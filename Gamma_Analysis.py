@@ -24,6 +24,71 @@ def absolute_efficiency(energy):
     return efficiency
 
 
+def peak_measurement(M, energy):
+    """
+    Takes in a measured spectra alongside a specific energy and returns the net
+    area and uncertainty for that energy.
+    """
+    energy_axis = M[0]
+    M_counts = M[1]
+
+    FWHM = 0.05*energy**0.5
+
+    #Peak Gross Area
+
+    start_peak = 0
+    while energy_axis[start_peak] < (energy - FWHM):
+        start_peak += 1
+
+    end_peak = start_peak
+    while energy_axis[end_peak] < (energy + FWHM):
+        end_peak += 1
+
+    gross_counts_peak = sum(M_counts[start_peak:end_peak])
+
+    #Left Gross Area
+
+    left_peak = energy - 2*FWHM
+
+    left_start = 0
+    while energy_axis[left_start] < (left_peak - FWHM):
+        left_start += 1
+
+    left_end = left_start
+    while energy_axis[left_end] < (left_peak + FWHM):
+        left_end += 1
+
+    gross_counts_left = sum(M_counts[left_start:left_end])
+
+    #Right Gross Area
+
+    right_peak = energy + 2*FWHM
+
+    right_start = 0
+    while energy_axis[right_start] < (right_peak - FWHM):
+        right_start += 1
+
+    right_end = right_start
+    while energy_axis[right_end] < (right_peak + FWHM):
+        right_end += 1
+
+    gross_counts_right = sum(M_counts[right_start:right_end])
+
+    #Net Area
+
+    net_area = gross_counts_peak - (gross_counts_left + gross_counts_right)/2
+
+    #Uncertainty
+
+    uncertainty = (gross_counts_peak + (gross_counts_left + gross_counts_right)/4)**0.5
+
+    #Returning results
+
+    results = [net_area, uncertainty]
+
+    return results
+
+
 def Background_Subtract(M, B):
     """
     Background_Subtract will subtract the background spectrum
