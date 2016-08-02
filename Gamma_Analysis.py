@@ -13,6 +13,17 @@ import numpy
 import matplotlib.pyplot as plt
 
 
+def absolute_efficiency(energy):
+    """
+    Returns absolute efficiency for a given energy, based on a provided
+    energy calibration.
+    """
+
+    efficiency = math.exp(30908*(math.log(energy)/energy)**3 - 3952.3*(math.log(energy)/energy)**2 + 161.65*(math.log(energy)/energy) - 5.1164)
+
+    return efficiency
+
+
 def Background_Subtract(M, B):
     """
     Background_Subtract will subtract the background spectrum
