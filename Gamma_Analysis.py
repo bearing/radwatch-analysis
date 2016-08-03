@@ -12,14 +12,18 @@ import math
 import numpy
 import matplotlib.pyplot as plt
 
+EFFICIENCY_CAL_COEFFS = [5.1164, 161.65, 3952.3, 30908]
 
-def absolute_efficiency(energy):
+
+def absolute_efficiency(energy, coeffs=EFFICIENCY_CAL_COEFFS):
     """
     Returns absolute efficiency for a given energy, based on a provided
-    energy calibration.
+    efficiency calibration.
     """
 
-    efficiency = math.exp(30908*(math.log(energy)/energy)**3 - 3952.3*(math.log(energy)/energy)**2 + 161.65*(math.log(energy)/energy) - 5.1164)
+    efficiency = math.exp(coeffs[3]*(math.log(energy)/energy)**3 -
+                          coeffs[2]*(math.log(energy)/energy)**2 +
+                          coeffs[1]*(math.log(energy)/energy) - coeffs[0])
 
     return efficiency
 
@@ -32,9 +36,10 @@ def peak_measurement(M, energy):
     energy_axis = M[0]
     M_counts = M[1]
 
+    # Rough estimate of FWHM.
     FWHM = 0.05*energy**0.5
 
-    #Peak Gross Area
+    # Peak Gross Area
 
     start_peak = 0
     while energy_axis[start_peak] < (energy - FWHM):
@@ -46,7 +51,7 @@ def peak_measurement(M, energy):
 
     gross_counts_peak = sum(M_counts[start_peak:end_peak])
 
-    #Left Gross Area
+    # Left Gross Area
 
     left_peak = energy - 2*FWHM
 
@@ -60,7 +65,7 @@ def peak_measurement(M, energy):
 
     gross_counts_left = sum(M_counts[left_start:left_end])
 
-    #Right Gross Area
+    # Right Gross Area
 
     right_peak = energy + 2*FWHM
 
@@ -74,15 +79,16 @@ def peak_measurement(M, energy):
 
     gross_counts_right = sum(M_counts[right_start:right_end])
 
-    #Net Area
+    # Net Area
 
     net_area = gross_counts_peak - (gross_counts_left + gross_counts_right)/2
 
-    #Uncertainty
+    # Uncertainty
 
-    uncertainty = (gross_counts_peak + (gross_counts_left + gross_counts_right)/4)**0.5
+    uncertainty = (gross_counts_peak +
+                   (gross_counts_left + gross_counts_right) / 4) ** 0.5
 
-    #Returning results
+    # Returning results
 
     results = [net_area, uncertainty]
 
@@ -98,27 +104,27 @@ def Background_Subtract(M, B):
     the energy calibrations are the same.
     """
 
-    M_Counts                = M.data
-    B_Counts                = B.data
+    M_Counts = M.data
+    B_Counts = B.data
 
-    M_Time                  = M.livetime
-    B_Time                  = B.livetime
+    M_Time = M.livetime
+    B_Time = B.livetime
 
-    M_Channels              = M.channel
-    E0                      = M.energy_cal[0]
-    Eslope                  = M.energy_cal[1]
+    M_Channels = M.channel
+    E0 = M.energy_cal[0]
+    Eslope = M.energy_cal[1]
 
-    Energy_Axis             = B.channel
-    Energy_Axis             = Energy_Axis.astype(float)
-    Energy_Axis[:]          = [E0+Eslope*x for x in Channel]
+    Energy_Axis = B.channel
+    Energy_Axis = Energy_Axis.astype(float)
+    Energy_Axis[:] = [E0+Eslope*x for x in Channel]
 
-    B_Counts_M              = [1.0]*len(M.channel)
+    B_Counts_M = [1.0]*len(M.channel)
 
-    B_Counts_M[:]           = [x*(M_Time/B_Time) for x in B_Counts]
+    B_Counts_M[:] = [x*(M_Time/B_Time) for x in B_Counts]
 
-    M_Sub_Back              = [1.0]*len(M_Channels)
+    M_Sub_Back = [1.0]*len(M_Channels)
 
-    M_Sub_Back              = [M_Counts[x]-B_Counts_M[x] for x in M.channel]
+    M_Sub_Back = [M_Counts[x]-B_Counts_M[x] for x in M.channel]
 
     Sub_Spect = [Energy_Axis, M_Sub_Back]
 
@@ -126,8 +132,8 @@ def Background_Subtract(M, B):
 
 
 def main():
-    Measurement    = SPEFile.SPEFile()
-    Background     = SPEFile.SPEFile()
+    Measurement = SPEFile.SPEFile()
+    Background = SPEFile.SPEFile()
 
     Measurement.read()
     Background.read()
