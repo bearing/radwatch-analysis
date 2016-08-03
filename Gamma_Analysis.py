@@ -142,3 +142,14 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+def emission_rate(energy, net_area, efficiency, livetime):
+    """this function returns the emission rate of gammas per second"""
+    emission_rates = []
+    for i in energy:
+        emission_rate = net_area[energy]/(efficiency[energy]*livetime)
+        emission_rates = emission_rates.append(emission_rate)
+    return emission_rates  
+
+
