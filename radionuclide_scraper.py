@@ -2,7 +2,7 @@
 """
 Created on Tue Aug 16 10:42:24 2016
 
-@author: Mustapha
+@author: Mustapha Saad
 """
 
 import bs4
@@ -11,7 +11,7 @@ import math
 
 
 
-def search_function(input):
+def search(input):
 
     """
     if input is an energy (searching for multiple radionuclides), then a url 
@@ -35,7 +35,7 @@ def search_function(input):
 
 
 
-def table_extractor_function(bsobject):
+def table_extractor(bsobject):
     """
     table_extractor takes the bsobject and extracts all data in the table.
     """    
@@ -82,7 +82,7 @@ def table_extractor_function(bsobject):
     
     
     
-def url_extractor_function(data):
+def url_extractor(data):
     
     """
     Extracting all intensities and url addons from the table.
@@ -138,7 +138,7 @@ def url_extractor_function(data):
 
 
 
-def gamma_function(data):
+def gamma_extractor(data):
     
     """
     Extracts gamma ray energies with intensities of at least 1%.
@@ -172,11 +172,13 @@ def gamma_function(data):
 
 
 
-def symbol_function(bsobject, table):
+def symbol_extractor(bsobject, table):
 
     """
     Acquires the symbol of the radionuclide.
     """
+    
+    #flag = False assumes that the radionuclide is not metastable.
     flag = False    
     
     bsradionuclide = bsobject.find('caption',{'align':'top'})
@@ -218,7 +220,7 @@ def symbol_function(bsobject, table):
     
     
     
-def half_life_function(table, index):
+def half_life_extractor(table, index):
     
     """
     Extracts the half life and decay constant of the radionuclide in seconds.
@@ -266,7 +268,7 @@ def half_life_function(table, index):
     
     
     
-def atomic_mass_numbers_function(url):
+def atomic_mass_numbers_extractor(url):
     
     """
     Acquiring atomic number and mass number.
@@ -297,53 +299,20 @@ def atomic_mass_numbers_function(url):
     return(atomic_number, mass_number)
     
     
-def main_module(energy):
 
-    """
-    Takes in gamma ray energy and calls the above functions to output the 
-    radionuclides' information (symbol, atomic number, mass number, half life,
-    decay constant, gamma ray energies and their corresponding intensities) 
-    emit a gamma ray at the specified energy.
-    """
-    
-    radionuclides_bsobject = search_function(energy)
-    data = table_extractor_function(radionuclides_bsobject)
-    urls = url_extractor_function(data[0])    
-    
-    info = []
-    for i in range(len(urls)):
-        bsobject = search_function(urls[i])
-        #bsgammatable takes the gamma ray energy/intensity table from the bsobject.
-        bsgammatable = bsobject.table.findAll('table',{'border':'0',
-                                                   'cellpadding':'0',
-                                                   'cellspacing':'0'}, limit=1)
-        table_data = table_extractor_function(bsgammatable)
-        gamma_info = gamma_function(table_data[0])
-        symbol = symbol_function(bsobject,table_data[1])
-        half_life = half_life_function(table_data[1],symbol[1])
-        atomic_mass_numbers = atomic_mass_numbers_function(urls[i])
-        
-        radionuclide_info = [symbol[0],atomic_mass_numbers[0],atomic_mass_numbers[1],
-                        half_life[0],half_life[1],gamma_info[0],gamma_info[1]]
-        
-        info.append(radionuclide_info)    
-    
-    return(info)
-    
-    
-    
 class Isotope(object):
-    def __init__(self, Symbol, Atomic_number, Mass_number, half_life, decay_constant, list_sig_g_e, list_sig_g_b_r):
-        self.Symbol = Symbol
-        self.Atomic_number = Atomic_number
-        self.Mass_number = Mass_number
+    def __init__(self, symbol, atomic_number, mass_number, half_life, decay_constant, list_sig_g_e, list_sig_g_b_r):
+        self.symbol = symbol
+        self.atomic_number = atomic_number
+        self.mass_number = mass_number
         self.half_life = half_life
         self.decay_constant = decay_constant
         self.list_sig_g_e = list_sig_g_e
         self.list_sig_g_b_r = list_sig_g_b_r
         return
         
-        
+    
+    
 def compiler(info):
     
     """
@@ -355,4 +324,41 @@ def compiler(info):
         vars()[info[i][0] + '_' + str(info[i][2])] = Isotope(info[i][0],info[i][1],info[i][2],info[i][3],info[i][4],info[i][5],info[i][6])
         database.append(vars()[info[i][0] + '_' + str(info[i][2])])
         
-    return(database)               
+    return(database)
+
+
+
+def main(energy):
+
+    """
+    Takes in gamma ray energy and calls the above functions to output the 
+    radionuclides' information (symbol, atomic number, mass number, half life,
+    decay constant, gamma ray energies and their corresponding intensities) 
+    that emit a gamma ray at the specified energy.
+    """
+    
+    radionuclides_bsobject = search(energy)
+    data = table_extractor(radionuclides_bsobject)
+    urls = url_extractor(data[0])    
+    
+    info = []
+    for i in range(len(urls)):
+        bsobject = search(urls[i])
+        #bsgammatable takes the gamma ray energy/intensity table from the bsobject.
+        bsgammatable = bsobject.table.findAll('table',{'border':'0',
+                                                   'cellpadding':'0',
+                                                   'cellspacing':'0'}, limit=1)
+        table_data = table_extractor(bsgammatable)
+        gamma_info = gamma_extractor(table_data[0])
+        symbol = symbol_extractor(bsobject,table_data[1])
+        half_life = half_life_extractor(table_data[1],symbol[1])
+        atomic_mass_numbers = atomic_mass_numbers_extractor(urls[i])
+        
+        radionuclide_info = [symbol[0],atomic_mass_numbers[0],atomic_mass_numbers[1],
+                        half_life[0],half_life[1],gamma_info[0],gamma_info[1]]
+        
+        info.append(radionuclide_info)    
+    
+    database = compiler(info)    
+    
+    return(database)    
