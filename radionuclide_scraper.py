@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Aug 16 10:42:24 2016
+Created on Wed Aug 24 20:41:34 2016
 
 @author: Mustapha Saad
 """
@@ -35,12 +35,12 @@ def search(input):
 
 
 
-def table_extractor(bsobject):
+def extract_table(bsobject):
     """
     table_extractor takes the bsobject and extracts all data in the table.
     """    
     table = str(bsobject)
-
+    
     data = [] 
        
     for i in range(len(table)):
@@ -51,6 +51,10 @@ def table_extractor(bsobject):
                     break
                 elif table[i+8+k:i+8+k+3] == '<i>':
                     data.append(table[i+8:i+8+k].strip())
+                    for j in range(10):
+                        if table[i+8+k+3+j:i+8+k+3+j+1] == '*':
+                            data[-1] = '0'
+                            break
                     break
                 elif table[i+8+k:i+8+k+5] == '</td>':
                     data.append(table[i+8:i+8+k].strip())
@@ -62,6 +66,10 @@ def table_extractor(bsobject):
                     break
                 elif table[i+5+k:i+5+k+3] == '<i>':
                     data.append(table[i+5:i+5+k].strip())
+                    for j in range(10):
+                        if table[i+5+k+3+j:i+5+k+3+j+1] == '*':
+                            data[-1] = '0'
+                            break
                     break
                 elif table[i+5+k:i+5+k+5] == '</td>':
                     data.append(table[i+5:i+5+k].strip())
@@ -72,17 +80,21 @@ def table_extractor(bsobject):
                     data.append('0')
                     break
                 elif table[i+4+k:i+4+k+3] == '<i>':
-                    data.append(table[i+4:i+4+k].strip())
+                    data.append(table[i+4:i+4+k].strip())                
+                    for j in range(10):
+                        if table[i+4+k+3+j:i+4+k+3+j+1] == '*':
+                            data[-1] = '0'
+                            break
                     break
                 elif table[i+4+k:i+4+k+5] == '</td>':
                     data.append(table[i+4:i+4+k].strip())
                     break    
-
+            
     return(data,table)
     
     
     
-def url_extractor(data):
+def extract_url(data):
     
     """
     Extracting all intensities and url addons from the table.
@@ -138,7 +150,7 @@ def url_extractor(data):
 
 
 
-def gamma_extractor(data):
+def extract_gamma(data):
     
     """
     Extracts gamma ray energies with intensities of at least 1%.
@@ -172,7 +184,7 @@ def gamma_extractor(data):
 
 
 
-def symbol_extractor(bsobject, table):
+def extract_symbol(bsobject, table):
 
     """
     Acquires the symbol of the radionuclide.
@@ -220,7 +232,7 @@ def symbol_extractor(bsobject, table):
     
     
     
-def half_life_extractor(table, index):
+def extract_half_life(table, index):
     
     """
     Extracts the half life and decay constant of the radionuclide in seconds.
@@ -268,7 +280,7 @@ def half_life_extractor(table, index):
     
     
     
-def atomic_mass_numbers_extractor(url):
+def extract_atomic_mass_numbers(url):
     
     """
     Acquiring atomic number and mass number.
@@ -313,7 +325,7 @@ class Isotope(object):
         
     
     
-def compiler(info):
+def compile_objects(info):
     
     """
     Returns a list of objects.
@@ -338,8 +350,8 @@ def main(energy):
     """
     
     radionuclides_bsobject = search(energy)
-    data = table_extractor(radionuclides_bsobject)
-    urls = url_extractor(data[0])    
+    data = extract_table(radionuclides_bsobject)
+    urls = extract_url(data[0])    
     
     info = []
     for i in range(len(urls)):
@@ -348,17 +360,17 @@ def main(energy):
         bsgammatable = bsobject.table.findAll('table',{'border':'0',
                                                    'cellpadding':'0',
                                                    'cellspacing':'0'}, limit=1)
-        table_data = table_extractor(bsgammatable)
-        gamma_info = gamma_extractor(table_data[0])
-        symbol = symbol_extractor(bsobject,table_data[1])
-        half_life = half_life_extractor(table_data[1],symbol[1])
-        atomic_mass_numbers = atomic_mass_numbers_extractor(urls[i])
+        table_data = extract_table(bsgammatable)
+        gamma_info = extract_gamma(table_data[0])
+        symbol = extract_symbol(bsobject,table_data[1])
+        half_life = extract_half_life(table_data[1],symbol[1])
+        atomic_mass_numbers = extract_atomic_mass_numbers(urls[i])
         
         radionuclide_info = [symbol[0],atomic_mass_numbers[0],atomic_mass_numbers[1],
                         half_life[0],half_life[1],gamma_info[0],gamma_info[1]]
         
         info.append(radionuclide_info)    
     
-    database = compiler(info)    
+    database = compile_objects(info)    
     
     return(database)    
