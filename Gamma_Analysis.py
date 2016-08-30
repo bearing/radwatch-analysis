@@ -4,28 +4,59 @@ It will collect two spectra:
 M = Measurement Spectrum
 B = Background Spectrum
 """
-
 from __future__ import print_function
 from SpectrumFileBase import SpectrumFileBase
 import SPEFile
 import math
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
+execfile("Isotope_identification.py")
 
 EFFICIENCY_CAL_COEFFS = [5.1164, 161.65, 3952.3, 30908]
 
 
 def absolute_efficiency(energy, coeffs=EFFICIENCY_CAL_COEFFS):
     """
-    Returns absolute efficiency for a given energy, based on a provided
-    efficiency calibration.
+    Returns absolute efficiencies for a given set of energies, based on a
+    provided efficiency calibration.
     """
-
-    efficiency = math.exp(coeffs[3]*(math.log(energy)/energy)**3 -
-                          coeffs[2]*(math.log(energy)/energy)**2 +
-                          coeffs[1]*(math.log(energy)/energy) - coeffs[0])
-
+    efficiency = []
+    for i in range(len(energy)):
+        efficiency.append(math.exp(coeffs[3] *
+                          (math.log(energy[i])/energy[i])**3 -
+                          coeffs[2]*(math.log(energy[i])/energy[i])**2 +
+                          coeffs[1]*(math.log(energy[i])/energy[i]) -
+                          coeffs[0]))
     return efficiency
+
+
+def emission_rate(net_area, efficiency, livetime):
+    """
+    this function returns the emission rate of gammas per second
+    alongside its uncertainty.
+    """
+    emission_rate = [net_area[0]/(efficiency*livetime),
+                     net_area[1]/(efficiency*livetime)]
+    return emission_rate
+
+
+def Isotope_Activity(Isotope, emission_rates, emission_uncertainty):
+    """
+    Isotope_Activity will determine the activity of a given radioactive isotope
+    based on the emission rates given and the isotope properties. It takes an
+    Isotope object and a given set of emission rates and outputs an activity
+    estimate alongside its uncertainty.
+    """
+    Branching_ratio = Isotope.list_sig_g_b_r
+    Activity = []
+    Uncertainty = []
+    for i in range(len(Branching_ratio)):
+        Activity.append(emission_rates[i]/Branching_ratio[i])
+        Uncertainty.append(emission_uncertainty[i]/Branching_ratio[i])
+    Isotope_Activity = np.mean(Activity)
+    Activity_uncertainty = np.mean(Uncertainty)
+    results = [Isotope_Activity, Activity_uncertainty]
+    return results
 
 
 def peak_measurement(M, energy):
@@ -142,14 +173,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-def emission_rate(energy, net_area, efficiency, livetime):
-    """this function returns the emission rate of gammas per second"""
-    emission_rates = []
-    for i in energy:
-        emission_rate = net_area[energy]/(efficiency[energy]*livetime)
-        emission_rates = emission_rates.append(emission_rate)
-    return emission_rates  
-
-
