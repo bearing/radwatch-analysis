@@ -123,6 +123,15 @@ def peak_measurement(M, energy):
 
     results = [net_area, uncertainty]
 
+    energy_range = energy_axis[left_start:right_end]
+    for i in energy_range:
+        turns = 0
+        while turns <= len(energy_range):
+            if abs(M_counts[i]) > 2*uncertainty:
+                    print("Error: There is a bias in the measurement at %s KeV"
+                          % energy_axis[i])
+            turns += 1
+
     return results
 
 
