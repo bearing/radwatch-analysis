@@ -10,6 +10,7 @@ import SPEFile
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 execfile("Isotope_identification.py")
 
 EFFICIENCY_CAL_COEFFS = [5.1164, 161.65, 3952.3, 30908]
@@ -174,15 +175,17 @@ def main():
     Isotope_List = [Caesium_134, Caesium_137, Cobalt_60, Potassium_40,
                     Thallium_208, Actinium_228, Lead_212, Bismuth_214
                     Lead_214, Thorium_234, Lead_210]
-    for i in range(len(Isotope_List)):
-        Isotope_Efficiency = absolute_efficiency(Isotope_List[i].list_sig_g_e)
-        Isotope_Energy = Isotope_List[i].list_sig_g_e
+
+    for isotope in Isotope_List:
+        Isotope_Efficiency = absolute_efficiency(Isotope_List[
+                                                 isotope].list_sig_g_e)
+        Isotope_Energy = Isotope_List[isotope].list_sig_g_e
         Activity_Info = []
         for j in range(len(Isotope_Energy)):
             Net_Area = peak_measurement(Sub_Measurement, Isotope_Energy[j])
             Peak_emission = emission_rate(Net_Area, Isotope_Efficiency[j],
                                           Measurement.livetime)
-            Actvity = Isotope_Activity(Isotope_List[i], Peak_emission[0],
+            Actvity = Isotope_Activity(Isotope_List[isotope], Peak_emission[0],
                                        Peak_emission[1])
             Activity_Info.append(Activity)
 
