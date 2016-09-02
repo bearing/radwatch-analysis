@@ -123,8 +123,8 @@ def peak_measurement(M, energy):
     # Returning results
 
     results = [net_area, uncertainty]
-
-    energy_range = energy_axis[left_start:right_end]
+    """
+    energy_range = M.channel[left_start:right_end]
     for i in energy_range:
         turns = 0
         while turns <= len(energy_range):
@@ -132,7 +132,7 @@ def peak_measurement(M, energy):
                     print("Error: There is a bias in the measurement at %s KeV"
                           % energy_axis[i])
             turns += 1
-
+    """
     return results
 
 
@@ -157,7 +157,7 @@ def Background_Subtract(M, B):
 
     Energy_Axis = B.channel
     Energy_Axis = Energy_Axis.astype(float)
-    Energy_Axis[:] = [E0+Eslope*x for x in Channel]
+    Energy_Axis[:] = [E0+Eslope*x for x in M_Channels]
 
     B_Counts_M = [1.0]*len(M.channel)
 
@@ -173,8 +173,8 @@ def Background_Subtract(M, B):
 
 
 def main():
-    Measurement = SPEFile.SPEFile()
-    Background = SPEFile.SPEFile()
+    Measurement = SPEFile.SPEFile("UCB006_Bananas.Spe")
+    Background = SPEFile.SPEFile("Background_Measurement.Spe")
 
     Measurement.read()
     Background.read()
@@ -182,21 +182,25 @@ def main():
     Sub_Measurement = Background_Subtract(M=Measurement, B=Background)
 
     Isotope_List = [Caesium_134, Caesium_137, Cobalt_60, Potassium_40,
-                    Thallium_208, Actinium_228, Lead_212, Bismuth_214
+                    Thallium_208, Actinium_228, Lead_212, Bismuth_214,
                     Lead_214, Thorium_234, Lead_210]
 
     for isotope in Isotope_List:
-        Isotope_Efficiency = absolute_efficiency(Isotope_List[
-                                                 isotope].list_sig_g_e)
-        Isotope_Energy = Isotope_List[isotope].list_sig_g_e
+        Isotope_Efficiency = absolute_efficiency(isotope.list_sig_g_e)
+        Isotope_Energy = isotope.list_sig_g_e
+        Gamma_Emission = []
+        Gamma_Uncertainty = []
         Activity_Info = []
         for j in range(len(Isotope_Energy)):
             Net_Area = peak_measurement(Sub_Measurement, Isotope_Energy[j])
             Peak_emission = emission_rate(Net_Area, Isotope_Efficiency[j],
                                           Measurement.livetime)
-            Actvity = Isotope_Activity(Isotope_List[isotope], Peak_emission[0],
-                                       Peak_emission[1])
-            Activity_Info.append(Activity)
+            Gamma_Emission.append(Peak_emission[0])
+            Gamma_Uncertainty.append(Peak_emission[1])
+        Activity = Isotope_Activity(isotope, Gamma_Emission,
+                                    Gamma_Uncertainty)
+        Activity_Info.append(Activity)
+        print(Activity_Info)
 
 
 if __name__ == '__main__':
