@@ -175,6 +175,37 @@ def Background_Subtract(M, B):
     return Sub_Spect
 
 
+
+
+
+
+
+def make_table(Isotope_List, sample_info, sample_names):
+    data = {}
+    
+    for i in range(len(sample_names)):
+        data[sample_names[i]] = sample_info
+
+    Isotope_Act_Unc = []        
+    for i in range(len(Isotope_List)):
+        Isotope_Act_Unc.append(str(Isotope_List[i].Symbol) + '-' +
+                               str(Isotope_List[i].Mass_number) + 
+                               ' Act' + '[Bq]') 
+        Isotope_Act_Unc.append(str(Isotope_List[i].Symbol) + '-' +
+                               str(Isotope_List[i].Mass_number) + 
+                               ' Unc' + '[Bq]')
+        
+    frame = pd.DataFrame(data, index = Isotope_Act_Unc)
+    frame = frame.T
+    frame.index.name = 'Sample Type'
+    frame.to_csv('Sampling_Table.csv')
+
+
+
+
+
+
+
 def main():
     Measurement = SPEFile.SPEFile("UCB006_Bananas.Spe")
     Background = SPEFile.SPEFile("Background_Measurement.Spe")
