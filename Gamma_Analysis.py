@@ -11,8 +11,8 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-#exec('Isotope_identification.py')
-#Use bottom line for Python 3 only. Use top comment for Python 2.7 only.
+# exec('Isotope_identification.py')
+# Use bottom line for Python 3 only. Use top comment for Python 2.7 only.
 exec(open('Isotope_identification.py').read())
 
 
@@ -175,35 +175,25 @@ def Background_Subtract(M, B):
     return Sub_Spect
 
 
-
-
-
-
-
 def make_table(Isotope_List, sample_info, sample_names):
     data = {}
-    
+
     for i in range(len(sample_names)):
         data[sample_names[i]] = sample_info
 
-    Isotope_Act_Unc = []        
+    Isotope_Act_Unc = []
     for i in range(len(Isotope_List)):
         Isotope_Act_Unc.append(str(Isotope_List[i].Symbol) + '-' +
-                               str(Isotope_List[i].Mass_number) + 
-                               ' Act' + '[Bq]') 
+                               str(Isotope_List[i].Mass_number) +
+                               ' Act' + '[Bq]')
         Isotope_Act_Unc.append(str(Isotope_List[i].Symbol) + '-' +
-                               str(Isotope_List[i].Mass_number) + 
+                               str(Isotope_List[i].Mass_number) +
                                ' Unc' + '[Bq]')
-        
-    frame = pd.DataFrame(data, index = Isotope_Act_Unc)
+
+    frame = pd.DataFrame(data, index=Isotope_Act_Unc)
     frame = frame.T
     frame.index.name = 'Sample Type'
     frame.to_csv('Sampling_Table.csv')
-
-
-
-
-
 
 
 def main():
@@ -224,7 +214,7 @@ def main():
         Isotope_Energy = isotope.list_sig_g_e
         Gamma_Emission = []
         Gamma_Uncertainty = []
-        
+
         for j in range(len(Isotope_Energy)):
             Net_Area = peak_measurement(Sub_Measurement, Isotope_Energy[j])
             Peak_emission = emission_rate(Net_Area, Isotope_Efficiency[j],
@@ -234,9 +224,8 @@ def main():
         Activity = Isotope_Activity(isotope, Gamma_Emission,
                                     Gamma_Uncertainty)
         Activity_Info.extend(Activity)
-    
-    table = make_table(Isotope_List, Activity_Info, ['Banana'])
-    print(table)
+
+    make_table(Isotope_List, Activity_Info, ['Banana'])
 
 
 if __name__ == '__main__':
