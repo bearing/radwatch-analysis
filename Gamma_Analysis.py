@@ -11,7 +11,10 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-execfile("Isotope_identification.py")
+#exec('Isotope_identification.py')
+#Use bottom line for Python 3 only. Use top comment for Python 2.7 only.
+exec(open('Isotope_identification.py').read())
+
 
 EFFICIENCY_CAL_COEFFS = [5.1164, 161.65, 3952.3, 30908]
 
@@ -184,13 +187,13 @@ def main():
     Isotope_List = [Caesium_134, Caesium_137, Cobalt_60, Potassium_40,
                     Thallium_208, Actinium_228, Lead_212, Bismuth_214,
                     Lead_214, Thorium_234, Lead_210]
-
+    Activity_Info = []
     for isotope in Isotope_List:
         Isotope_Efficiency = absolute_efficiency(isotope.list_sig_g_e)
         Isotope_Energy = isotope.list_sig_g_e
         Gamma_Emission = []
         Gamma_Uncertainty = []
-        Activity_Info = []
+        
         for j in range(len(Isotope_Energy)):
             Net_Area = peak_measurement(Sub_Measurement, Isotope_Energy[j])
             Peak_emission = emission_rate(Net_Area, Isotope_Efficiency[j],
@@ -199,8 +202,10 @@ def main():
             Gamma_Uncertainty.append(Peak_emission[1])
         Activity = Isotope_Activity(isotope, Gamma_Emission,
                                     Gamma_Uncertainty)
-        Activity_Info.append(Activity)
-        print(Activity_Info)
+        Activity_Info.extend(Activity)
+    
+    table = make_table(Isotope_List, Activity_Info, ['Banana'])
+    print(table)
 
 
 if __name__ == '__main__':
