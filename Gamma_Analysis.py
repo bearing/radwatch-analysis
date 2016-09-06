@@ -127,16 +127,7 @@ def peak_measurement(M, energy):
     # Returning results
 
     results = [net_area, uncertainty]
-    """
-    energy_range = M.channel[left_start:right_end]
-    for i in energy_range:
-        turns = 0
-        while turns <= len(energy_range):
-            if abs(M_counts[i]) > 2*uncertainty:
-                    print("Error: There is a bias in the measurement at %s KeV"
-                          % energy_axis[i])
-            turns += 1
-    """
+
     return results
 
 
@@ -176,6 +167,59 @@ def Background_Subtract(M, B):
     return Sub_Spect
 
 
+def Bias_Check(Spectrum, Background, Measurement_Name):
+    """
+    Bias_Check will determine if there's a bias in the measurement. It will
+    look at high energy peaks that correspond to Bi-214 and Tl-208 since these
+    peaks occur in the background. If the net area of those peaks are negative
+    beyond 2 sigma, where sigma is the uncertainty of a peak net area, then a
+    message indicating a measurement bias will be produced.
+    """
+    Check_Energies = [1120.29, 1764.49, 2614.51]
+    Message = "FINE"
+    M_Counts = Spectrum.data
+    B_Counts = Background.data
+
+    M_Time = Spectrum.livetime
+    B_Time = Background.livetime
+    Time_Ratio = M_Time/B_Time
+
+    M_Channels = Spectrum.channel
+    E0 = Spectrum.energy_cal[0]
+    Eslope = Spectrum.energy_cal[1]
+
+    Energy_Axis = Background.channel
+    Energy_Axis = Energy_Axis.astype(float)
+    Energy_Axis[:] = [E0+Eslope*x for x in M_Channels]
+
+    for energy in Check_Energies:
+        FWHM = 0.05*energy**0.5
+        start_peak = 0
+        while Energy_Axis[start_peak] < (energy - FWHM):
+            start_peak += 1
+
+        end_peak = start_peak
+        while Energy_Axis[end_peak] < (energy + FWHM):
+            end_peak += 1
+        Peak_Area = sum(M_Counts[start_peak:end_peak])
+        Peak_Area_Uncertainty = (Peak_Area)**0.5
+
+        Background_Area = sum(B_Counts[start_peak:end_peak])
+        Background_Uncertainty = (Background_Area)**0.5
+
+        B_to_M_Area = Background_Area*Time_Ratio
+        B_to_M_Uncertainty = Background_Uncertainty*Time_Ratio
+
+        Check_Area = Peak_Area - B_to_M_Area
+        Check_Area_Uncertainty = (Peak_Area_Uncertainty +
+                                  B_to_M_Uncertainty)**0.5
+        if Check_Area < 0:
+            Significance = Check_Area/Check_Area_Uncertainty
+            if Significance < -2:
+                Message = 'BIAS'
+    return(Message)
+
+
 def make_table(Isotope_List, sample_info, sample_names):
     data = {}
 
@@ -204,6 +248,7 @@ def main():
     Sample_Measurements = []
     SAMPLE_NAMES = []
     Sample_Data = []
+    Error_Spectrum = []
 
     for file in os.listdir(dir_path):
         if file.endswith(".Spe"):
@@ -218,7 +263,10 @@ def main():
     for SAMPLE in Sample_Measurements:
         Measurement = SPEFile.SPEFile(SAMPLE)
         Measurement.read()
-
+        Check = Bias_Check(Spectrum=Measurement, Background=Background,
+                           Measurement_Name=SAMPLE)
+        if Check == "BIAS":
+            Error_Spectrum.append(SAMPLE)
         Sub_Measurement = Background_Subtract(M=Measurement, B=Background)
 
         Isotope_List = [Caesium_134, Caesium_137, Cobalt_60, Potassium_40,
@@ -241,8 +289,13 @@ def main():
                                         Gamma_Uncertainty)
             Activity_Info.extend(Activity)
         Sample_Data.append(Activity_Info)
+    if Error_Spectrum == []:
+        pass
+    else:
+        with open('Error.txt', 'w') as file:
+            file.writelines('There is a bias in %s \n' % bias for bias in
+                            Error_Spectrum)
     make_table(Isotope_List, Sample_Data, SAMPLE_NAMES)
-
 
 if __name__ == '__main__':
     main()
