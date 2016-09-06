@@ -11,6 +11,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import os
 # exec('Isotope_identification.py')
 # Use bottom line for Python 3 only. Use top comment for Python 2.7 only.
 exec(open('Isotope_identification.py').read())
@@ -179,7 +180,7 @@ def make_table(Isotope_List, sample_info, sample_names):
     data = {}
 
     for i in range(len(sample_names)):
-        data[sample_names[i]] = sample_info
+        data[sample_names[i]] = sample_info[i]
 
     Isotope_Act_Unc = []
     for i in range(len(Isotope_List)):
@@ -197,35 +198,49 @@ def make_table(Isotope_List, sample_info, sample_names):
 
 
 def main():
-    Measurement = SPEFile.SPEFile("UCB006_Bananas.Spe")
     Background = SPEFile.SPEFile("Background_Measurement.Spe")
-
-    Measurement.read()
     Background.read()
+    dir_path = os.getcwd()
+    Sample_Measurements = []
+    SAMPLE_NAMES = []
+    Sample_Data = []
 
-    Sub_Measurement = Background_Subtract(M=Measurement, B=Background)
+    for file in os.listdir(dir_path):
+        if file.endswith(".Spe"):
+            if file == "Background_Measurement.Spe":
+                pass
+            else:
+                Sample_Measurements.append(file)
+                Name = os.path.splitext(file)[0].split("_", 1)[1]
+                SAMPLE_NAMES.append(Name)
 
-    Isotope_List = [Caesium_134, Caesium_137, Cobalt_60, Potassium_40,
-                    Thallium_208, Actinium_228, Lead_212, Bismuth_214,
-                    Lead_214, Thorium_234, Lead_210]
-    Activity_Info = []
-    for isotope in Isotope_List:
-        Isotope_Efficiency = absolute_efficiency(isotope.list_sig_g_e)
-        Isotope_Energy = isotope.list_sig_g_e
-        Gamma_Emission = []
-        Gamma_Uncertainty = []
+    for SAMPLE in Sample_Measurements:
+        Measurement = SPEFile.SPEFile(SAMPLE)
+        Measurement.read()
 
-        for j in range(len(Isotope_Energy)):
-            Net_Area = peak_measurement(Sub_Measurement, Isotope_Energy[j])
-            Peak_emission = emission_rate(Net_Area, Isotope_Efficiency[j],
-                                          Measurement.livetime)
-            Gamma_Emission.append(Peak_emission[0])
-            Gamma_Uncertainty.append(Peak_emission[1])
-        Activity = Isotope_Activity(isotope, Gamma_Emission,
-                                    Gamma_Uncertainty)
-        Activity_Info.extend(Activity)
+        Sub_Measurement = Background_Subtract(M=Measurement, B=Background)
 
-    make_table(Isotope_List, Activity_Info, ['Banana'])
+        Isotope_List = [Caesium_134, Caesium_137, Cobalt_60, Potassium_40,
+                        Thallium_208, Actinium_228, Lead_212, Bismuth_214,
+                        Lead_214, Thorium_234, Lead_210]
+        Activity_Info = []
+        for isotope in Isotope_List:
+            Isotope_Efficiency = absolute_efficiency(isotope.list_sig_g_e)
+            Isotope_Energy = isotope.list_sig_g_e
+            Gamma_Emission = []
+            Gamma_Uncertainty = []
+
+            for j in range(len(Isotope_Energy)):
+                Net_Area = peak_measurement(Sub_Measurement, Isotope_Energy[j])
+                Peak_emission = emission_rate(Net_Area, Isotope_Efficiency[j],
+                                              Measurement.livetime)
+                Gamma_Emission.append(Peak_emission[0])
+                Gamma_Uncertainty.append(Peak_emission[1])
+            Activity = Isotope_Activity(isotope, Gamma_Emission,
+                                        Gamma_Uncertainty)
+            Activity_Info.extend(Activity)
+        Sample_Data.append(Activity_Info)
+    make_table(Isotope_List, Sample_Data, SAMPLE_NAMES)
 
 
 if __name__ == '__main__':
