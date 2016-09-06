@@ -121,8 +121,8 @@ def peak_measurement(M, energy):
 
     # Uncertainty
 
-    uncertainty = (gross_counts_peak +
-                   (gross_counts_left + gross_counts_right) / 4) ** 0.5
+    uncertainty = abs((gross_counts_peak +
+                      (gross_counts_left + gross_counts_right) / 4)) ** 0.5
 
     # Returning results
 
