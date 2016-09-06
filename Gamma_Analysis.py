@@ -211,7 +211,8 @@ def main():
                 pass
             else:
                 Sample_Measurements.append(file)
-                Name = os.path.splitext(file)[0].split("_", 1)[1]
+                Name = os.path.splitext(file)[0].split("_",
+                                                       1)[1].replace("_", " ")
                 SAMPLE_NAMES.append(Name)
 
     for SAMPLE in Sample_Measurements:
