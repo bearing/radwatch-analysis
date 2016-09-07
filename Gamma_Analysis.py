@@ -263,8 +263,20 @@ def make_table(Isotope_List, sample_info, sample_names, dates):
     frame = pd.DataFrame(data, index=Isotope_Act_Unc)
     frame = frame.T
     frame.index.name = 'Sample Type'
+    
+    #Adding Date Measured and Sample Weight Columns
+    df = pd.read_csv('RadWatch_Samples.csv')
+    frame['Date Measured'] = dates   
+    frame['Sample Weight (g)'] = pd.Series.tolist(df.ix[:,2])
+    
+    #Reindexing columns to place 'Date Measured' and 'Sample Weight' first.
+    colnames = frame.columns.tolist()
+    colnames = colnames[-2:] + colnames[:-2]
+    frame = frame[colnames]
     frame.to_csv('Sampling_Table.csv')
-
+    
+    return frame
+    
 
 def main():
     Background = SPEFile.SPEFile("Background_Measurement.Spe")
