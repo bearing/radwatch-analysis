@@ -245,7 +245,7 @@ def Bias_Check(Spectrum, Background, Measurement_Name):
     return(Message)
 
 
-def make_table(Isotope_List, sample_info, sample_names):
+def make_table(Isotope_List, sample_info, sample_names, dates):
     data = {}
 
     for i in range(len(sample_names)):
@@ -272,6 +272,7 @@ def main():
     dir_path = os.getcwd()
     Sample_Measurements = []
     SAMPLE_NAMES = []
+    Measurement_Dates = []
     Sample_Data = []
     Error_Spectrum = []
 
@@ -281,13 +282,13 @@ def main():
                 pass
             else:
                 Sample_Measurements.append(file)
-                Name = os.path.splitext(file)[0].split("_",
-                                                       1)[1].replace("_", " ")
+                Name = os.path.splitext(file)[0].replace("_", " ")
                 SAMPLE_NAMES.append(Name)
 
     for SAMPLE in Sample_Measurements:
         Measurement = SPEFile.SPEFile(SAMPLE)
         Measurement.read()
+        Measurement_Dates.append(Measurement.collection_start.split(' ')[0])
         Check = Bias_Check(Spectrum=Measurement, Background=Background,
                            Measurement_Name=SAMPLE)
         if Check == "BIAS":
@@ -320,7 +321,7 @@ def main():
         with open('Error.txt', 'w') as file:
             file.writelines('There is a bias in %s \n' % bias for bias in
                             Error_Spectrum)
-    make_table(Isotope_List, Sample_Data, SAMPLE_NAMES)
+    make_table(Isotope_List, Sample_Data, SAMPLE_NAMES, Measurement_Dates)
 
 if __name__ == '__main__':
     main()
