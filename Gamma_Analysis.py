@@ -146,24 +146,36 @@ def Background_Subtract(M, B):
     M_Time = M.livetime
     B_Time = B.livetime
 
-    M_Channels = M.channel
+    B_Channels = B.channel
     E0 = M.energy_cal[0]
     Eslope = M.energy_cal[1]
 
-    Energy_Axis = B.channel
-    Energy_Axis = Energy_Axis.astype(float)
-    Energy_Axis[:] = [E0+Eslope*x for x in M_Channels]
-
-    B_Counts_M = [1.0]*len(M.channel)
-
-    B_Counts_M[:] = [x*(M_Time/B_Time) for x in B_Counts]
-
-    M_Sub_Back = [1.0]*len(M_Channels)
-
-    M_Sub_Back = [M_Counts[x]-B_Counts_M[x] for x in M.channel]
-
-    Sub_Spect = [Energy_Axis, M_Sub_Back]
-
+    Energy_Axis = M.channel
+    channel_ratio = (len(Energy_Axis)+1)/(len(B_Channels)+1)
+    if channel_ratio == 1:
+        Energy_Axis = Energy_Axis.astype(float)
+        Energy_Axis[:] = [E0+Eslope*x for x in B_Channels]
+        B_Counts_M = [1.0]*len(M.channel)
+        B_Counts_M[:] = [x*(M_Time/B_Time) for x in B_Counts]
+        M_Sub_Back = [1.0]*len(B_Channels)
+        M_Sub_Back = [M_Counts[x]-B_Counts_M[x] for x in M.channel]
+        Sub_Spect = [Energy_Axis, M_Sub_Back]
+    else:
+        MOD = (len(Energy_Axis)+1) % channel_ratio
+        REM = channel_ratio - MOD + 1
+        M_Counts = np.append(M_Counts, np.zeros(REM))
+        M_Counts = M_Counts.reshape((-1, channel_ratio))
+        M_Counts = np.sum(M_Counts, 1)
+        Energy_Axis = Energy_Axis.astype(float)
+        Energy_Axis[:] = [E0+Eslope*x for x in M.channel]
+        Energy_Axis = np.append(Energy_Axis, np.zeros(REM))
+        Energy_Axis = Energy_Axis.reshape((-1, channel_ratio))
+        Energy_Axis = np.mean(Energy_Axis, 1)
+        B_Counts_M = [1.0]*len(B.channel)
+        B_Counts_M[:] = [x*(M_Time/B_Time) for x in B_Counts]
+        M_Sub_Back = [1.0]*len(M_Counts)
+        M_Sub_Back = [M_Counts[x]-B_Counts_M[x] for x in B.channel]
+        Sub_Spect = [Energy_Axis, M_Sub_Back]
     return Sub_Spect
 
 
@@ -184,13 +196,26 @@ def Bias_Check(Spectrum, Background, Measurement_Name):
     B_Time = Background.livetime
     Time_Ratio = M_Time/B_Time
 
-    M_Channels = Spectrum.channel
+    B_Channels = Background.channel
     E0 = Spectrum.energy_cal[0]
     Eslope = Spectrum.energy_cal[1]
 
-    Energy_Axis = Background.channel
-    Energy_Axis = Energy_Axis.astype(float)
-    Energy_Axis[:] = [E0+Eslope*x for x in M_Channels]
+    Energy_Axis = Spectrum.channel
+    channel_ratio = (len(Energy_Axis)+1)/(len(B_Channels)+1)
+    if channel_ratio == 1:
+        Energy_Axis = Energy_Axis.astype(float)
+        Energy_Axis[:] = [E0+Eslope*x for x in B_Channels]
+    else:
+        MOD = (len(Energy_Axis)+1) % channel_ratio
+        REM = channel_ratio - MOD + 1
+        M_Counts = np.append(M_Counts, np.zeros(REM))
+        M_Counts = M_Counts.reshape((-1, channel_ratio))
+        M_Counts = np.sum(M_Counts, 1)
+        Energy_Axis = Energy_Axis.astype(float)
+        Energy_Axis[:] = [E0+Eslope*x for x in Spectrum.channel]
+        Energy_Axis = np.append(Energy_Axis, np.zeros(REM))
+        Energy_Axis = Energy_Axis.reshape((-1, channel_ratio))
+        Energy_Axis = np.mean(Energy_Axis, 1)
 
     for energy in Check_Energies:
         FWHM = 0.05*energy**0.5
