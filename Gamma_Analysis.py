@@ -6,31 +6,32 @@ B = Background Spectrum
 """
 from __future__ import print_function
 from SpectrumFileBase import SpectrumFileBase
+import Isotope_identification as ii
 import SPEFile
 import math
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
-# exec('Isotope_identification.py')
-# Use bottom line for Python 3 only. Use top comment for Python 2.7 only.
-exec(open('Isotope_identification.py').read())
 
-
-EFFICIENCY_CAL_COEFFS = [5.1164, 161.65, 3952.3, 30908]
+EFFICIENCY_CAL_COEFFS = [-5.1164, 161.65, -3952.3, 30908]
 
 
 def absolute_efficiency(energy, coeffs=EFFICIENCY_CAL_COEFFS):
     """
     Returns absolute efficiencies for a given set of energies, based on a
-    provided efficiency calibration.
+    provided efficiency calibration. It takes an energy (in keV) and a set
+    of calibration coefficients.
+    The efficiency is calculated using the equation given below:
+    ln(efficiency) = c3*(E^3) + c2*(E^2) + c1*E + c0*E,
+    where E = ln(energy[keV])/energy[keV]
     """
     efficiency = []
     for i in range(len(energy)):
         efficiency.append(math.exp(coeffs[3] *
-                          (math.log(energy[i])/energy[i])**3 -
+                          (math.log(energy[i])/energy[i])**3 +
                           coeffs[2]*(math.log(energy[i])/energy[i])**2 +
-                          coeffs[1]*(math.log(energy[i])/energy[i]) -
+                          coeffs[1]*(math.log(energy[i])/energy[i]) +
                           coeffs[0]))
     return efficiency
 
@@ -263,20 +264,20 @@ def make_table(Isotope_List, sample_info, sample_names, dates):
     frame = pd.DataFrame(data, index=Isotope_Act_Unc)
     frame = frame.T
     frame.index.name = 'Sample Type'
-    
+
     #Adding Date Measured and Sample Weight Columns
     df = pd.read_csv('RadWatch_Samples.csv')
-    frame['Date Measured'] = dates   
+    frame['Date Measured'] = dates
     frame['Sample Weight (g)'] = pd.Series.tolist(df.ix[:,2])
-    
+
     #Reindexing columns to place 'Date Measured' and 'Sample Weight' first.
     colnames = frame.columns.tolist()
     colnames = colnames[-2:] + colnames[:-2]
     frame = frame[colnames]
     frame.to_csv('Sampling_Table.csv')
-    
+
     return frame
-    
+
 
 def main():
     Background = SPEFile.SPEFile("Background_Measurement.Spe")
@@ -307,9 +308,10 @@ def main():
             Error_Spectrum.append(SAMPLE)
         Sub_Measurement = Background_Subtract(M=Measurement, B=Background)
 
-        Isotope_List = [Caesium_134, Caesium_137, Cobalt_60, Potassium_40,
-                        Thallium_208, Actinium_228, Lead_212, Bismuth_214,
-                        Lead_214, Thorium_234, Lead_210]
+        Isotope_List = [ii.Caesium_134, ii.Caesium_137, ii.Cobalt_60,
+                        ii.Potassium_40, ii.Thallium_208, ii.Actinium_228,
+                        ii.Lead_212, ii.Bismuth_214, ii.Lead_214,
+                        ii.Thorium_234, ii.Lead_210]
         Activity_Info = []
         for isotope in Isotope_List:
             Isotope_Efficiency = absolute_efficiency(isotope.list_sig_g_e)
