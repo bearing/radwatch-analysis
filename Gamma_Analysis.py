@@ -238,74 +238,6 @@ def Background_Subtract(Meas_Area, Back_Area, Meas_Time, Back_Time):
     return Sub_Peak
 
 
-def Bias_Check(Spectrum, Background, Measurement_Name):
-    """
-    Bias_Check will determine if there's a bias in the measurement. It will
-    look at high energy peaks that correspond to Bi-214 and Tl-208 since these
-    peaks occur in the background. If the net area of those peaks are negative
-    beyond 2 sigma, where sigma is the uncertainty of a peak net area, then a
-    message indicating a measurement bias will be produced.
-
-    Check_Energies = [1120.29, 1764.49, 2614.51]
-    Message = "FINE"
-    M_Counts = Spectrum.data
-    B_Counts = Background.data
-
-    M_Time = Spectrum.livetime
-    B_Time = Background.livetime
-    Time_Ratio = M_Time/B_Time
-
-    B_Channels = Background.channel
-    E0 = Spectrum.energy_cal[0]
-    Eslope = Spectrum.energy_cal[1]
-
-    Energy_Axis = Spectrum.channel
-    channel_ratio = (len(Energy_Axis)+1)/(len(B_Channels)+1)
-    if channel_ratio == 1:
-        Energy_Axis = Energy_Axis.astype(float)
-        Energy_Axis[:] = [E0+Eslope*x for x in B_Channels]
-    else:
-        MOD = (len(Energy_Axis)+1) % channel_ratio
-        REM = channel_ratio - MOD + 1
-        M_Counts = np.append(M_Counts, np.zeros(REM))
-        M_Counts = M_Counts.reshape((-1, channel_ratio))
-        M_Counts = np.sum(M_Counts, 1)
-        Energy_Axis = Energy_Axis.astype(float)
-        Energy_Axis[:] = [E0+Eslope*x for x in Spectrum.channel]
-        Energy_Axis = np.append(Energy_Axis, np.zeros(REM))
-        Energy_Axis = Energy_Axis.reshape((-1, channel_ratio))
-        Energy_Axis = np.mean(Energy_Axis, 1)
-
-    for energy in Check_Energies:
-        FWHM = 0.05*energy**0.5
-        start_peak = 0
-        while Energy_Axis[start_peak] < (energy - FWHM):
-            start_peak += 1
-
-        end_peak = start_peak
-        while Energy_Axis[end_peak] < (energy + FWHM):
-            end_peak += 1
-        Peak_Area = sum(M_Counts[start_peak:end_peak])
-        Peak_Area_Uncertainty = (Peak_Area)**0.5
-
-        Background_Area = sum(B_Counts[start_peak:end_peak])
-        Background_Uncertainty = (Background_Area)**0.5
-
-        B_to_M_Area = Background_Area*Time_Ratio
-        B_to_M_Uncertainty = Background_Uncertainty*Time_Ratio
-
-        Check_Area = Peak_Area - B_to_M_Area
-        Check_Area_Uncertainty = (Peak_Area_Uncertainty +
-                                  B_to_M_Uncertainty)**0.5
-        if Check_Area < 0:
-            Significance = Check_Area/Check_Area_Uncertainty
-            if Significance < -2:
-                Message = 'BIAS'
-    """
-    Message = 'FINE'
-    return(Message)
-
-
 def make_table(Isotope_List, sample_info, sample_names, dates):
     data = {}
 
@@ -365,11 +297,22 @@ def main():
         Measurement = SPEFile.SPEFile(SAMPLE)
         Measurement.read()
         Measurement_Dates.append(Measurement.collection_start.split(' ')[0])
-        Check = Bias_Check(Spectrum=Measurement, Background=Background,
-                           Measurement_Name=SAMPLE)
-        if Check == "BIAS":
-            Error_Spectrum.append(SAMPLE)
-
+        Check_Energies = [1120.29, 1460.83, 1764.49, 2614.51]
+        for energy in Check_Energies:
+                Background_Energy = PEAK_FINDER(Background, energy)
+                Background_Peak = peak_measurement(Background,
+                                                   Background_Energy)
+                Sample_Energy = PEAK_FINDER(Measurement, energy)
+                Sample_Net_Area = peak_measurement(Measurement, Sample_Energy)
+                Check = Background_Subtract(Sample_Net_Area,
+                                            Background_Peak,
+                                            Measurement.livetime,
+                                            Background.livetime)
+                if Check[0] < 0:
+                    Significance = Check[0]/Check[1]
+                    if Significance < -2:
+                        Error_Spectrum.append(SAMPLE)
+                        break
         Isotope_List = [ii.Caesium_134, ii.Caesium_137, ii.Cobalt_60,
                         ii.Potassium_40, ii.Thallium_208, ii.Actinium_228,
                         ii.Lead_212, ii.Bismuth_214, ii.Lead_214,
