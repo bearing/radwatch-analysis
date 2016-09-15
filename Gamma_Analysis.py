@@ -47,7 +47,7 @@ def emission_rate(net_area, efficiency, livetime):
     return emission_rate
 
 
-def Isotope_Activity(isotope, emission_rates, emission_uncertainty):
+def isotope_activity(isotope, emission_rates, emission_uncertainty):
     """
     Isotope_Activity will determine the activity of a given radioactive isotope
     based on the emission rates given and the isotope properties. It takes an
@@ -66,7 +66,7 @@ def Isotope_Activity(isotope, emission_rates, emission_uncertainty):
     return results
 
 
-def Isotope_Concentration(isotope, Reference, Sample_Activity,
+def isotope_concentration(isotope, Reference, Sample_Activity,
                           Reference_Activity):
     """
     Isotope_Concentration evaluates the concentration of a certain isotope
@@ -124,7 +124,7 @@ def Isotope_Concentration(isotope, Reference, Sample_Activity,
     return Results
 
 
-def PEAK_FINDER(Spectrum, Energy):
+def peak_finder(Spectrum, Energy):
     '''
     PEAK_FINDER will search for peaks within a certain range determined by the
     Energy given. It takes a Spectra file and an Energy value as input. The
@@ -217,7 +217,7 @@ def peak_measurement(M, energy):
     return results
 
 
-def Background_Subtract(Meas_Area, Back_Area, Meas_Time, Back_Time):
+def background_subtract(Meas_Area, Back_Area, Meas_Time, Back_Time):
     """
     Background_Subtract will subtract a measured Background peak net area from
     a sample peak net area. The background peak is converted to the same time
@@ -299,12 +299,12 @@ def main():
         Measurement_Dates.append(Measurement.collection_start.split(' ')[0])
         Check_Energies = [1120.29, 1460.83, 1764.49, 2614.51]
         for energy in Check_Energies:
-                Background_Energy = PEAK_FINDER(Background, energy)
+                Background_Energy = peak_finder(Background, energy)
                 Background_Peak = peak_measurement(Background,
                                                    Background_Energy)
-                Sample_Energy = PEAK_FINDER(Measurement, energy)
+                Sample_Energy = peak_finder(Measurement, energy)
                 Sample_Net_Area = peak_measurement(Measurement, Sample_Energy)
-                Check = Background_Subtract(Sample_Net_Area,
+                Check = background_subtract(Sample_Net_Area,
                                             Background_Peak,
                                             Measurement.livetime,
                                             Background.livetime)
@@ -327,21 +327,21 @@ def main():
             Ref_Uncertainty = []
 
             for j in range(len(Isotope_Energy)):
-                Background_Energy = PEAK_FINDER(Background, Isotope_Energy[j])
+                Background_Energy = peak_finder(Background, Isotope_Energy[j])
                 Background_Peak = peak_measurement(Background,
                                                    Background_Energy)
-                Sample_Energy = PEAK_FINDER(Measurement, Isotope_Energy[j])
+                Sample_Energy = peak_finder(Measurement, Isotope_Energy[j])
                 Sample_Net_Area = peak_measurement(Measurement, Sample_Energy)
-                Reference_Energy = PEAK_FINDER(Reference, Isotope_Energy[j])
+                Reference_Energy = peak_finder(Reference, Isotope_Energy[j])
                 Reference_Peak = peak_measurement(Reference, Reference_Energy)
-                Net_Area = Background_Subtract(Sample_Net_Area,
+                Net_Area = background_subtract(Sample_Net_Area,
                                                Background_Peak,
                                                Measurement.livetime,
                                                Background.livetime)
 
                 Peak_emission = emission_rate(Net_Area, Isotope_Efficiency[j],
                                               Measurement.livetime)
-                Reference_Area = Background_Subtract(Reference_Peak,
+                Reference_Area = background_subtract(Reference_Peak,
                                                      Background_Peak,
                                                      Reference.livetime,
                                                      Background.livetime)
@@ -352,12 +352,12 @@ def main():
                 Gamma_Uncertainty.append(Peak_emission[1])
                 Ref_Emission.append(Reference_Emission[0])
                 Ref_Uncertainty.append(Reference_Emission[1])
-            Activity = Isotope_Activity(isotope, Gamma_Emission,
+            Activity = isotope_activity(isotope, Gamma_Emission,
                                         Gamma_Uncertainty)
-            Reference_Activity = Isotope_Activity(isotope,
+            Reference_Activity = isotope_activity(isotope,
                                                   Ref_Emission,
                                                   Ref_Uncertainty)
-            Concentration = Isotope_Concentration(isotope, Sample_Comparison,
+            Concentration = isotope_concentration(isotope, Sample_Comparison,
                                                   Activity, Reference_Activity)
             Activity_Info.extend(Concentration)
         Sample_Data.append(Activity_Info)
