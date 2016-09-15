@@ -7,7 +7,6 @@ class Reference(object):
         self.Ref_Concentration = Ref_Concentration
         self.Ref_Concentration_Error = Ref_Concentration_Error
         self.Conversion = Conversion
-        return
 
 Dirt_Mass = 2.380
 Dirt_K_40 = 2.57

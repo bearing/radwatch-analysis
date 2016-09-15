@@ -6,11 +6,12 @@ B = Background Spectrum
 """
 from __future__ import print_function
 from SpectrumFileBase import SpectrumFileBase
-import Isotope_identification as ii
+import Gamma_Isotopes as ii
+import Gamma_Reference as ref
 import SPEFile
-import math
 import numpy as np
 import matplotlib.pyplot as plt
+import peakutils
 import pandas as pd
 import os
 
@@ -28,10 +29,10 @@ def absolute_efficiency(energy, coeffs=EFFICIENCY_CAL_COEFFS):
     """
     efficiency = []
     for i in range(len(energy)):
-        efficiency.append(math.exp(coeffs[3] *
-                          (math.log(energy[i])/energy[i])**3 +
-                          coeffs[2]*(math.log(energy[i])/energy[i])**2 +
-                          coeffs[1]*(math.log(energy[i])/energy[i]) +
+        efficiency.append(np.exp(coeffs[3] *
+                          (np.log(energy[i])/energy[i])**3 +
+                          coeffs[2]*(np.log(energy[i])/energy[i])**2 +
+                          coeffs[1]*(np.log(energy[i])/energy[i]) +
                           coeffs[0]))
     return efficiency
 
@@ -46,14 +47,14 @@ def emission_rate(net_area, efficiency, livetime):
     return emission_rate
 
 
-def Isotope_Activity(Isotope, emission_rates, emission_uncertainty):
+def Isotope_Activity(isotope, emission_rates, emission_uncertainty):
     """
     Isotope_Activity will determine the activity of a given radioactive isotope
     based on the emission rates given and the isotope properties. It takes an
     Isotope object and a given set of emission rates and outputs an activity
     estimate alongside its uncertainty.
     """
-    Branching_ratio = Isotope.list_sig_g_b_r
+    Branching_ratio = isotope.list_sig_g_b_r
     Activity = []
     Uncertainty = []
     for i in range(len(Branching_ratio)):
@@ -65,26 +66,118 @@ def Isotope_Activity(Isotope, emission_rates, emission_uncertainty):
     return results
 
 
+def Isotope_Concentration(isotope, Reference, Sample_Activity,
+                          Reference_Activity):
+    """
+    Isotope_Concentration evaluates the concentration of a certain isotope
+    given a reference sample and reference along with their respective
+    activities. The Reference contains information regarding the concentrations
+    of isotopes and their uncertainties. A reference activity per mass is
+    calculated and a ratio of specific activity and concentration is
+    determined. The sample activity is multiplied by this ratio and a
+    conversion factor that is contained in the Reference. The Reference and
+    isotope are objects while their activities are a scalar number.
+    """
+    if isotope.Symbol == 'K' and isotope.Mass_number == 40:
+        Reference_Conc = Reference.Ref_Concentration[0]
+        Reference_Conc_Unc = Reference.Ref_Concentration_Error[0]
+        Conversion = Reference.Conversion[0]
+    elif isotope.Symbol == 'Bi' and isotope.Mass_number == 214:
+            Reference_Conc = Reference.Ref_Concentration[1]
+            Reference_Conc_Unc = Reference.Ref_Concentration_Error[1]
+            Conversion = Reference.Conversion[1]
+    elif isotope.Symbol == 'Pb':
+        if isotope.Mass_number == 214:
+            Reference_Conc = Reference.Ref_Concentration[2]
+            Reference_Conc_Unc = Reference.Ref_Concentration_Error[2]
+            Conversion = Reference.Conversion[1]
+        else:
+            Reference_Conc = Reference.Ref_Concentration[6]
+            Reference_Conc_Unc = Reference.Ref_Concentration_Error[6]
+            Conversion = Reference.Conversion[2]
+    elif isotope.Symbol == 'Th' and isotope.Mass_number == 234:
+        Reference_Conc = Reference.Ref_Concentration[3]
+        Reference_Conc_Unc = Reference.Ref_Concentration_Error[3]
+        Conversion = Reference.Conversion[1]
+    elif isotope.Symbol == 'Tl' and isotope.Mass_number == 208:
+        Reference_Conc = Reference.Ref_Concentration[4]
+        Reference_Conc_Unc = Reference.Ref_Concentration_Error[4]
+        Conversion = Reference.Conversion[2]
+    elif isotope.Symbol == 'Ac' and isotope.Mass_number == 228:
+        Reference_Conc = Reference.Ref_Concentration[5]
+        Reference_Conc_Unc = Reference.Ref_Concentration_Error[5]
+        Conversion = Reference.Conversion[2]
+    else:
+        Reference_Conc = 1
+        Reference_Conc_Unc = 0
+        Conversion = 1
+    Ref_Specific_Activity = Reference_Activity[0]/Reference.Mass
+    Ref_Conc_SpecAct_Ratio = Reference_Conc/Ref_Specific_Activity
+    Error_Factor = ((Sample_Activity[1]/Sample_Activity[0])**2 +
+                    (Reference_Activity[1]/Reference_Activity[0])**2 +
+                    (Reference_Conc_Unc/Reference_Conc)**2)**0.5
+    Sample_Factor = Sample_Activity[0]*Ref_Conc_SpecAct_Ratio
+    Sample_Factor_Uncertainty = Sample_Factor*Error_Factor
+    Sample_Concentration = Sample_Factor*Conversion
+    Sample_Concentration_Uncertainty = Sample_Factor_Uncertainty*Conversion
+    Results = [Sample_Concentration, Sample_Concentration_Uncertainty]
+    return Results
+
+
+def PEAK_FINDER(Spectrum, Energy):
+    '''
+    PEAK_FINDER will search for peaks within a certain range determined by the
+    Energy given. It takes a Spectra file and an Energy value as input. The
+    energy range to look in is given by the Full-Width-Half-Maximum (FWHM).
+    If more than one peak is found in the given range, the peak with the
+    highest amount of counts will be used.
+    '''
+    E0 = Spectrum.energy_cal[0]
+    Eslope = Spectrum.energy_cal[1]
+    Energy_Axis = E0 + Eslope*Spectrum.channel
+
+    Peak_Energy = []
+    # Rough estimate of FWHM.
+    FWHM = 0.05*Energy**0.5
+
+    # Peak Gross Area
+
+    start_region = np.flatnonzero(Energy_Axis > Energy - 3*FWHM)[0]
+
+    end_region = np.flatnonzero(Energy_Axis > Energy + 3*FWHM)[0]
+    y = Spectrum.data[start_region:end_region]
+    indexes = peakutils.indexes(y, thres=0.5, min_dist=4)
+    Tallest_Peak = []
+    if indexes.size == 0:
+        Peak_Energy.append(int((end_region-start_region)/2)+start_region)
+    else:
+        for i in range(indexes.size):
+            Spot = Spectrum.data[indexes[i]+start_region]
+            Tallest_Peak.append(Spot)
+        indexes = indexes[np.argmax(Tallest_Peak)]
+        Peak_Energy.append(int(indexes+start_region))
+    Peak_Energy = float(Energy_Axis[Peak_Energy])
+    return(Peak_Energy)
+
+
 def peak_measurement(M, energy):
     """
     Takes in a measured spectra alongside a specific energy and returns the net
     area and uncertainty for that energy.
     """
-    energy_axis = M[0]
-    M_counts = M[1]
+    E0 = M.energy_cal[0]
+    Eslope = M.energy_cal[1]
+    energy_axis = E0 + Eslope*M.channel
+    M_counts = M.data
 
     # Rough estimate of FWHM.
     FWHM = 0.05*energy**0.5
 
     # Peak Gross Area
 
-    start_peak = 0
-    while energy_axis[start_peak] < (energy - FWHM):
-        start_peak += 1
+    start_peak = np.flatnonzero(energy_axis > energy - FWHM)[0]
 
-    end_peak = start_peak
-    while energy_axis[end_peak] < (energy + FWHM):
-        end_peak += 1
+    end_peak = np.flatnonzero(energy_axis > energy + FWHM)[0]
 
     gross_counts_peak = sum(M_counts[start_peak:end_peak])
 
@@ -92,13 +185,9 @@ def peak_measurement(M, energy):
 
     left_peak = energy - 2*FWHM
 
-    left_start = 0
-    while energy_axis[left_start] < (left_peak - FWHM):
-        left_start += 1
+    left_start = np.flatnonzero(energy_axis > left_peak - FWHM)[0]
 
-    left_end = left_start
-    while energy_axis[left_end] < (left_peak + FWHM):
-        left_end += 1
+    left_end = np.flatnonzero(energy_axis > left_peak + FWHM)[0]
 
     gross_counts_left = sum(M_counts[left_start:left_end])
 
@@ -106,13 +195,9 @@ def peak_measurement(M, energy):
 
     right_peak = energy + 2*FWHM
 
-    right_start = 0
-    while energy_axis[right_start] < (right_peak - FWHM):
-        right_start += 1
+    right_start = np.flatnonzero(energy_axis > right_peak - FWHM)[0]
 
-    right_end = right_start
-    while energy_axis[right_end] < (right_peak + FWHM):
-        right_end += 1
+    right_end = np.flatnonzero(energy_axis > right_peak + FWHM)[0]
 
     gross_counts_right = sum(M_counts[right_start:right_end])
 
@@ -132,52 +217,25 @@ def peak_measurement(M, energy):
     return results
 
 
-def Background_Subtract(M, B):
+def Background_Subtract(Meas_Area, Back_Area, Meas_Time, Back_Time):
     """
-    Background_Subtract will subtract the background spectrum
-    from a given measurement. This will return the energy bins using a given
-    energy calibration as well as the background subtracted counts of a
-    measurement. Since both spectra come from the same detector, this assumes
-    the energy calibrations are the same.
+    Background_Subtract will subtract a measured Background peak net area from
+    a sample peak net area. The background peak is converted to the same time
+    scale as the measurement and the subtraction is performed. All inputs are
+    scalar numbers, where Meas_Area and Back_Area represent the net area of
+    a sample net area and background net area respectively. Meas_Time and
+    Back_Time are the livetimes of the measurement and background respectively.
     """
+    Time_Ratio = Meas_Time/Back_Time
+    Back_to_Meas = Back_Area[0]*Time_Ratio
+    Meas_Sub_Back = Meas_Area[0] - Back_to_Meas
 
-    M_Counts = M.data
-    B_Counts = B.data
+    Meas_Uncertainty = Meas_Area[1]
+    Back_Uncertainty = Back_Area[1]*Time_Ratio
+    Meas_Sub_Back_Uncertainty = (Meas_Uncertainty+Back_Uncertainty)**0.5
 
-    M_Time = M.livetime
-    B_Time = B.livetime
-
-    B_Channels = B.channel
-    E0 = M.energy_cal[0]
-    Eslope = M.energy_cal[1]
-
-    Energy_Axis = M.channel
-    channel_ratio = (len(Energy_Axis)+1)/(len(B_Channels)+1)
-    if channel_ratio == 1:
-        Energy_Axis = Energy_Axis.astype(float)
-        Energy_Axis[:] = [E0+Eslope*x for x in B_Channels]
-        B_Counts_M = [1.0]*len(M.channel)
-        B_Counts_M[:] = [x*(M_Time/B_Time) for x in B_Counts]
-        M_Sub_Back = [1.0]*len(B_Channels)
-        M_Sub_Back = [M_Counts[x]-B_Counts_M[x] for x in M.channel]
-        Sub_Spect = [Energy_Axis, M_Sub_Back]
-    else:
-        MOD = (len(Energy_Axis)+1) % channel_ratio
-        REM = channel_ratio - MOD + 1
-        M_Counts = np.append(M_Counts, np.zeros(REM))
-        M_Counts = M_Counts.reshape((-1, channel_ratio))
-        M_Counts = np.sum(M_Counts, 1)
-        Energy_Axis = Energy_Axis.astype(float)
-        Energy_Axis[:] = [E0+Eslope*x for x in M.channel]
-        Energy_Axis = np.append(Energy_Axis, np.zeros(REM))
-        Energy_Axis = Energy_Axis.reshape((-1, channel_ratio))
-        Energy_Axis = np.mean(Energy_Axis, 1)
-        B_Counts_M = [1.0]*len(B.channel)
-        B_Counts_M[:] = [x*(M_Time/B_Time) for x in B_Counts]
-        M_Sub_Back = [1.0]*len(M_Counts)
-        M_Sub_Back = [M_Counts[x]-B_Counts_M[x] for x in B.channel]
-        Sub_Spect = [Energy_Axis, M_Sub_Back]
-    return Sub_Spect
+    Sub_Peak = [Meas_Sub_Back, Meas_Sub_Back_Uncertainty]
+    return Sub_Peak
 
 
 def Bias_Check(Spectrum, Background, Measurement_Name):
@@ -187,7 +245,7 @@ def Bias_Check(Spectrum, Background, Measurement_Name):
     peaks occur in the background. If the net area of those peaks are negative
     beyond 2 sigma, where sigma is the uncertainty of a peak net area, then a
     message indicating a measurement bias will be produced.
-    """
+
     Check_Energies = [1120.29, 1764.49, 2614.51]
     Message = "FINE"
     M_Counts = Spectrum.data
@@ -243,6 +301,8 @@ def Bias_Check(Spectrum, Background, Measurement_Name):
             Significance = Check_Area/Check_Area_Uncertainty
             if Significance < -2:
                 Message = 'BIAS'
+    """
+    Message = 'FINE'
     return(Message)
 
 
@@ -280,8 +340,11 @@ def make_table(Isotope_List, sample_info, sample_names, dates):
 
 
 def main():
-    Background = SPEFile.SPEFile("Background_Measurement.Spe")
+    Background = SPEFile.SPEFile("USS_Independence_Background.Spe")
     Background.read()
+    Reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
+    Reference.read()
+    Sample_Comparison = ref.Soil_Reference
     dir_path = os.getcwd()
     Sample_Measurements = []
     SAMPLE_NAMES = []
@@ -291,7 +354,7 @@ def main():
 
     for file in os.listdir(dir_path):
         if file.endswith(".Spe"):
-            if file == "Background_Measurement.Spe":
+            if file == "USS_Independence_Background.Spe":
                 pass
             else:
                 Sample_Measurements.append(file)
@@ -306,7 +369,6 @@ def main():
                            Measurement_Name=SAMPLE)
         if Check == "BIAS":
             Error_Spectrum.append(SAMPLE)
-        Sub_Measurement = Background_Subtract(M=Measurement, B=Background)
 
         Isotope_List = [ii.Caesium_134, ii.Caesium_137, ii.Cobalt_60,
                         ii.Potassium_40, ii.Thallium_208, ii.Actinium_228,
@@ -318,16 +380,43 @@ def main():
             Isotope_Energy = isotope.list_sig_g_e
             Gamma_Emission = []
             Gamma_Uncertainty = []
+            Ref_Emission = []
+            Ref_Uncertainty = []
 
             for j in range(len(Isotope_Energy)):
-                Net_Area = peak_measurement(Sub_Measurement, Isotope_Energy[j])
+                Background_Energy = PEAK_FINDER(Background, Isotope_Energy[j])
+                Background_Peak = peak_measurement(Background,
+                                                   Background_Energy)
+                Sample_Energy = PEAK_FINDER(Measurement, Isotope_Energy[j])
+                Sample_Net_Area = peak_measurement(Measurement, Sample_Energy)
+                Reference_Energy = PEAK_FINDER(Reference, Isotope_Energy[j])
+                Reference_Peak = peak_measurement(Reference, Reference_Energy)
+                Net_Area = Background_Subtract(Sample_Net_Area,
+                                               Background_Peak,
+                                               Measurement.livetime,
+                                               Background.livetime)
+
                 Peak_emission = emission_rate(Net_Area, Isotope_Efficiency[j],
                                               Measurement.livetime)
+                Reference_Area = Background_Subtract(Reference_Peak,
+                                                     Background_Peak,
+                                                     Reference.livetime,
+                                                     Background.livetime)
+                Reference_Emission = emission_rate(Reference_Area,
+                                                   Isotope_Efficiency[j],
+                                                   Reference.livetime)
                 Gamma_Emission.append(Peak_emission[0])
                 Gamma_Uncertainty.append(Peak_emission[1])
+                Ref_Emission.append(Reference_Emission[0])
+                Ref_Uncertainty.append(Reference_Emission[1])
             Activity = Isotope_Activity(isotope, Gamma_Emission,
                                         Gamma_Uncertainty)
-            Activity_Info.extend(Activity)
+            Reference_Activity = Isotope_Activity(isotope,
+                                                  Ref_Emission,
+                                                  Ref_Uncertainty)
+            Concentration = Isotope_Concentration(isotope, Sample_Comparison,
+                                                  Activity, Reference_Activity)
+            Activity_Info.extend(Concentration)
         Sample_Data.append(Activity_Info)
     if Error_Spectrum == []:
         pass

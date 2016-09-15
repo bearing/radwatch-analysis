@@ -21,7 +21,6 @@ class Isotope(object):
         else:
             self.list_sig_g_b_r = [0.01*list_sig_g_b_r[i]
                                    for i in range(len(list_sig_g_b_r))]
-        return
 
 Ac_228_g_e = [338.32, 911.204, 964.766, 968.971]
 Ac_228_b_r = [11.27, 25.8, 5, 15.8]
