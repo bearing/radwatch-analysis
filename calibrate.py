@@ -89,6 +89,7 @@ def calibration_correction(file_name, measurement, channel, energy):
 def main():
     Sample_Measurements = []
     Cal_Error = []
+    Double_Check = []
     dir_path = os.getcwd()
     for file in os.listdir(dir_path):
         if file.endswith(".Spe"):
@@ -97,23 +98,30 @@ def main():
             else:
                 Sample_Measurements.append(file)
     for SAMPLE in Sample_Measurements:
-        Measurement = SPEFile.SPEFile(SAMPLE)
-        Measurement.read()
-        [Channel, Energy, Status] = calibration_check(Measurement)
-        if Status == 'Fix':
-            if '_recal.Spe' in SAMPLE:
-                Cal_Error.append(SAMPLE.replace('_recal.Spe', '.Spe'))
-                pass
-            else:
+        if '_recal.Spe' in SAMPLE:
+            Double_Check.append(SAMPLE)
+            pass
+        else:
+            Measurement = SPEFile.SPEFile(SAMPLE)
+            Measurement.read()
+            [Channel, Energy, Status] = calibration_check(Measurement)
+            if Status == 'Fix':
                 print(('\nFixing calibration for %s \n' % SAMPLE))
                 Cal_File = sh.copyfile(SAMPLE, os.path.splitext(SAMPLE)[0] +
                                        '_recal.Spe')
                 Fix_Measurement = SPEFile.SPEFile(Cal_File)
                 Fix_Measurement.read()
+                Double_Check.append(Cal_File)
                 calibration_correction(Cal_File, Fix_Measurement, Channel,
                                        Energy)
-        elif Status == 'Error':
-            Cal_Error.append(SAMPLE)
+            elif Status == 'Error':
+                Cal_Error.append(SAMPLE)
+    for check in Double_Check:
+        Recal = SPEFile.SPEFile(check)
+        Recal.read()
+        Status = calibration_check(Recal)[2]
+        if Status == 'Fix':
+            Cal_Error.append(check.replace('_recal.Spe', '.Spe'))
     if Cal_Error == []:
         pass
     else:
