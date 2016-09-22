@@ -101,12 +101,17 @@ def main():
         Measurement.read()
         [Channel, Energy, Status] = calibration_check(Measurement)
         if Status == 'Fix':
-            print(('\nFixing calibration for %s \n' % SAMPLE))
-            Cal_File = sh.copyfile(SAMPLE, os.path.splitext(SAMPLE)[0] +
-                                   '_recal.Spe')
-            Fix_Measurement = SPEFile.SPEFile(Cal_File)
-            Fix_Measurement.read()
-            calibration_correction(Cal_File, Fix_Measurement, Channel, Energy)
+            if '_recal.Spe' in SAMPLE:
+                Cal_Error.append(SAMPLE.replace('_recal.Spe', '.Spe'))
+                pass
+            else:
+                print(('\nFixing calibration for %s \n' % SAMPLE))
+                Cal_File = sh.copyfile(SAMPLE, os.path.splitext(SAMPLE)[0] +
+                                       '_recal.Spe')
+                Fix_Measurement = SPEFile.SPEFile(Cal_File)
+                Fix_Measurement.read()
+                calibration_correction(Cal_File, Fix_Measurement, Channel,
+                                       Energy)
         elif Status == 'Error':
             Cal_Error.append(SAMPLE)
     if Cal_Error == []:
