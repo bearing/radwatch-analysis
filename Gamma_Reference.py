@@ -9,10 +9,10 @@ class Reference(object):
     """
     def __init__(self, mass, ref_concentration, ref_concentration_error,
                  conversion):
-        self.Mass = mass
-        self.Ref_Concentration = ref_concentration
-        self.Ref_Concentration_Error = ref_concentration_error
-        self.Conversion = conversion
+        self.mass = mass
+        self.ref_roncentration = ref_concentration
+        self.ref_concentration_error = ref_concentration_error
+        self.conversion = conversion
 
 Dirt_Mass = 2.380
 Dirt_K_40 = 2.57
