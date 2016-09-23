@@ -66,8 +66,8 @@ def isotope_activity(isotope, emission_rates, emission_uncertainty):
     return results
 
 
-def isotope_concentration(isotope, Reference, Sample_Activity,
-                          Reference_Activity):
+def isotope_concentration(isotope, reference, sample_activity,
+                          reference_activity):
     """
     Isotope_Concentration evaluates the concentration of a certain isotope
     given a reference sample and reference along with their respective
@@ -79,52 +79,52 @@ def isotope_concentration(isotope, Reference, Sample_Activity,
     isotope are objects while their activities are a scalar number.
     """
     if isotope.Symbol == 'K' and isotope.Mass_number == 40:
-        Reference_Conc = Reference.Ref_Concentration[0]
-        Reference_Conc_Unc = Reference.Ref_Concentration_Error[0]
-        Conversion = Reference.Conversion[0]
+        Reference_Conc = reference.Ref_Concentration[0]
+        Reference_Conc_Unc = reference.Ref_Concentration_Error[0]
+        Conversion = reference.Conversion[0]
     elif isotope.Symbol == 'Bi' and isotope.Mass_number == 214:
-            Reference_Conc = Reference.Ref_Concentration[1]
-            Reference_Conc_Unc = Reference.Ref_Concentration_Error[1]
-            Conversion = Reference.Conversion[1]
+            Reference_Conc = reference.Ref_Concentration[1]
+            Reference_Conc_Unc = reference.Ref_Concentration_Error[1]
+            Conversion = reference.Conversion[1]
     elif isotope.Symbol == 'Pb':
         if isotope.Mass_number == 214:
-            Reference_Conc = Reference.Ref_Concentration[2]
-            Reference_Conc_Unc = Reference.Ref_Concentration_Error[2]
-            Conversion = Reference.Conversion[1]
+            Reference_Conc = reference.Ref_Concentration[2]
+            Reference_Conc_Unc = reference.Ref_Concentration_Error[2]
+            Conversion = reference.Conversion[1]
         else:
-            Reference_Conc = Reference.Ref_Concentration[6]
-            Reference_Conc_Unc = Reference.Ref_Concentration_Error[6]
-            Conversion = Reference.Conversion[2]
+            Reference_Conc = reference.Ref_Concentration[6]
+            Reference_Conc_Unc = reference.Ref_Concentration_Error[6]
+            Conversion = reference.Conversion[2]
     elif isotope.Symbol == 'Th' and isotope.Mass_number == 234:
-        Reference_Conc = Reference.Ref_Concentration[3]
-        Reference_Conc_Unc = Reference.Ref_Concentration_Error[3]
-        Conversion = Reference.Conversion[1]
+        Reference_Conc = reference.Ref_Concentration[3]
+        Reference_Conc_Unc = reference.Ref_Concentration_Error[3]
+        Conversion = reference.Conversion[1]
     elif isotope.Symbol == 'Tl' and isotope.Mass_number == 208:
-        Reference_Conc = Reference.Ref_Concentration[4]
-        Reference_Conc_Unc = Reference.Ref_Concentration_Error[4]
-        Conversion = Reference.Conversion[2]
+        Reference_Conc = reference.Ref_Concentration[4]
+        Reference_Conc_Unc = reference.Ref_Concentration_Error[4]
+        Conversion = reference.Conversion[2]
     elif isotope.Symbol == 'Ac' and isotope.Mass_number == 228:
-        Reference_Conc = Reference.Ref_Concentration[5]
-        Reference_Conc_Unc = Reference.Ref_Concentration_Error[5]
-        Conversion = Reference.Conversion[2]
+        Reference_Conc = reference.Ref_Concentration[5]
+        Reference_Conc_Unc = reference.Ref_Concentration_Error[5]
+        Conversion = reference.Conversion[2]
     else:
         Reference_Conc = 1
         Reference_Conc_Unc = 0
         Conversion = 1
-    Ref_Specific_Activity = Reference_Activity[0]/Reference.Mass
-    Ref_Conc_SpecAct_Ratio = Reference_Conc/Ref_Specific_Activity
-    Error_Factor = ((Sample_Activity[1]/Sample_Activity[0])**2 +
-                    (Reference_Activity[1]/Reference_Activity[0])**2 +
-                    (Reference_Conc_Unc/Reference_Conc)**2)**0.5
-    Sample_Factor = Sample_Activity[0]*Ref_Conc_SpecAct_Ratio
-    Sample_Factor_Uncertainty = Sample_Factor*Error_Factor
-    Sample_Concentration = Sample_Factor*Conversion
-    Sample_Concentration_Uncertainty = Sample_Factor_Uncertainty*Conversion
+    Ref_Specific_Activity = reference_activity[0] / reference.Mass
+    Ref_Conc_SpecAct_Ratio = Reference_Conc / Ref_Specific_Activity
+    Error_Factor = ((sample_activity[1] / sample_activity[0])**2 +
+                    (reference_activity[1] / reference_activity[0])**2 +
+                    (Reference_Conc_Unc / Reference_Conc)**2)**0.5
+    Sample_Factor = sample_activity[0] * Ref_Conc_SpecAct_Ratio
+    Sample_Factor_Uncertainty = Sample_Factor * Error_Factor
+    Sample_Concentration = Sample_Factor * Conversion
+    Sample_Concentration_Uncertainty = Sample_Factor_Uncertainty * Conversion
     Results = [Sample_Concentration, Sample_Concentration_Uncertainty]
     return Results
 
 
-def peak_finder(Spectrum, Energy):
+def peak_finder(spectrum, energy):
     '''
     PEAK_FINDER will search for peaks within a certain range determined by the
     Energy given. It takes a Spectra file and an Energy value as input. The
@@ -132,27 +132,27 @@ def peak_finder(Spectrum, Energy):
     If more than one peak is found in the given range, the peak with the
     highest amount of counts will be used.
     '''
-    E0 = Spectrum.energy_cal[0]
-    Eslope = Spectrum.energy_cal[1]
-    Energy_Axis = E0 + Eslope*Spectrum.channel
+    E0 = spectrum.energy_cal[0]
+    Eslope = spectrum.energy_cal[1]
+    Energy_Axis = E0 + Eslope*spectrum.channel
 
     Peak_Energy = []
     # Rough estimate of FWHM.
-    FWHM = 0.05*Energy**0.5
+    FWHM = 0.05*energy**0.5
 
     # Peak Gross Area
 
-    start_region = np.flatnonzero(Energy_Axis > Energy - 3*FWHM)[0]
+    start_region = np.flatnonzero(Energy_Axis > energy - 3*FWHM)[0]
 
-    end_region = np.flatnonzero(Energy_Axis > Energy + 3*FWHM)[0]
-    y = Spectrum.data[start_region:end_region]
+    end_region = np.flatnonzero(Energy_Axis > energy + 3*FWHM)[0]
+    y = spectrum.data[start_region:end_region]
     indexes = peakutils.indexes(y, thres=0.5, min_dist=4)
     Tallest_Peak = []
     if indexes.size == 0:
         Peak_Energy.append(int((end_region-start_region)/2)+start_region)
     else:
         for i in range(indexes.size):
-            Spot = Spectrum.data[indexes[i]+start_region]
+            Spot = spectrum.data[indexes[i]+start_region]
             Tallest_Peak.append(Spot)
         indexes = indexes[np.argmax(Tallest_Peak)]
         Peak_Energy.append(int(indexes+start_region))
@@ -172,52 +172,34 @@ def peak_measurement(M, energy):
 
     # Rough estimate of FWHM.
     FWHM = 0.05*energy**0.5
-
     # Peak Gross Area
-
     start_peak = np.flatnonzero(energy_axis > energy - FWHM)[0]
-
     end_peak = np.flatnonzero(energy_axis > energy + FWHM)[0]
-
     gross_counts_peak = sum(M_counts[start_peak:end_peak])
 
     # Left Gross Area
-
     left_peak = energy - 2*FWHM
-
     left_start = np.flatnonzero(energy_axis > left_peak - FWHM)[0]
-
     left_end = np.flatnonzero(energy_axis > left_peak + FWHM)[0]
-
     gross_counts_left = sum(M_counts[left_start:left_end])
 
     # Right Gross Area
-
     right_peak = energy + 2*FWHM
-
     right_start = np.flatnonzero(energy_axis > right_peak - FWHM)[0]
-
     right_end = np.flatnonzero(energy_axis > right_peak + FWHM)[0]
-
     gross_counts_right = sum(M_counts[right_start:right_end])
 
     # Net Area
-
     net_area = gross_counts_peak - (gross_counts_left + gross_counts_right)/2
-
     # Uncertainty
-
     uncertainty = abs((gross_counts_peak +
                       (gross_counts_left + gross_counts_right) / 4)) ** 0.5
-
     # Returning results
-
     results = [net_area, uncertainty]
-
     return results
 
 
-def background_subtract(Meas_Area, Back_Area, Meas_Time, Back_Time):
+def background_subtract(meas_area, back_area, meas_time, back_time):
     """
     Background_Subtract will subtract a measured Background peak net area from
     a sample peak net area. The background peak is converted to the same time
@@ -226,31 +208,32 @@ def background_subtract(Meas_Area, Back_Area, Meas_Time, Back_Time):
     a sample net area and background net area respectively. Meas_Time and
     Back_Time are the livetimes of the measurement and background respectively.
     """
-    Time_Ratio = Meas_Time/Back_Time
-    Back_to_Meas = Back_Area[0]*Time_Ratio
-    Meas_Sub_Back = Meas_Area[0] - Back_to_Meas
 
-    Meas_Uncertainty = Meas_Area[1]
-    Back_Uncertainty = Back_Area[1]*Time_Ratio
+    Time_Ratio = meas_time/back_time
+    Back_to_Meas = back_area[0]*Time_Ratio
+    Meas_Sub_Back = meas_area[0] - Back_to_Meas
+
+    Meas_Uncertainty = meas_area[1]
+    Back_Uncertainty = back_area[1]*Time_Ratio
     Meas_Sub_Back_Uncertainty = (Meas_Uncertainty+Back_Uncertainty)**0.5
 
     Sub_Peak = [Meas_Sub_Back, Meas_Sub_Back_Uncertainty]
     return Sub_Peak
 
 
-def make_table(Isotope_List, sample_info, sample_names, dates):
+def make_table(isotope_List, sample_info, sample_names, dates):
     data = {}
 
     for i in range(len(sample_names)):
         data[sample_names[i]] = sample_info[i]
 
     Isotope_Act_Unc = []
-    for i in range(len(Isotope_List)):
-        Isotope_Act_Unc.append(str(Isotope_List[i].Symbol) + '-' +
-                               str(Isotope_List[i].Mass_number) +
+    for i in range(len(isotope_List)):
+        Isotope_Act_Unc.append(str(isotope_List[i].Symbol) + '-' +
+                               str(isotope_List[i].Mass_number) +
                                ' Act' + '[Bq]')
-        Isotope_Act_Unc.append(str(Isotope_List[i].Symbol) + '-' +
-                               str(Isotope_List[i].Mass_number) +
+        Isotope_Act_Unc.append(str(isotope_List[i].Symbol) + '-' +
+                               str(isotope_List[i].Mass_number) +
                                ' Unc' + '[Bq]')
 
     frame = pd.DataFrame(data, index=Isotope_Act_Unc)
@@ -267,7 +250,6 @@ def make_table(Isotope_List, sample_info, sample_names, dates):
     colnames = colnames[-2:] + colnames[:-2]
     frame = frame[colnames]
     frame.to_csv('Sampling_Table.csv')
-
     return frame
 
 
