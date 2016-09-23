@@ -63,7 +63,7 @@ def calibration_check(spectrum):
     return(Peak_Channel, Found_Energy, Message)
 
 
-def calibration_correction(file_name, measurement, channel, energy):
+def calibration_correction(measurement, channel, energy):
     """
     calibration_correction implements a corrected energy calibration based
     on the array of channels and energies given as input. It performs a
@@ -72,8 +72,12 @@ def calibration_correction(file_name, measurement, channel, energy):
     spectra file will contain the same information with only the old
     calibration changed.
     """
-    Old_Cal = (str(float(measurement.energy_cal[0])) + ' ' +
-               str(float(measurement.energy_cal[1])))
+    Cal_File = sh.copyfile(measurement, os.path.splitext(measurement)[0] +
+                           '_recal.Spe')
+    Fix_Measurement = SPEFile.SPEFile(Cal_File)
+    Fix_Measurement.read()
+    Old_Cal = (str(float(Fix_Measurement.energy_cal[0])) + ' ' +
+               str(float(Fix_Measurement.energy_cal[1])))
 
     A_matrix = np.vstack([channel, np.ones(len(channel))]).T
     Calibration_Line = np.linalg.lstsq(A_matrix, energy)
@@ -81,9 +85,10 @@ def calibration_correction(file_name, measurement, channel, energy):
     E0 = float(Calibration_Line[0][1])
     Eslope = float(Calibration_Line[0][0])
     New_Cal = str(float(E0)) + ' ' + str(float(Eslope))
-    with fileinput.FileInput(file_name, inplace=1) as file:
+    with fileinput.FileInput(Cal_File, inplace=1) as file:
         for line in file:
             print(line.replace(Old_Cal, New_Cal).rstrip())
+    return(Cal_File)
 
 
 def main():
@@ -107,13 +112,9 @@ def main():
             [Channel, Energy, Status] = calibration_check(Measurement)
             if Status == 'Fix':
                 print(('\nFixing calibration for %s \n' % SAMPLE))
-                Cal_File = sh.copyfile(SAMPLE, os.path.splitext(SAMPLE)[0] +
-                                       '_recal.Spe')
-                Fix_Measurement = SPEFile.SPEFile(Cal_File)
-                Fix_Measurement.read()
+                Cal_File = calibration_correction(SAMPLE, Channel,
+                                                  Energy)
                 Double_Check.append(Cal_File)
-                calibration_correction(Cal_File, Fix_Measurement, Channel,
-                                       Energy)
             elif Status == 'Error':
                 Cal_Error.append(SAMPLE)
     for check in Double_Check:
