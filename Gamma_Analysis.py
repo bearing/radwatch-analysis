@@ -251,19 +251,14 @@ def make_table(isotope_List, sample_info, sample_names, dates):
     return frame
 
 
-def main():
-    Background = SPEFile.SPEFile("USS_Independence_Background.Spe")
-    Background.read()
-    Reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
-    Reference.read()
-    Sample_Comparison = ref.Soil_Reference
-    dir_path = os.getcwd()
+def acquire_files():
+    """
+    acquire_files gathers all the .Spe file in the current file directory and
+    returns a list containing all .Spe files.
+    """
     Sample_Measurements = []
     SAMPLE_NAMES = []
-    Measurement_Dates = []
-    Sample_Data = []
-    Error_Spectrum = []
-
+    dir_path = os.getcwd()
     for file in os.listdir(dir_path):
         if file.endswith(".Spe"):
             if file == "USS_Independence_Background.Spe":
@@ -272,6 +267,20 @@ def main():
                 Sample_Measurements.append(file)
                 Name = os.path.splitext(file)[0].replace("_", " ")
                 SAMPLE_NAMES.append(Name)
+    return Sample_Measurements, SAMPLE_NAMES
+
+
+def main():
+    Background = SPEFile.SPEFile("USS_Independence_Background.Spe")
+    Background.read()
+    Reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
+    Reference.read()
+    Sample_Comparison = ref.Soil_Reference
+    Sample_Measurements = acquire_files()[0]
+    SAMPLE_NAMES = acquire_files()[1]
+    Measurement_Dates = []
+    Sample_Data = []
+    Error_Spectrum = []
 
     for SAMPLE in Sample_Measurements:
         Measurement = SPEFile.SPEFile(SAMPLE)
