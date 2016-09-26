@@ -1,12 +1,18 @@
 
 
-class Reference(object):
-    def __init__(self, Mass, Ref_Concentration, Ref_Concentration_Error,
-                 Conversion):
-        self.Mass = Mass
-        self.Ref_Concentration = Ref_Concentration
-        self.Ref_Concentration_Error = Ref_Concentration_Error
-        self.Conversion = Conversion
+class reference(object):
+    """
+    Generates a reference object that contains a reference mass and
+    concentrations. Mass is in kg and concentrations are in percent for
+    K-40 and ppm for the rest. Conversions are currently unknown in their
+    origin and derivation.
+    """
+    def __init__(self, mass, ref_concentration, ref_concentration_error,
+                 conversion):
+        self.mass = mass
+        self.ref_concentration = ref_concentration
+        self.ref_concentration_error = ref_concentration_error
+        self.conversion = conversion
 
 Dirt_Mass = 2.380
 Dirt_K_40 = 2.57
@@ -31,5 +37,5 @@ Dirt_Concentrations_Uncertainty = [Dirt_K_40_Unc, Dirt_Bi_214_Unc,
                                    Dirt_Tl_208_Unc, Dirt_Ac_228_Unc,
                                    Dirt_Pb_212_Unc]
 Dirt_Conversions = [309.6, 12.3, 4.07]
-Soil_Reference = Reference(Dirt_Mass, Dirt_Concentrations,
+Soil_Reference = reference(Dirt_Mass, Dirt_Concentrations,
                            Dirt_Concentrations_Uncertainty, Dirt_Conversions)

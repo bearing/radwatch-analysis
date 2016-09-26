@@ -6,6 +6,22 @@ import SPEFile
 import os
 
 
+def acquire_files():
+    """
+    acquire_files gathers all the .Spe file in the current file directory and
+    returns a list containing all .Spe files.
+    """
+    Sample_Measurements = []
+    dir_path = os.getcwd()
+    for file in os.listdir(dir_path):
+        if file.endswith(".Spe"):
+            if file == "USS_Independence_Background.Spe":
+                pass
+            else:
+                Sample_Measurements.append(file)
+    return Sample_Measurements
+
+
 def calibration_check(spectrum):
     '''
     calibration_check will search for certain peaks that are expected to occur
@@ -92,16 +108,10 @@ def calibration_correction(measurement, channel, energy):
 
 
 def main():
-    Sample_Measurements = []
+    Sample_Measurements = acquire_files()
     Cal_Error = []
     Double_Check = []
-    dir_path = os.getcwd()
-    for file in os.listdir(dir_path):
-        if file.endswith(".Spe"):
-            if file == "USS_Independence_Background.Spe":
-                pass
-            else:
-                Sample_Measurements.append(file)
+
     for SAMPLE in Sample_Measurements:
         if '_recal.Spe' in SAMPLE:
             Double_Check.append(SAMPLE)

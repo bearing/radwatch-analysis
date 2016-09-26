@@ -78,40 +78,40 @@ def isotope_concentration(isotope, reference, sample_activity,
     conversion factor that is contained in the Reference. The Reference and
     isotope are objects while their activities are a scalar number.
     """
-    if isotope.Symbol == 'K' and isotope.Mass_number == 40:
-        Reference_Conc = reference.Ref_Concentration[0]
-        Reference_Conc_Unc = reference.Ref_Concentration_Error[0]
-        Conversion = reference.Conversion[0]
-    elif isotope.Symbol == 'Bi' and isotope.Mass_number == 214:
-            Reference_Conc = reference.Ref_Concentration[1]
-            Reference_Conc_Unc = reference.Ref_Concentration_Error[1]
-            Conversion = reference.Conversion[1]
-    elif isotope.Symbol == 'Pb':
-        if isotope.Mass_number == 214:
-            Reference_Conc = reference.Ref_Concentration[2]
-            Reference_Conc_Unc = reference.Ref_Concentration_Error[2]
-            Conversion = reference.Conversion[1]
+    if isotope.symbol == 'K' and isotope.mass_number == 40:
+        Reference_Conc = reference.ref_concentration[0]
+        Reference_Conc_Unc = reference.ref_concentration_error[0]
+        Conversion = reference.conversion[0]
+    elif isotope.symbol == 'Bi' and isotope.mass_number == 214:
+            Reference_Conc = reference.ref_concentration[1]
+            Reference_Conc_Unc = reference.ref_concentration_error[1]
+            Conversion = reference.conversion[1]
+    elif isotope.symbol == 'Pb':
+        if isotope.mass_number == 214:
+            Reference_Conc = reference.ref_concentration[2]
+            Reference_Conc_Unc = reference.ref_concentration_error[2]
+            Conversion = reference.conversion[1]
         else:
-            Reference_Conc = reference.Ref_Concentration[6]
-            Reference_Conc_Unc = reference.Ref_Concentration_Error[6]
-            Conversion = reference.Conversion[2]
-    elif isotope.Symbol == 'Th' and isotope.Mass_number == 234:
-        Reference_Conc = reference.Ref_Concentration[3]
-        Reference_Conc_Unc = reference.Ref_Concentration_Error[3]
-        Conversion = reference.Conversion[1]
-    elif isotope.Symbol == 'Tl' and isotope.Mass_number == 208:
-        Reference_Conc = reference.Ref_Concentration[4]
-        Reference_Conc_Unc = reference.Ref_Concentration_Error[4]
-        Conversion = reference.Conversion[2]
-    elif isotope.Symbol == 'Ac' and isotope.Mass_number == 228:
-        Reference_Conc = reference.Ref_Concentration[5]
-        Reference_Conc_Unc = reference.Ref_Concentration_Error[5]
-        Conversion = reference.Conversion[2]
+            Reference_Conc = reference.ref_concentration[6]
+            Reference_Conc_Unc = reference.ref_concentration_error[6]
+            Conversion = reference.conversion[2]
+    elif isotope.symbol == 'Th' and isotope.mass_number == 234:
+        Reference_Conc = reference.ref_concentration[3]
+        Reference_Conc_Unc = reference.ref_concentration_error[3]
+        Conversion = reference.conversion[1]
+    elif isotope.symbol == 'Tl' and isotope.mass_number == 208:
+        Reference_Conc = reference.ref_concentration[4]
+        Reference_Conc_Unc = reference.ref_concentration_error[4]
+        Conversion = reference.conversion[2]
+    elif isotope.symbol == 'Ac' and isotope.mass_number == 228:
+        Reference_Conc = reference.ref_concentration[5]
+        Reference_Conc_Unc = reference.ref_concentration_error[5]
+        Conversion = reference.conversion[2]
     else:
         Reference_Conc = 1
         Reference_Conc_Unc = 0
         Conversion = 1
-    Ref_Specific_Activity = reference_activity[0] / reference.Mass
+    Ref_Specific_Activity = reference_activity[0] / reference.mass
     Ref_Conc_SpecAct_Ratio = Reference_Conc / Ref_Specific_Activity
     Error_Factor = ((sample_activity[1] / sample_activity[0])**2 +
                     (reference_activity[1] / reference_activity[0])**2 +
@@ -140,10 +140,8 @@ def peak_finder(spectrum, energy):
     # Rough estimate of FWHM.
     FWHM = 0.05*energy**0.5
 
-    # Peak Gross Area
-
+    # Peak Search Area
     start_region = np.flatnonzero(Energy_Axis > energy - 3*FWHM)[0]
-
     end_region = np.flatnonzero(Energy_Axis > energy + 3*FWHM)[0]
     y = spectrum.data[start_region:end_region]
     indexes = peakutils.indexes(y, thres=0.5, min_dist=4)
@@ -229,11 +227,11 @@ def make_table(isotope_List, sample_info, sample_names, dates):
 
     Isotope_Act_Unc = []
     for i in range(len(isotope_List)):
-        Isotope_Act_Unc.append(str(isotope_List[i].Symbol) + '-' +
-                               str(isotope_List[i].Mass_number) +
+        Isotope_Act_Unc.append(str(isotope_List[i].symbol) + '-' +
+                               str(isotope_List[i].mass_number) +
                                ' Act' + '[Bq]')
-        Isotope_Act_Unc.append(str(isotope_List[i].Symbol) + '-' +
-                               str(isotope_List[i].Mass_number) +
+        Isotope_Act_Unc.append(str(isotope_List[i].symbol) + '-' +
+                               str(isotope_List[i].mass_number) +
                                ' Unc' + '[Bq]')
 
     frame = pd.DataFrame(data, index=Isotope_Act_Unc)
@@ -253,19 +251,14 @@ def make_table(isotope_List, sample_info, sample_names, dates):
     return frame
 
 
-def main():
-    Background = SPEFile.SPEFile("USS_Independence_Background.Spe")
-    Background.read()
-    Reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
-    Reference.read()
-    Sample_Comparison = ref.Soil_Reference
-    dir_path = os.getcwd()
+def acquire_files():
+    """
+    acquire_files gathers all the .Spe file in the current file directory and
+    returns a list containing all .Spe files.
+    """
     Sample_Measurements = []
     SAMPLE_NAMES = []
-    Measurement_Dates = []
-    Sample_Data = []
-    Error_Spectrum = []
-
+    dir_path = os.getcwd()
     for file in os.listdir(dir_path):
         if file.endswith(".Spe"):
             if file == "USS_Independence_Background.Spe":
@@ -274,6 +267,20 @@ def main():
                 Sample_Measurements.append(file)
                 Name = os.path.splitext(file)[0].replace("_", " ")
                 SAMPLE_NAMES.append(Name)
+    return Sample_Measurements, SAMPLE_NAMES
+
+
+def main():
+    Background = SPEFile.SPEFile("USS_Independence_Background.Spe")
+    Background.read()
+    Reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
+    Reference.read()
+    Sample_Comparison = ref.Soil_Reference
+    Sample_Measurements = acquire_files()[0]
+    SAMPLE_NAMES = acquire_files()[1]
+    Measurement_Dates = []
+    Sample_Data = []
+    Error_Spectrum = []
 
     for SAMPLE in Sample_Measurements:
         Measurement = SPEFile.SPEFile(SAMPLE)
