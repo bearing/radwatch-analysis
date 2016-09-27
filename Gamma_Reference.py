@@ -1,6 +1,6 @@
 
 
-class reference(object):
+class Reference(object):
     """
     Generates a reference object that contains a reference mass and
     concentrations. Mass is in kg and concentrations are in percent for
@@ -37,5 +37,5 @@ Dirt_Concentrations_Uncertainty = [Dirt_K_40_Unc, Dirt_Bi_214_Unc,
                                    Dirt_Tl_208_Unc, Dirt_Ac_228_Unc,
                                    Dirt_Pb_212_Unc]
 Dirt_Conversions = [309.6, 12.3, 4.07]
-Soil_Reference = reference(Dirt_Mass, Dirt_Concentrations,
+Soil_Reference = Reference(Dirt_Mass, Dirt_Concentrations,
                            Dirt_Concentrations_Uncertainty, Dirt_Conversions)
