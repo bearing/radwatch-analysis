@@ -3,7 +3,33 @@ import matplotlib.pyplot as plt
 import peakutils
 import SPEFile
 
-def plot_spectrum(spectrum,title,energy_range='None'):
+"""
+plot_spectrum plots the spectra only.
+"""
+def plot_spectrum(spectrum, title,energy_range='None'):
+    zero_offset = spectrum.energy_cal[0]
+    energy_per_channel = spectrum.energy_cal[1]
+    energy_axis = zero_offset + energy_per_channel*spectrum.channel
+    counts = spectrum.data
+    
+    #Graphs the spectrum first without any ROIs.
+    plt.semilogy(energy_axis,counts,drawstyle='steps-mid')
+    plt.xlabel('Energy (keV)')
+    plt.ylabel('Counts')
+    plt.title(title)
+    
+    """
+    If energy_range is set to a tuple of two values, then below code will graph
+    the spectrum within the energy_range values for the energies (x-values).
+    """    
+    if energy_range != 'None':
+        plt.xlim([energy_range[0], energy_range[1]])
+
+
+"""
+plot_peaks plots spectra with peaks highlighted.
+"""
+def plot_peaks(spectrum,title,energy_range='None'):
     zero_offset = spectrum.energy_cal[0]
     energy_per_channel = spectrum.energy_cal[1]
     energy_axis = zero_offset + energy_per_channel*spectrum.channel
@@ -98,19 +124,28 @@ def plot_spectrum(spectrum,title,energy_range='None'):
     """    
     if energy_range != 'None':
         plt.xlim([energy_range[0], energy_range[1]])
- 
-
-
 
 """
-#Test 1 Plot Spectrum With Highlighted Peaks and Background.
+#Test 1 for plot_spectrum
 measurement = SPEFile.SPEFile('UCB006_Bananas.Spe')
 measurement.read()
 plot_spectrum(measurement, 'UCB006_Bananas')
 """
 """
-#Test 2 Plot Spectrum With Highlighted Peaks and Background with energy range.
+#Test 2 for plot_spectrum
 measurement = SPEFile.SPEFile('UCB006_Bananas.Spe')
 measurement.read()
 plot_spectrum(measurement, 'UCB006_Bananas',(2606,2626))
+"""
+"""
+#Test 3 for plot_peaks
+measurement = SPEFile.SPEFile('UCB006_Bananas.Spe')
+measurement.read()
+plot_peaks(measurement, 'UCB006_Bananas')
+"""
+"""
+#Test 4 for plot_peaks
+measurement = SPEFile.SPEFile('UCB006_Bananas.Spe')
+measurement.read()
+plot_peaks(measurement, 'UCB006_Bananas',(2606,2626))
 """
