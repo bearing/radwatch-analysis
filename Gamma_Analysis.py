@@ -275,7 +275,7 @@ def main():
     background.read()
     reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
     reference.read()
-    sample_comparison = ref.Soil_Reference
+    sample_comparison = ref.soil_reference
     sample_measurements = acquire_files()[0]
     sample_names = acquire_files()[1]
     measurement_dates = []
