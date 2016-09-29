@@ -14,28 +14,28 @@ class Reference(object):
         self.ref_concentration_error = ref_concentration_error
         self.conversion = conversion
 
-Dirt_Mass = 2.380
-Dirt_K_40 = 2.57
-Dirt_Bi_214 = 1.97
-Dirt_Pb_214 = 1.97
-Dirt_Th_234 = 2.26
-Dirt_Tl_208 = 5.08
-Dirt_Ac_228 = 5.43
-Dirt_Pb_212 = 5.08
+dirt_mass = 2.380
+dirt_k_40 = 2.57
+dirt_bi_214 = 1.97
+dirt_pb_214 = 1.97
+dirt_th_234 = 2.26
+dirt_tl_208 = 5.08
+dirt_ac_228 = 5.43
+dirt_pb_212 = 5.08
 
-Dirt_K_40_Unc = 0.01
-Dirt_Bi_214_Unc = 0.02
-Dirt_Pb_214_Unc = 0.02
-Dirt_Th_234_Unc = 0.07
-Dirt_Tl_208_Unc = 0.05
-Dirt_Ac_228_Unc = 0.07
-Dirt_Pb_212_Unc = 0.05
-Dirt_Concentrations = [Dirt_K_40, Dirt_Bi_214, Dirt_Pb_214, Dirt_Th_234,
-                       Dirt_Tl_208, Dirt_Ac_228, Dirt_Pb_212]
-Dirt_Concentrations_Uncertainty = [Dirt_K_40_Unc, Dirt_Bi_214_Unc,
-                                   Dirt_Pb_214_Unc, Dirt_Th_234_Unc,
-                                   Dirt_Tl_208_Unc, Dirt_Ac_228_Unc,
-                                   Dirt_Pb_212_Unc]
-Dirt_Conversions = [309.6, 12.3, 4.07]
-Soil_Reference = Reference(Dirt_Mass, Dirt_Concentrations,
-                           Dirt_Concentrations_Uncertainty, Dirt_Conversions)
+dirt_k_40_unc = 0.01
+dirt_bi_214_unc = 0.02
+dirt_pb_214_unc = 0.02
+dirt_th_234_unc = 0.07
+dirt_tl_208_unc = 0.05
+dirt_ac_228_unc = 0.07
+dirt_pb_212_unc = 0.05
+dirt_concentrations = [dirt_k_40, dirt_bi_214, dirt_pb_214, dirt_th_234,
+                       dirt_tl_208, dirt_ac_228, dirt_pb_212]
+dirt_concentrations_uncertainty = [dirt_k_40_unc, dirt_bi_214_unc,
+                                   dirt_pb_214_unc, dirt_th_234_unc,
+                                   dirt_tl_208_unc, dirt_ac_228_unc,
+                                   dirt_pb_212_unc]
+dirt_conversions = [309.6, 12.3, 4.07]
+soil_reference = Reference(dirt_mass, dirt_concentrations,
+                           dirt_concentrations_uncertainty, dirt_conversions)
