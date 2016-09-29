@@ -219,22 +219,22 @@ def background_subtract(meas_area, back_area, meas_time, back_time):
     return sub_peak
 
 
-def make_table(isotope_List, sample_info, sample_names, dates):
+def make_table(isotope_list, sample_info, sample_names, dates):
     data = {}
 
     for i in range(len(sample_names)):
         data[sample_names[i]] = sample_info[i]
 
-    Isotope_Act_Unc = []
-    for i in range(len(isotope_List)):
-        Isotope_Act_Unc.append(str(isotope_List[i].symbol) + '-' +
-                               str(isotope_List[i].mass_number) +
+    isotope_act_unc = []
+    for i in range(len(isotope_list)):
+        isotope_act_unc.append(str(isotope_list[i].symbol) + '-' +
+                               str(isotope_list[i].mass_number) +
                                ' Act' + '[Bq]')
-        Isotope_Act_Unc.append(str(isotope_List[i].symbol) + '-' +
-                               str(isotope_List[i].mass_number) +
+        isotope_act_unc.append(str(isotope_list[i].symbol) + '-' +
+                               str(isotope_list[i].mass_number) +
                                ' Unc' + '[Bq]')
 
-    frame = pd.DataFrame(data, index=Isotope_Act_Unc)
+    frame = pd.DataFrame(data, index=isotope_act_unc)
     frame = frame.T
     frame.index.name = 'Sample Type'
 
@@ -256,7 +256,7 @@ def acquire_files():
     acquire_files gathers all the .Spe file in the current file directory and
     returns a list containing all .Spe files.
     """
-    Sample_Measurements = []
+    sample_measurements = []
     sample_names = []
     dir_path = os.getcwd()
     for file in os.listdir(dir_path):
@@ -264,10 +264,10 @@ def acquire_files():
             if file == "USS_Independence_Background.Spe":
                 pass
             else:
-                Sample_Measurements.append(file)
-                Name = os.path.splitext(file)[0].replace("_", " ")
-                sample_names.append(Name)
-    return Sample_Measurements, sample_names
+                sample_measurements.append(file)
+                name = os.path.splitext(file)[0].replace("_", " ")
+                sample_names.append(name)
+    return sample_measurements, sample_names
 
 
 def main():
