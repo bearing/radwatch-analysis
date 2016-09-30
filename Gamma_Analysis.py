@@ -238,12 +238,12 @@ def make_table(isotope_list, sample_info, sample_names, dates):
     frame = frame.T
     frame.index.name = 'Sample Type'
 
-    #Adding Date Measured and Sample Weight Columns
+    # Adding Date Measured and Sample Weight Columns
     df = pd.read_csv('RadWatch_Samples.csv')
     frame['Date Measured'] = dates
-    frame['Sample Weight (g)'] = pd.Series.tolist(df.ix[:,2])
+    frame['Sample Weight (g)'] = pd.Series.tolist(df.ix[:, 2])
 
-    #Reindexing columns to place 'Date Measured' and 'Sample Weight' first.
+    # Reindexing columns to place 'Date Measured' and 'Sample Weight' first.
     colnames = frame.columns.tolist()
     colnames = colnames[-2:] + colnames[:-2]
     frame = frame[colnames]
