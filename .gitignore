@@ -1,0 +1,12 @@
+# Files and file types to ignore
+
+# Python compiled files
+*.pyc
+
+# Error files
+Error.txt
+Error_Cal.txt
+
+# Output sampling table
+Sampling_Table.csv
+
