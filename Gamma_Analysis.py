@@ -141,8 +141,8 @@ def peak_finder(spectrum, energy):
     fwhm = 0.05*energy**0.5
 
     # peak search area
-    start_region = np.flatnonzero(energy_axis > energy - 3*fwhm)[0]
-    end_region = np.flatnonzero(energy_axis > energy + 3*fwhm)[0]
+    start_region = np.flatnonzero(energy_axis > energy - 2 * fwhm)[0]
+    end_region = np.flatnonzero(energy_axis > energy + 2 * fwhm)[0]
     y = spectrum.data[start_region:end_region]
     indexes = peakutils.indexes(y, thres=0.5, min_dist=4)
     tallest_peak = []
@@ -171,20 +171,20 @@ def peak_measurement(M, energy):
     # Rough estimate of FWHM.
     fwhm = 0.05*energy**0.5
     # peak gross area
-    start_peak = np.flatnonzero(energy_axis > energy - fwhm)[0]
-    end_peak = np.flatnonzero(energy_axis > energy + fwhm)[0]
+    start_peak = np.flatnonzero(energy_axis > energy - 1.15 * fwhm)[0]
+    end_peak = np.flatnonzero(energy_axis > energy + 1.15 * fwhm)[0]
     gross_counts_peak = sum(M_counts[start_peak:end_peak])
 
     # Left Gross Area
-    left_peak = energy - 2*fwhm
-    left_start = np.flatnonzero(energy_axis > left_peak - fwhm)[0]
-    left_end = np.flatnonzero(energy_axis > left_peak + fwhm)[0]
+    left_peak = energy - 2.5 * fwhm
+    left_start = np.flatnonzero(energy_axis > left_peak - 1.15 * fwhm)[0]
+    left_end = np.flatnonzero(energy_axis > left_peak + 1.15 * fwhm)[0]
     gross_counts_left = sum(M_counts[left_start:left_end])
 
     # Right Gross Area
-    right_peak = energy + 2*fwhm
-    right_start = np.flatnonzero(energy_axis > right_peak - fwhm)[0]
-    right_end = np.flatnonzero(energy_axis > right_peak + fwhm)[0]
+    right_peak = energy + 2.5 * fwhm
+    right_start = np.flatnonzero(energy_axis > right_peak - 1.15 * fwhm)[0]
+    right_end = np.flatnonzero(energy_axis > right_peak + 1.15 * fwhm)[0]
     gross_counts_right = sum(M_counts[right_start:right_end])
 
     # Net Area
