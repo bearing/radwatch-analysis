@@ -141,8 +141,8 @@ def peak_finder(spectrum, energy):
     fwhm = 0.05*energy**0.5
 
     # peak search area
-    start_region = np.flatnonzero(energy_axis > energy - 2 * fwhm)[0]
-    end_region = np.flatnonzero(energy_axis > energy + 2 * fwhm)[0]
+    start_region = np.flatnonzero(energy_axis > energy - 3 * fwhm)[0]
+    end_region = np.flatnonzero(energy_axis > energy + 3 * fwhm)[0]
     y = spectrum.data[start_region:end_region]
     indexes = peakutils.indexes(y, thres=0.5, min_dist=4)
     tallest_peak = []
@@ -171,20 +171,20 @@ def peak_measurement(M, energy):
     # Rough estimate of FWHM.
     fwhm = 0.05*energy**0.5
     # peak gross area
-    start_peak = np.flatnonzero(energy_axis > energy - 1.15 * fwhm)[0]
-    end_peak = np.flatnonzero(energy_axis > energy + 1.15 * fwhm)[0]
+    start_peak = np.flatnonzero(energy_axis > energy - 1.3 * fwhm)[0]
+    end_peak = np.flatnonzero(energy_axis > energy + 1.3 * fwhm)[0]
     gross_counts_peak = sum(M_counts[start_peak:end_peak])
 
     # Left Gross Area
-    left_peak = energy - 2.5 * fwhm
-    left_start = np.flatnonzero(energy_axis > left_peak - 1.15 * fwhm)[0]
-    left_end = np.flatnonzero(energy_axis > left_peak + 1.15 * fwhm)[0]
+    left_peak = energy - 4 * fwhm
+    left_start = np.flatnonzero(energy_axis > left_peak - 1.3 * fwhm)[0]
+    left_end = np.flatnonzero(energy_axis > left_peak + 1.3 * fwhm)[0]
     gross_counts_left = sum(M_counts[left_start:left_end])
 
     # Right Gross Area
-    right_peak = energy + 2.5 * fwhm
-    right_start = np.flatnonzero(energy_axis > right_peak - 1.15 * fwhm)[0]
-    right_end = np.flatnonzero(energy_axis > right_peak + 1.15 * fwhm)[0]
+    right_peak = energy + 4 * fwhm
+    right_start = np.flatnonzero(energy_axis > right_peak - 1.3 * fwhm)[0]
+    right_end = np.flatnonzero(energy_axis > right_peak + 1.3 * fwhm)[0]
     gross_counts_right = sum(M_counts[right_start:right_end])
 
     # Net Area
@@ -221,25 +221,32 @@ def background_subtract(meas_area, back_area, meas_time, back_time):
 
 def make_table(isotope_list, sample_info, sample_names, dates):
     data = {}
-
+    df = pd.read_csv('RadWatch_Samples.csv')
+    mass = pd.Series.tolist(df.ix[:, 2])
+    for j in range(len(mass)):
+        if np.isnan(mass[j]):
+            mass[j] = 1
+        else:
+            mass[j] = float(mass[j])
+        mass[j] = 1000/mass[j]
     for i in range(len(sample_names)):
-        data[sample_names[i]] = sample_info[i]
+        data[sample_names[i]] = np.array(sample_info[i]) * mass[i]
 
     isotope_act_unc = []
     for i in range(len(isotope_list)):
         isotope_act_unc.append(str(isotope_list[i].symbol) + '-' +
                                str(isotope_list[i].mass_number) +
-                               ' Act' + '[Bq]')
+                               ' Act' + '[Bq/kg]')
         isotope_act_unc.append(str(isotope_list[i].symbol) + '-' +
                                str(isotope_list[i].mass_number) +
-                               ' Unc' + '[Bq]')
+                               ' Unc' + '[Bq/kg]')
 
     frame = pd.DataFrame(data, index=isotope_act_unc)
     frame = frame.T
     frame.index.name = 'Sample Type'
 
     # Adding Date Measured and Sample Weight Columns
-    df = pd.read_csv('RadWatch_Samples.csv')
+
     frame['Date Measured'] = dates
     frame['Sample Weight (g)'] = pd.Series.tolist(df.ix[:, 2])
 
