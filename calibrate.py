@@ -11,15 +11,15 @@ def acquire_files():
     acquire_files gathers all the .Spe file in the current file directory and
     returns a list containing all .Spe files.
     """
-    Sample_Measurements = []
+    sample_measurements = []
     dir_path = os.getcwd()
     for file in os.listdir(dir_path):
         if file.endswith(".Spe"):
             if file == "USS_Independence_Background.Spe":
                 pass
             else:
-                Sample_Measurements.append(file)
-    return Sample_Measurements
+                sample_measurements.append(file)
+    return sample_measurements
 
 
 def calibration_check(spectrum):
@@ -35,48 +35,48 @@ def calibration_check(spectrum):
     '''
     E0 = spectrum.energy_cal[0]
     Eslope = spectrum.energy_cal[1]
-    Energy_Axis = E0 + Eslope*spectrum.channel
+    energy_axis = E0 + Eslope*spectrum.channel
 
-    Peak_Channel = []
-    Found_Energy = []
-    Energy_List = [351.93, 583.19, 609.31, 911.20, 1120.29, 1460.82, 1764.49,
+    peak_channel = []
+    found_energy = []
+    energy_list = [351.93, 583.19, 609.31, 911.20, 1120.29, 1460.82, 1764.49,
                    2614.51]
     skip = 0
-    Fix = 0
-    for Energy in Energy_List:
-        # Rough estimate of FWHM.
-        FWHM = 0.05*Energy**0.5
-        Range = 0.015*Energy
+    fix = 0
+    for energy in energy_list:
+        # rough estimate of fwhm.
+        fwhm = 0.05*energy**0.5
+        energy_range = 0.015*energy
 
-        # Peak Gross Area
+        # peak gross area
 
-        start_region = np.flatnonzero(Energy_Axis > Energy - Range)[0]
+        start_region = np.flatnonzero(energy_axis > energy - energy_range)[0]
 
-        end_region = np.flatnonzero(Energy_Axis > Energy + Range)[0]
+        end_region = np.flatnonzero(energy_axis > energy + energy_range)[0]
         y = spectrum.data[start_region:end_region]
         indexes = peakutils.indexes(y, thres=0.5, min_dist=4)
-        Tallest_Peak = []
+        tallest_peak = []
         if indexes.size == 0:
-            print('Peak Not Found')
+            print('peak not found')
             skip += 1
         else:
             for i in range(indexes.size):
-                Spot = spectrum.data[indexes[i]+start_region]
-                Tallest_Peak.append(Spot)
-            indexes = indexes[np.argmax(Tallest_Peak)]
-            Peak_Channel.append(int(indexes+start_region))
-            Found_Energy.append(Energy)
-            Difference = abs((Energy -
-                              float(Energy_Axis[int(indexes+start_region)])))
-            if Difference > 0.5*FWHM:
-                Fix += 1
+                spot = spectrum.data[indexes[i]+start_region]
+                tallest_peak.append(spot)
+            indexes = indexes[np.argmax(tallest_peak)]
+            peak_channel.append(int(indexes+start_region))
+            found_energy.append(energy)
+            difference = abs((energy -
+                              float(energy_axis[int(indexes+start_region)])))
+            if difference > 0.5*fwhm:
+                fix += 1
     if skip > 4:
-        Message = 'Error'
-    elif Fix >= 4:
-        Message = 'Fix'
+        message = 'error'
+    elif fix >= 4:
+        message = 'fix'
     else:
-        Message = 'Fine'
-    return(Peak_Channel, Found_Energy, Message)
+        message = 'fine'
+    return(peak_channel, found_energy, message)
 
 
 def calibration_correction(measurement, channel, energy):
@@ -88,57 +88,57 @@ def calibration_correction(measurement, channel, energy):
     spectra file will contain the same information with only the old
     calibration changed.
     """
-    Cal_File = sh.copyfile(measurement, os.path.splitext(measurement)[0] +
+    cal_file = sh.copyfile(measurement, os.path.splitext(measurement)[0] +
                            '_recal.Spe')
-    Fix_Measurement = SPEFile.SPEFile(Cal_File)
-    Fix_Measurement.read()
-    Old_Cal = (str(float(Fix_Measurement.energy_cal[0])) + ' ' +
-               str(float(Fix_Measurement.energy_cal[1])))
+    fix_measurement = SPEFile.SPEFile(cal_file)
+    fix_measurement.read()
+    old_cal = (str(float(fix_measurement.energy_cal[0])) + ' ' +
+               str(float(fix_measurement.energy_cal[1])))
 
-    A_matrix = np.vstack([channel, np.ones(len(channel))]).T
-    Calibration_Line = np.linalg.lstsq(A_matrix, energy)
+    a_matrix = np.vstack([channel, np.ones(len(channel))]).T
+    calibration_line = np.linalg.lstsq(a_matrix, energy)
 
-    E0 = float(Calibration_Line[0][1])
-    Eslope = float(Calibration_Line[0][0])
-    New_Cal = str(float(E0)) + ' ' + str(float(Eslope))
-    with fileinput.FileInput(Cal_File, inplace=1) as file:
+    e0 = float(calibration_line[0][1])
+    eslope = float(calibration_line[0][0])
+    new_cal = str(float(e0)) + ' ' + str(float(eslope))
+    with fileinput.FileInput(cal_file, inplace=1) as file:
         for line in file:
-            print(line.replace(Old_Cal, New_Cal).rstrip())
-    return(Cal_File)
+            print(line.replace(old_cal, new_cal).rstrip())
+    return(cal_file)
 
 
 def main():
-    Sample_Measurements = acquire_files()
-    Cal_Error = []
-    Double_Check = []
+    sample_measurements = acquire_files()
+    cal_error = []
+    double_check = []
 
-    for SAMPLE in Sample_Measurements:
-        if '_recal.Spe' in SAMPLE:
-            Double_Check.append(SAMPLE)
+    for sample in sample_measurements:
+        if '_recal.spe' in sample:
+            double_check.append(sample)
             pass
         else:
-            Measurement = SPEFile.SPEFile(SAMPLE)
-            Measurement.read()
-            [Channel, Energy, Status] = calibration_check(Measurement)
-            if Status == 'Fix':
-                print(('\nFixing calibration for %s \n' % SAMPLE))
-                Cal_File = calibration_correction(SAMPLE, Channel,
-                                                  Energy)
-                Double_Check.append(Cal_File)
-            elif Status == 'Error':
-                Cal_Error.append(SAMPLE)
-    for check in Double_Check:
+            measurement = SPEFile.SPEFile(sample)
+            measurement.read()
+            [channel, energy, status] = calibration_check(measurement)
+            if status == 'fix':
+                print(('\nFixing calibration for %s \n' % sample))
+                cal_file = calibration_correction(sample, channel,
+                                                  energy)
+                double_check.append(cal_file)
+            elif status == 'error':
+                cal_error.append(sample)
+    for check in double_check:
         Recal = SPEFile.SPEFile(check)
         Recal.read()
-        Status = calibration_check(Recal)[2]
-        if Status == 'Fix':
-            Cal_Error.append(check.replace('_recal.Spe', '.Spe'))
-    if Cal_Error == []:
+        status = calibration_check(Recal)[2]
+        if status == 'Fix':
+            cal_error.append(check.replace('_recal.Spe', '.Spe'))
+    if cal_error == []:
         pass
     else:
         with open('Error_Cal.txt', 'w') as file:
             file.writelines('Check calibration in %s \n' % error for error in
-                            Cal_Error)
+                            cal_error)
 
 
 if __name__ == '__main__':
