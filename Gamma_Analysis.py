@@ -158,40 +158,44 @@ def peak_finder(spectrum, energy):
     return(peak_energy)
 
 
-def peak_measurement(M, energy):
+def peak_measurement(M, energy, sub_regions='both'):
     """
     Takes in a measured spectra alongside a specific energy and returns the net
     area and uncertainty for that energy.
     """
     E0 = M.energy_cal[0]
     Eslope = M.energy_cal[1]
-    energy_axis = E0 + Eslope*M.channel
     M_counts = M.data
+    energy_channel = int((energy - E0) / Eslope)
 
+    region_size = 1.3
+    compton_distance = 4
     # Rough estimate of FWHM.
     fwhm = 0.05*energy**0.5
+    fwhm_channel = int(region_size * (fwhm - E0) / Eslope)
     # peak gross area
-    start_peak = np.flatnonzero(energy_axis > energy - 1.3 * fwhm)[0]
-    end_peak = np.flatnonzero(energy_axis > energy + 1.3 * fwhm)[0]
-    gross_counts_peak = sum(M_counts[start_peak:end_peak])
+    gross_counts_peak = sum(M_counts[(energy_channel - fwhm_channel):
+                                     (energy_channel + fwhm_channel)])
 
     # Left Gross Area
-    left_peak = energy - 4 * fwhm
-    left_start = np.flatnonzero(energy_axis > left_peak - 1.3 * fwhm)[0]
-    left_end = np.flatnonzero(energy_axis > left_peak + 1.3 * fwhm)[0]
-    gross_counts_left = sum(M_counts[left_start:left_end])
-
+    left_peak = energy_channel - compton_distance * fwhm_channel
+    gross_counts_left = sum(M_counts[(left_peak - fwhm_channel):
+                                     (left_peak + fwhm_channel)])
     # Right Gross Area
-    right_peak = energy + 4 * fwhm
-    right_start = np.flatnonzero(energy_axis > right_peak - 1.3 * fwhm)[0]
-    right_end = np.flatnonzero(energy_axis > right_peak + 1.3 * fwhm)[0]
-    gross_counts_right = sum(M_counts[right_start:right_end])
+    right_peak = energy_channel - compton_distance * fwhm_channel
+    gross_counts_right = sum(M_counts[(right_peak - fwhm_channel):
+                                      (right_peak + fwhm_channel)])
+    compton_region = [gross_counts_left, gross_counts_right]
 
+    if sub_regions == 'left':
+        compton_region = compton_region[0]
+    elif sub_regions == 'right':
+        compton_region = compton_region[1]
     # Net Area
-    net_area = gross_counts_peak - (gross_counts_left + gross_counts_right)/2
+    net_area = gross_counts_peak - np.mean(compton_region)
     # Uncertainty
     uncertainty = abs((gross_counts_peak +
-                      (gross_counts_left + gross_counts_right) / 4)) ** 0.5
+                      np.mean(compton_region) / 2)) ** 0.5
     # Returning results
     results = [net_area, uncertainty]
     return results
@@ -315,6 +319,10 @@ def main():
                         ii.thorium_234, ii.lead_210]
         activity_info = []
         for isotope in isotope_list:
+            if isotope.symbol == 'Cs' and isotope.mass_number == 134:
+                compton_region = 'left'
+            else:
+                compton_region = 'both'
             isotope_efficiency = absolute_efficiency(isotope.list_sig_g_e)
             isotope_energy = isotope.list_sig_g_e
             gamma_emission = []
@@ -325,11 +333,14 @@ def main():
             for j in range(len(isotope_energy)):
                 background_energy = peak_finder(background, isotope_energy[j])
                 background_peak = peak_measurement(background,
-                                                   background_energy)
+                                                   background_energy,
+                                                   compton_region)
                 sample_energy = peak_finder(measurement, isotope_energy[j])
-                sample_net_area = peak_measurement(measurement, sample_energy)
+                sample_net_area = peak_measurement(measurement, sample_energy,
+                                                   compton_region)
                 reference_energy = peak_finder(reference, isotope_energy[j])
-                reference_peak = peak_measurement(reference, reference_energy)
+                reference_peak = peak_measurement(reference, reference_energy,
+                                                  compton_region)
                 net_area = background_subtract(sample_net_area,
                                                background_peak,
                                                measurement.livetime,
