@@ -1,7 +1,7 @@
 import bs4
 import urllib
 import math
-
+from Gamma_Isotopes import Isotope 
 
 def search(input):
     """
@@ -287,19 +287,6 @@ def extract_atomic_mass_numbers(url):
         atomic_number = int(atomic_number[0:3])
 
     return(atomic_number, mass_number)
-
-
-class Isotope(object):
-    def __init__(self, symbol, atomic_number, mass_number, half_life,
-                 decay_constant, list_sig_g_e, list_sig_g_b_r):
-        self.symbol = symbol
-        self.atomic_number = atomic_number
-        self.mass_number = mass_number
-        self.half_life = half_life
-        self.decay_constant = decay_constant
-        self.list_sig_g_e = list_sig_g_e
-        self.list_sig_g_b_r = list_sig_g_b_r
-        return
 
 
 def compile_objects(info):
