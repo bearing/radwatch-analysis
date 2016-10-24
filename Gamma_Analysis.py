@@ -193,9 +193,9 @@ def peak_measurement(M, energy, sub_regions='both'):
         compton_region = compton_region[1]
     # Net Area
     net_area = gross_counts_peak - np.mean(compton_region)
-    # Uncertainty
-    uncertainty = abs((gross_counts_peak +
-                      np.mean(compton_region) / 2)) ** 0.5
+    # Uncertainty - 2-sigma
+    uncertainty = 2 * abs((gross_counts_peak +
+                          np.mean(compton_region) / 2)) ** 0.5
     # Returning results
     results = [net_area, uncertainty]
     return results
@@ -217,7 +217,7 @@ def background_subtract(meas_area, back_area, meas_time, back_time):
 
     meas_uncertainty = meas_area[1]
     back_uncertainty = back_area[1] * time_ratio
-    meas_sub_back_uncertainty = (meas_uncertainty+back_uncertainty)**0.5
+    meas_sub_back_uncertainty = (meas_uncertainty + back_uncertainty)**0.5
 
     sub_peak = [meas_sub_back, meas_sub_back_uncertainty]
     return sub_peak
