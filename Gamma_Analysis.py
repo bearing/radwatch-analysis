@@ -211,12 +211,12 @@ def background_subtract(meas_area, back_area, meas_time, back_time):
     Back_Time are the livetimes of the measurement and background respectively.
     """
 
-    time_ratio = meas_time/back_time
-    back_to_meas = back_area[0]*time_ratio
+    time_ratio = meas_time / back_time
+    back_to_meas = back_area[0] * time_ratio
     meas_sub_back = meas_area[0] - back_to_meas
 
     meas_uncertainty = meas_area[1]
-    back_uncertainty = back_area[1]*time_ratio
+    back_uncertainty = back_area[1] * time_ratio
     meas_sub_back_uncertainty = (meas_uncertainty+back_uncertainty)**0.5
 
     sub_peak = [meas_sub_back, meas_sub_back_uncertainty]
