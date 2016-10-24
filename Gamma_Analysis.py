@@ -147,7 +147,7 @@ def peak_finder(spectrum, energy):
     indexes = peakutils.indexes(y, thres=0.5, min_dist=4)
     tallest_peak = []
     if indexes.size == 0:
-        peak_energy.append(int((end_region-start_region)/2)+start_region)
+        peak_energy.append(int((end_region - start_region) / 2) + start_region)
     else:
         for i in range(indexes.size):
             spot = spectrum.data[indexes[i]+start_region]
@@ -182,7 +182,7 @@ def peak_measurement(M, energy, sub_regions='both'):
     gross_counts_left = sum(M_counts[(left_peak - fwhm_channel):
                                      (left_peak + fwhm_channel)])
     # Right Gross Area
-    right_peak = energy_channel - compton_distance * fwhm_channel
+    right_peak = energy_channel + compton_distance * fwhm_channel
     gross_counts_right = sum(M_counts[(right_peak - fwhm_channel):
                                       (right_peak + fwhm_channel)])
     compton_region = [gross_counts_left, gross_counts_right]
