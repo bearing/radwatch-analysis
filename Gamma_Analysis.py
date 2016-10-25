@@ -141,13 +141,13 @@ def peak_finder(spectrum, energy):
     fwhm = 0.05*energy**0.5
 
     # peak search area
-    start_region = np.flatnonzero(energy_axis > energy - 3*fwhm)[0]
-    end_region = np.flatnonzero(energy_axis > energy + 3*fwhm)[0]
+    start_region = np.flatnonzero(energy_axis > energy - 3 * fwhm)[0]
+    end_region = np.flatnonzero(energy_axis > energy + 3 * fwhm)[0]
     y = spectrum.data[start_region:end_region]
     indexes = peakutils.indexes(y, thres=0.5, min_dist=4)
     tallest_peak = []
     if indexes.size == 0:
-        peak_energy.append(int((end_region-start_region)/2)+start_region)
+        peak_energy.append(int((end_region - start_region) / 2) + start_region)
     else:
         for i in range(indexes.size):
             spot = spectrum.data[indexes[i]+start_region]
@@ -158,40 +158,44 @@ def peak_finder(spectrum, energy):
     return(peak_energy)
 
 
-def peak_measurement(M, energy):
+def peak_measurement(M, energy, sub_regions='both'):
     """
     Takes in a measured spectra alongside a specific energy and returns the net
     area and uncertainty for that energy.
     """
     E0 = M.energy_cal[0]
     Eslope = M.energy_cal[1]
-    energy_axis = E0 + Eslope*M.channel
     M_counts = M.data
+    energy_channel = int((energy - E0) / Eslope)
 
+    region_size = 1.3
+    compton_distance = 4
     # Rough estimate of FWHM.
     fwhm = 0.05*energy**0.5
+    fwhm_channel = int(region_size * (fwhm - E0) / Eslope)
     # peak gross area
-    start_peak = np.flatnonzero(energy_axis > energy - fwhm)[0]
-    end_peak = np.flatnonzero(energy_axis > energy + fwhm)[0]
-    gross_counts_peak = sum(M_counts[start_peak:end_peak])
+    gross_counts_peak = sum(M_counts[(energy_channel - fwhm_channel):
+                                     (energy_channel + fwhm_channel)])
 
     # Left Gross Area
-    left_peak = energy - 2*fwhm
-    left_start = np.flatnonzero(energy_axis > left_peak - fwhm)[0]
-    left_end = np.flatnonzero(energy_axis > left_peak + fwhm)[0]
-    gross_counts_left = sum(M_counts[left_start:left_end])
-
+    left_peak = energy_channel - compton_distance * fwhm_channel
+    gross_counts_left = sum(M_counts[(left_peak - fwhm_channel):
+                                     (left_peak + fwhm_channel)])
     # Right Gross Area
-    right_peak = energy + 2*fwhm
-    right_start = np.flatnonzero(energy_axis > right_peak - fwhm)[0]
-    right_end = np.flatnonzero(energy_axis > right_peak + fwhm)[0]
-    gross_counts_right = sum(M_counts[right_start:right_end])
+    right_peak = energy_channel + compton_distance * fwhm_channel
+    gross_counts_right = sum(M_counts[(right_peak - fwhm_channel):
+                                      (right_peak + fwhm_channel)])
+    compton_region = [gross_counts_left, gross_counts_right]
 
+    if sub_regions == 'left':
+        compton_region = compton_region[0]
+    elif sub_regions == 'right':
+        compton_region = compton_region[1]
     # Net Area
-    net_area = gross_counts_peak - (gross_counts_left + gross_counts_right)/2
-    # Uncertainty
-    uncertainty = abs((gross_counts_peak +
-                      (gross_counts_left + gross_counts_right) / 4)) ** 0.5
+    net_area = gross_counts_peak - np.mean(compton_region)
+    # Uncertainty - 2-sigma
+    uncertainty = 2 * abs((gross_counts_peak +
+                          np.mean(compton_region) / 2)) ** 0.5
     # Returning results
     results = [net_area, uncertainty]
     return results
@@ -207,13 +211,13 @@ def background_subtract(meas_area, back_area, meas_time, back_time):
     Back_Time are the livetimes of the measurement and background respectively.
     """
 
-    time_ratio = meas_time/back_time
-    back_to_meas = back_area[0]*time_ratio
+    time_ratio = meas_time / back_time
+    back_to_meas = back_area[0] * time_ratio
     meas_sub_back = meas_area[0] - back_to_meas
 
     meas_uncertainty = meas_area[1]
-    back_uncertainty = back_area[1]*time_ratio
-    meas_sub_back_uncertainty = (meas_uncertainty+back_uncertainty)**0.5
+    back_uncertainty = back_area[1] * time_ratio
+    meas_sub_back_uncertainty = (meas_uncertainty + back_uncertainty)**0.5
 
     sub_peak = [meas_sub_back, meas_sub_back_uncertainty]
     return sub_peak
@@ -221,25 +225,32 @@ def background_subtract(meas_area, back_area, meas_time, back_time):
 
 def make_table(isotope_list, sample_info, sample_names, dates):
     data = {}
-
+    df = pd.read_csv('RadWatch_Samples.csv')
+    mass = pd.Series.tolist(df.ix[:, 2])
+    for j in range(len(mass)):
+        if np.isnan(mass[j]):
+            mass[j] = 1
+        else:
+            mass[j] = float(mass[j])
+        mass[j] = 1000/mass[j]
     for i in range(len(sample_names)):
-        data[sample_names[i]] = sample_info[i]
+        data[sample_names[i]] = np.array(sample_info[i]) * mass[i]
 
     isotope_act_unc = []
     for i in range(len(isotope_list)):
         isotope_act_unc.append(str(isotope_list[i].symbol) + '-' +
                                str(isotope_list[i].mass_number) +
-                               ' Act' + '[Bq]')
+                               ' Act' + '[Bq/kg]')
         isotope_act_unc.append(str(isotope_list[i].symbol) + '-' +
                                str(isotope_list[i].mass_number) +
-                               ' Unc' + '[Bq]')
+                               ' Unc' + '[Bq/kg]')
 
     frame = pd.DataFrame(data, index=isotope_act_unc)
     frame = frame.T
     frame.index.name = 'Sample Type'
 
     # Adding Date Measured and Sample Weight Columns
-    df = pd.read_csv('RadWatch_Samples.csv')
+
     frame['Date Measured'] = dates
     frame['Sample Weight (g)'] = pd.Series.tolist(df.ix[:, 2])
 
@@ -308,6 +319,10 @@ def main():
                         ii.thorium_234, ii.lead_210]
         activity_info = []
         for isotope in isotope_list:
+            if isotope.symbol == 'Cs' and isotope.mass_number == 134:
+                compton_region = 'left'
+            else:
+                compton_region = 'both'
             isotope_efficiency = absolute_efficiency(isotope.list_sig_g_e)
             isotope_energy = isotope.list_sig_g_e
             gamma_emission = []
@@ -318,11 +333,14 @@ def main():
             for j in range(len(isotope_energy)):
                 background_energy = peak_finder(background, isotope_energy[j])
                 background_peak = peak_measurement(background,
-                                                   background_energy)
+                                                   background_energy,
+                                                   compton_region)
                 sample_energy = peak_finder(measurement, isotope_energy[j])
-                sample_net_area = peak_measurement(measurement, sample_energy)
+                sample_net_area = peak_measurement(measurement, sample_energy,
+                                                   compton_region)
                 reference_energy = peak_finder(reference, isotope_energy[j])
-                reference_peak = peak_measurement(reference, reference_energy)
+                reference_peak = peak_measurement(reference, reference_energy,
+                                                  compton_region)
                 net_area = background_subtract(sample_net_area,
                                                background_peak,
                                                measurement.livetime,

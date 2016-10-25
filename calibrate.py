@@ -39,7 +39,7 @@ def calibration_check(spectrum):
 
     peak_channel = []
     found_energy = []
-    energy_list = [351.93, 583.19, 609.31, 911.20, 1120.29, 1460.82, 1764.49,
+    energy_list = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
                    2614.51]
     skip = 0
     fix = 0
@@ -69,6 +69,7 @@ def calibration_check(spectrum):
             difference = abs((energy -
                               float(energy_axis[int(indexes+start_region)])))
             if difference > 0.5*fwhm:
+                print(energy_axis[indexes+start_region])
                 fix += 1
     if skip > 4:
         message = 'error'
