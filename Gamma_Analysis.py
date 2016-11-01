@@ -117,9 +117,8 @@ def isotope_concentration(isotope, reference, sample_activity,
                     (reference_activity[1] / reference_activity[0])**2 +
                     (reference_conc_unc / reference_conc)**2)**0.5
     sample_factor = sample_activity[0] * ref_conc_specact_ratio
-    sample_factor_uncertainty = sample_factor * error_factor
     sample_concentration = sample_factor * conversion
-    sample_concentration_uncertainty = sample_factor_uncertainty * conversion
+    sample_concentration_uncertainty = (sample_concentration * error_factor)
     results = [sample_concentration, sample_concentration_uncertainty]
     return results
 
@@ -139,10 +138,11 @@ def peak_finder(spectrum, energy):
     peak_energy = []
     # rough estimate of fwhm.
     fwhm = 0.05*energy**0.5
+    fwhm_range = 1
 
     # peak search area
-    start_region = np.flatnonzero(energy_axis > energy - 3 * fwhm)[0]
-    end_region = np.flatnonzero(energy_axis > energy + 3 * fwhm)[0]
+    start_region = np.flatnonzero(energy_axis > energy - fwhm_range * fwhm)[0]
+    end_region = np.flatnonzero(energy_axis > energy + fwhm_range * fwhm)[0]
     y = spectrum.data[start_region:end_region]
     indexes = peakutils.indexes(y, thres=0.5, min_dist=4)
     tallest_peak = []
@@ -194,8 +194,10 @@ def peak_measurement(M, energy, sub_regions='both'):
     # Net Area
     net_area = gross_counts_peak - np.mean(compton_region)
     # Uncertainty - 2-sigma
-    uncertainty = 2 * abs((gross_counts_peak +
-                          np.mean(compton_region) / 2)) ** 0.5
+    gross_area_uncertainty = (gross_counts_peak)**0.5
+    compton_region_uncertainty = (np.mean(compton_region))**0.5
+    uncertainty = 2 * (gross_area_uncertainty**2 +
+                       compton_region_uncertainty**2)**0.5
     # Returning results
     results = [net_area, uncertainty]
     return results
@@ -217,7 +219,8 @@ def background_subtract(meas_area, back_area, meas_time, back_time):
 
     meas_uncertainty = meas_area[1]
     back_uncertainty = back_area[1] * time_ratio
-    meas_sub_back_uncertainty = (meas_uncertainty + back_uncertainty)**0.5
+    meas_sub_back_uncertainty = (meas_uncertainty**2 +
+                                 back_uncertainty**2)**0.5
 
     sub_peak = [meas_sub_back, meas_sub_back_uncertainty]
     return sub_peak
@@ -310,7 +313,7 @@ def main():
                                             background.livetime)
                 if check[0] < 0:
                     significance = check[0]/check[1]
-                    if significance < -2:
+                    if significance < -1:
                         error_spectrum.append(sample)
                         break
         isotope_list = [ii.caesium_134, ii.caesium_137, ii.cobalt_60,
@@ -345,7 +348,6 @@ def main():
                                                background_peak,
                                                measurement.livetime,
                                                background.livetime)
-
                 peak_emission = emission_rate(net_area, isotope_efficiency[j],
                                               measurement.livetime)
                 reference_area = background_subtract(reference_peak,
