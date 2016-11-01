@@ -115,10 +115,11 @@ def isotope_concentration(isotope, reference, sample_activity,
     ref_conc_specact_ratio = reference_conc / ref_specific_activity
     error_factor = ((sample_activity[1] / sample_activity[0])**2 +
                     (reference_activity[1] / reference_activity[0])**2 +
-                    (reference_conc_unc / reference_conc)**2)**0.5
+                    (reference_conc_unc / reference_conc)**2)
     sample_factor = sample_activity[0] * ref_conc_specact_ratio
     sample_concentration = sample_factor * conversion
-    sample_concentration_uncertainty = (sample_concentration * error_factor)
+    sample_concentration_uncertainty = ((sample_concentration)**2 *
+                                        (error_factor))**0.5
     results = [sample_concentration, sample_concentration_uncertainty]
     return results
 
