@@ -10,11 +10,24 @@ def search(input):
     information), then input will simply be reassigned as url.
     """
     if type(input) == int or type(input) == float:
-        plus_one = input + 1
-        minus_one = input - 1
-        url = 'http://nucleardata.nuclear.lu.se/toi/Gamma.asp?sql=&Min=' \
-        + str(minus_one) + '&Max=' + str(plus_one) \
-        + '&HlifeMin=3600&tMinStr=1+h'
+        if input >= 2000:
+            plus_three = input + 3
+            minus_three = input - 3    
+            url = 'http://nucleardata.nuclear.lu.se/toi/Gamma.asp?sql=&Min=' \
+            + str(minus_three) + '&Max=' + str(plus_three) \
+            + '&HlifeMin=3600&tMinStr=1+h'
+        elif input >= 1000:
+            plus_two = input + 2
+            minus_two = input - 2    
+            url = 'http://nucleardata.nuclear.lu.se/toi/Gamma.asp?sql=&Min=' \
+            + str(minus_two) + '&Max=' + str(plus_two) \
+            + '&HlifeMin=3600&tMinStr=1+h'
+        else:
+            plus_one = input + 1
+            minus_one = input - 1    
+            url = 'http://nucleardata.nuclear.lu.se/toi/Gamma.asp?sql=&Min=' \
+            + str(minus_one) + '&Max=' + str(plus_one) \
+            + '&HlifeMin=3600&tMinStr=1+h'
     elif type(input) == str:
         url = input
 
