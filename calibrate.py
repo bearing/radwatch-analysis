@@ -114,7 +114,7 @@ def main():
     double_check = []
 
     for sample in sample_measurements:
-        if '_recal.spe' in sample:
+        if '_recal.Spe' in sample:
             double_check.append(sample)
             pass
         else:
@@ -132,7 +132,7 @@ def main():
         Recal = SPEFile.SPEFile(check)
         Recal.read()
         status = calibration_check(Recal)[2]
-        if status == 'Fix':
+        if status == 'fix':
             cal_error.append(check.replace('_recal.Spe', '.Spe'))
     if cal_error == []:
         pass
