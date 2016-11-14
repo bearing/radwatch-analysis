@@ -254,7 +254,6 @@ def make_table(isotope_list, sample_info, sample_names, dates):
     frame = pd.DataFrame(data, index=isotope_act_unc)
     frame = frame.T
     frame.index.name = 'Sample Type'
-
     # Adding Date Measured and Sample Weight Columns
 
     frame['Date Measured'] = dates
@@ -280,6 +279,8 @@ def acquire_files():
         if file.endswith(".Spe"):
             if file == "USS_Independence_Background.Spe":
                 pass
+            elif file == "UCB018_Soil_Sample010_2.Spe":
+                pass
             else:
                 sample_measurements.append(file)
                 name = os.path.splitext(file)[0].replace("_", " ")
@@ -293,8 +294,7 @@ def main():
     reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
     reference.read()
     sample_comparison = ref.soil_reference
-    sample_measurements = acquire_files()[0]
-    sample_names = acquire_files()[1]
+    sample_measurements, sample_names = acquire_files()
     measurement_dates = []
     sample_data = []
     error_spectrum = []
@@ -319,9 +319,9 @@ def main():
                     if significance < -1:
                         error_spectrum.append(sample)
                         break
-        isotope_list = [ii.caesium_134, ii.caesium_137, ii.cobalt_60,
-                        ii.potassium_40, ii.thallium_208, ii.actinium_228,
-                        ii.lead_212, ii.bismuth_214, ii.lead_214,
+        isotope_list = [ii.potassium_40, ii.bismuth_214, ii.thallium_208,
+                        ii.caesium_137, ii.caesium_134, ii.cobalt_60,
+                        ii.actinium_228, ii.lead_212, ii.lead_214,
                         ii.thorium_234, ii.lead_210]
         activity_info = []
         for isotope in isotope_list:
