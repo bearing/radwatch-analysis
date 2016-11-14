@@ -36,10 +36,10 @@ def create_barerror_plot(csv_file, title, log=True):
         for row in dictparser:
             tmp_list = []
             if 'recal' in row[header[0]]:
-                title = str(row[header[0]][7:-5]) + '\n' + str(row[header[1]])
+                label = str(row[header[0]][7:-5]) + '\n' + str(row[header[1]])
             else:
-                title = str(row[header[0]][7:]) + '\n' + str(row[header[1]])
-            name_list.append(title)
+                label = str(row[header[0]][7:]) + '\n' + str(row[header[1]])
+            name_list.append(label)
             date_list.append(row[header[1]])
             for ind in range(metacols, 2 * len(isotope_key) + 2, 2):
                 if float(row[header[ind]]) < float(row[header[ind+1]]):
