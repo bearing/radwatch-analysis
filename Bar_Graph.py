@@ -73,6 +73,12 @@ def generate_barerror_logy(sample_names, data, error, legend_key, title,
     axis = []
     mins = np.amin(data[np.nonzero(data)])
     for sample in range(0, len(legend_key)):
+        error_color = []
+        for i in range(len(data[:, sample])):
+            if data[:, sample][i] < error[:, sample][i]:
+                error_color.append(color_scheme[sample])
+            else:
+                error_color.append('black')
         args = np.zeros((0))
         left_edge = index + float(width) * float(sample)
         if np.amin(data[:, sample]) == 0:
@@ -80,11 +86,12 @@ def generate_barerror_logy(sample_names, data, error, legend_key, title,
             data[args, sample] += 1e-9
             draw_arrows(axes=ax, xlocs=(left_edge + 0.5 * float(width))[args],
                         ylocs=error[args, sample], color=color_scheme[sample])
+        for pos, val, err, color in zip(left_edge, data[:, sample],
+                                        error[:, sample], error_color):
+            ax.errorbar(pos + 0.075, val, err, color=color)
         axis.append(ax.bar(left=left_edge, height=tuple(data[:, sample]),
                     width=width, color=color_scheme[sample],
-                    yerr=tuple(error[:, sample]), ecolor=color_scheme[sample],
                     edgecolor="none", log=log))
-
     ylims = ax.get_ylim()
     upper_mult = 1
     if log:
@@ -121,4 +128,4 @@ def draw_arrows(axes, xlocs, ylocs, color):
                       facecolor=color, arrowstyle="-|>"))
     return
 
-create_barerror_plot('Sampling_Table.csv', 'Cyrax')
+create_barerror_plot('Sampling_Table.csv', 'Sample Summary')
