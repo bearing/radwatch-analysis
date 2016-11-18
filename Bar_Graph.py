@@ -78,7 +78,7 @@ def create_barerror_plot(csv_file, title, log=True):
         for row in dictparser:
             tmp_list = []
             if 'recal' in row[header[0]]:
-                label = str(row[header[0]][7:-5])
+                label = str(row[header[0]][7:-6])
             else:
                 label = str(row[header[0]][7:])
             name_list.append(label)
