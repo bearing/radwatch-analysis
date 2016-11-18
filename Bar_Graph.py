@@ -24,6 +24,48 @@ def parse_time(date):
                              day=return_list[1])
 
 
+def unique_sample_names(sample_names):
+    ret = []
+    for name in sample_names:
+        if name not in ret:
+            ret.append(name)
+    return ret
+
+
+def combine_measurements(sample_array, sample_names,
+                         sample_dates):
+    u_sample_names = unique_sample_names(sample_names)
+    u_sample_array = []
+    u_sample_names_ret = []
+    for u_name in u_sample_names:
+        lst = []
+        row = 0
+        u_sample_dates = []
+        for name in sample_names:
+            if(u_name == name):
+                lst.append(sample_array[row, :])
+                if sample_dates[row] == '':
+                    continue
+                u_sample_dates.append(sample_dates[row])
+            row += 1
+
+        u_sample_dates = np.sort(u_sample_dates)
+        if len(u_sample_dates):
+            u_sample_dates_ = '('+str(len(u_sample_dates))+')'
+        else:
+            u_sample_dates_ = '('+str(1)+')'
+
+        for date in u_sample_dates[-3:]:
+            u_sample_dates_ += "\n"+date.strftime('%m-%d-%y')
+
+        lst = np.asarray(lst)
+        u_sample_array.append(np.max(lst, axis=0))
+        u_sample_names_ret.append(u_name + u_sample_dates_)
+
+    return np.asarray(u_sample_array), u_sample_names_ret
+
+
+
 def create_barerror_plot(csv_file, title, log=True):
     sample_list = []
     name_list = []
@@ -36,11 +78,11 @@ def create_barerror_plot(csv_file, title, log=True):
         for row in dictparser:
             tmp_list = []
             if 'recal' in row[header[0]]:
-                label = str(row[header[0]][7:-5]) + '\n' + str(row[header[1]])
+                label = str(row[header[0]][7:-5])
             else:
-                label = str(row[header[0]][7:]) + '\n' + str(row[header[1]])
+                label = str(row[header[0]][7:])
             name_list.append(label)
-            date_list.append(row[header[1]])
+            date_list.append(parse_time(row[header[1]]))
             for ind in range(metacols, 2 * len(isotope_key) + 2, 2):
                 if float(row[header[ind]]) < float(row[header[ind+1]]):
                     tmp_list.extend([0, float(row[header[ind+1]])])
@@ -50,6 +92,9 @@ def create_barerror_plot(csv_file, title, log=True):
             sample_list.append(tmp_list)
     sample_list = np.asarray(sample_list)
     legend_key = []
+    sample_list, name_list = combine_measurements(sample_array=sample_list,
+                                                  sample_names=name_list,
+                                                  sample_dates=date_list)
     data = np.zeros((len(name_list), int(sample_list.shape[1] / 2.)))
     error = np.zeros((len(name_list), int(sample_list.shape[1] / 2.)))
     loop = 0
