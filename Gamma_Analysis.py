@@ -240,7 +240,12 @@ def make_table(isotope_list, sample_info, sample_names, dates):
             mass[j] = float(mass[j])
         mass[j] = 1000/mass[j]
     for i in range(len(sample_names)):
-        data[sample_names[i]] = np.array(sample_info[i]) * mass[i]
+        information = []
+        for k in range(len(sample_info[i])):
+            value = sample_info[i][k] * mass[i]
+            value = "%.2f" % value
+            information.append(float(value))
+        data[sample_names[i]] = np.array(information)
 
     isotope_act_unc = []
     for i in range(len(isotope_list)):
