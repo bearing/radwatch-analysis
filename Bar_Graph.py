@@ -57,13 +57,11 @@ def combine_measurements(sample_array, sample_names,
 
         for date in u_sample_dates[-3:]:
             u_sample_dates_ += "\n"+date.strftime('%m-%d-%y')
-
         lst = np.asarray(lst)
-        u_sample_array.append(np.max(lst, axis=0))
+        u_sample_array.append(np.mean(lst, axis=0))
         u_sample_names_ret.append(u_name + u_sample_dates_)
 
     return np.asarray(u_sample_array), u_sample_names_ret
-
 
 
 def create_barerror_plot(csv_file, title, log=True):
@@ -84,9 +82,6 @@ def create_barerror_plot(csv_file, title, log=True):
             name_list.append(label)
             date_list.append(parse_time(row[header[1]]))
             for ind in range(metacols, 2 * len(isotope_key) + 2, 2):
-                if float(row[header[ind]]) < float(row[header[ind+1]]):
-                    tmp_list.extend([0, float(row[header[ind+1]])])
-                else:
                     tmp_list.extend([float(row[header[ind]]),
                                      float(row[header[ind+1]])])
             sample_list.append(tmp_list)
@@ -120,7 +115,8 @@ def generate_barerror_logy(sample_names, data, error, legend_key, title,
     for sample in range(0, len(legend_key)):
         error_color = []
         for i in range(len(data[:, sample])):
-            if data[:, sample][i] < error[:, sample][i]:
+            if data[:, sample][i] <= error[:, sample][i]:
+                data[:, sample][i] = 0
                 error_color.append(color_scheme[sample])
             else:
                 error_color.append('black')
@@ -128,7 +124,7 @@ def generate_barerror_logy(sample_names, data, error, legend_key, title,
         left_edge = index + float(width) * float(sample)
         if np.amin(data[:, sample]) == 0:
             args = np.where(data[:, sample] == 0)
-            data[args, sample] += 1e-9
+            data[args, sample] += 1e-2
             draw_arrows(axes=ax, xlocs=(left_edge + 0.5 * float(width))[args],
                         ylocs=error[args, sample], color=color_scheme[sample])
         for pos, val, err, color in zip(left_edge, data[:, sample],
