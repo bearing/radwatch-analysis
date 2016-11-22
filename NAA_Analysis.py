@@ -62,6 +62,10 @@ def count_rate(M, B, energy):
     """
     Takes in a measured and background spectra and a peak energy and return the
     net area under the peak.
+
+    Peak measurements are done using the Gamma_Analysis peak_measurement
+    module, which only does regions of interest. Since peak fitting is not done
+    the given count_rate is expected to be systematically higher.
     """
     pm_results = ga.peak_measurement(M, energy, sub_regions='none')
     bm_results = ga.peak_measurement(B, energy, sub_regions='none')
@@ -179,7 +183,7 @@ def acquire_measurement():
     measurements = []
     dir_path = os.getcwd()
     for file in os.listdir(dir_path):
-        if file.endswith(".Spe"):
+        if file.lower().endswith(".spe"):
             measurements.append(file)
     sample = input('\n' "Enter the name of the measurement." '\n'
                    "Please do not include the file extension." '\n' '-->')
