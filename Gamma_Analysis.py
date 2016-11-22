@@ -282,6 +282,7 @@ def acquire_files():
     dir_path = os.getcwd()
     for file in os.listdir(dir_path):
         if file.endswith(".Spe"):
+            "Ignore the background and reference spectra"
             if file == "USS_Independence_Background.Spe":
                 pass
             elif file == "UCB018_Soil_Sample010_2.Spe":

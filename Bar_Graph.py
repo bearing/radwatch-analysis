@@ -14,6 +14,9 @@ color_scheme = np.asarray([color_scheme[color_map[key]]
 
 
 def parse_time(date):
+    """
+    parse_time formats the date given into the format month-day-year.
+    """
     if ('-' in date):
         return ''
     date_list = date.split('/')
@@ -25,6 +28,10 @@ def parse_time(date):
 
 
 def unique_sample_names(sample_names):
+    """
+    unique_sample_names takes a given list of sample names and returns a list
+    of all the unique names in the list
+    """
     ret = []
     for name in sample_names:
         if name not in ret:
@@ -34,6 +41,13 @@ def unique_sample_names(sample_names):
 
 def combine_measurements(sample_array, sample_names,
                          sample_dates):
+    """
+    combine_measurements acquires all the samples with the same name and
+    their corresponding information and combines it into one sample
+    that's representative of the group. It returns sample information that
+    contains the name of the sample group, the average of the group data and
+    uncertainty, and the dates of the three most recent samples.
+    """
     u_sample_names = unique_sample_names(sample_names)
     u_sample_array = []
     u_sample_names_ret = []
@@ -65,6 +79,12 @@ def combine_measurements(sample_array, sample_names,
 
 
 def create_barerror_plot(csv_file, title, log=True):
+    """
+    create_barerror_plot reads a csv file and takes a title input and prepares
+    the information from the csv file for generating a bar plot. This
+    preparation includes cleaning the sample names of the UCB title and simply
+    showing the sample type.
+    """
     sample_list = []
     name_list = []
     date_list = []
@@ -76,6 +96,7 @@ def create_barerror_plot(csv_file, title, log=True):
         for row in dictparser:
             tmp_list = []
             if 'recal' in row[header[0]]:
+                "Remove recal from name"
                 label = str(row[header[0]][7:-6])
             else:
                 label = str(row[header[0]][7:])
@@ -93,6 +114,7 @@ def create_barerror_plot(csv_file, title, log=True):
     data = np.zeros((len(name_list), int(sample_list.shape[1] / 2.)))
     error = np.zeros((len(name_list), int(sample_list.shape[1] / 2.)))
     loop = 0
+    "Create data and error lists for simple bar graph assembly"
     for item in range(0, sample_list.shape[1], 2):
         legend_key.append(header[metacols + item])
         data[:, loop] = sample_list[:, item]
@@ -105,6 +127,11 @@ def create_barerror_plot(csv_file, title, log=True):
 
 def generate_barerror_logy(sample_names, data, error, legend_key, title,
                            log=True):
+    """
+    generate_barerror_logy generates a bar graph with error bars. Bars are
+    are generated on a log plot with arrows indicating a detection limit and
+    bars representing a concentration value.
+    """
     number_samples = len(sample_names)
     index = np.arange(0.5, number_samples, dtype=np.float64)
     width = float(0.15)
@@ -115,6 +142,7 @@ def generate_barerror_logy(sample_names, data, error, legend_key, title,
     for sample in range(0, len(legend_key)):
         error_color = []
         for i in range(len(data[:, sample])):
+            "Determine whether to present a bar or detection limit"
             if data[:, sample][i] <= error[:, sample][i]:
                 data[:, sample][i] = 0
                 error_color.append(color_scheme[sample])
@@ -156,6 +184,10 @@ def generate_barerror_logy(sample_names, data, error, legend_key, title,
 
 
 def draw_arrows(axes, xlocs, ylocs, color):
+    """
+    draw_arrows places arrow hats for measurement detection limits to
+    distinguish them from regular error bars.
+    """
     num_els = len(xlocs)
     if num_els == 0:
         return
