@@ -240,12 +240,8 @@ def make_table(isotope_list, sample_info, sample_names, dates):
             mass[j] = float(mass[j])
         mass[j] = 1000/mass[j]
     for i in range(len(sample_names)):
-        information = []
-        for k in range(len(sample_info[i])):
-            value = sample_info[i][k] * mass[i]
-            value = "%.2f" % value
-            information.append(float(value))
-        data[sample_names[i]] = np.array(information)
+        value = np.array(sample_info[i]) * mass[i]
+        data[sample_names[i]] = np.array(value.round(decimals=2))
 
     isotope_act_unc = []
     for i in range(len(isotope_list)):
@@ -281,7 +277,7 @@ def acquire_files():
     sample_names = []
     dir_path = os.getcwd()
     for file in os.listdir(dir_path):
-        if file.endswith(".Spe"):
+        if file.lower().endswith(".spe"):
             "Ignore the background and reference spectra"
             if file == "USS_Independence_Background.Spe":
                 pass

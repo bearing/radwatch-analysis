@@ -96,7 +96,7 @@ def create_barerror_plot(csv_file, title, log=True):
         for row in dictparser:
             tmp_list = []
             if 'recal' in row[header[0]]:
-                "Remove recal from name"
+                # Remove recal from name
                 label = str(row[header[0]][7:-6])
             else:
                 label = str(row[header[0]][7:])
@@ -114,7 +114,7 @@ def create_barerror_plot(csv_file, title, log=True):
     data = np.zeros((len(name_list), int(sample_list.shape[1] / 2.)))
     error = np.zeros((len(name_list), int(sample_list.shape[1] / 2.)))
     loop = 0
-    "Create data and error lists for simple bar graph assembly"
+    # Create data and error lists for simple bar graph assembly
     for item in range(0, sample_list.shape[1], 2):
         legend_key.append(header[metacols + item])
         data[:, loop] = sample_list[:, item]
@@ -142,7 +142,7 @@ def generate_barerror_logy(sample_names, data, error, legend_key, title,
     for sample in range(0, len(legend_key)):
         error_color = []
         for i in range(len(data[:, sample])):
-            "Determine whether to present a bar or detection limit"
+            # Determine whether to present a bar or detection limit
             if data[:, sample][i] <= error[:, sample][i]:
                 data[:, sample][i] = 0
                 error_color.append(color_scheme[sample])

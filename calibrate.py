@@ -14,7 +14,7 @@ def acquire_files():
     sample_measurements = []
     dir_path = os.getcwd()
     for file in os.listdir(dir_path):
-        if file.endswith(".Spe"):
+        if file.lower().endswith(".spe"):
             if file == "USS_Independence_Background.Spe":
                 pass
             else:
@@ -114,7 +114,7 @@ def main():
     double_check = []
 
     for sample in sample_measurements:
-        if '_recal.Spe' in sample:
+        if '_recal.spe' in sample.lower():
             double_check.append(sample)
             pass
         else:
