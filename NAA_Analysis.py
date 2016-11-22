@@ -11,6 +11,10 @@ import Isotopic_Abudance as ia
 
 
 def peak_finder(measurement):
+    """
+    peak_finder takes a measurement and returns all of the energies where a
+    peak is found.
+    """
     E0 = measurement.energy_cal[0]
     Eslope = measurement.energy_cal[1]
     energy_axis = E0 + Eslope*measurement.channel
@@ -71,10 +75,15 @@ def count_rate(M, B, energy):
 
 def isotope_verifier(isotope):
     """
-    Takes in a list of isotopes and checks to see whether or not the isotope is
+    Takes in an isotope and checks to see whether or not the isotope is
     naturally occuring or not. If the isotope is naturally occuring, then the
-    module will display the isotope along with its mass number and natural
-    abundance.
+    module will indicate that the isotope is naturally occurring and return
+    the isotope mass number, isotopic abundance, and radiative capture
+    cross section.
+
+    Meta-stable elements are considered the same isotope as the non-meta
+    version and has the m removed from the beginning of the name in order to
+    allow it to be searched.
     """
     isotope = isotope.symbol + str(isotope.mass_number - 1)
     if isotope[0] == 'm':
@@ -110,6 +119,11 @@ def element_fraction(d_per_s, isotope, mass_number, I_A, cross_section,
 
 
 def sample_questions():
+    """
+    sample_questions prompts the user to input information required for
+    NAA analysis. This includes sample weight, reactor flux, irradiation time,
+    and time between irradiation and measurement.
+    """
     weight = input('\n''Enter sample mass in grams.' '\n' '-->')
     weight_value = False
     while weight_value is False:
@@ -158,6 +172,10 @@ def sample_questions():
 
 
 def acquire_measurement():
+    """
+    acquire_measurement prompts the user to input the measurement file they
+    want to analyze.
+    """
     measurements = []
     dir_path = os.getcwd()
     for file in os.listdir(dir_path):
@@ -178,6 +196,11 @@ def acquire_measurement():
     return acquire
 
 def NAA_table(candidates, energy, isotopes, fractions):
+    """
+    NAA_table generates a csv file containing the results of the NAA analysis,
+    which includes possible isotopes and their fractions for each energy found
+    in a certain spectra.
+    """
     sorted_info = []
     data = {}
     for i in range(len(isotopes)):
