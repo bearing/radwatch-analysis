@@ -14,7 +14,7 @@ def acquire_files():
     sample_measurements = []
     dir_path = os.getcwd()
     for file in os.listdir(dir_path):
-        if file.endswith(".Spe"):
+        if file.lower().endswith(".spe"):
             if file == "USS_Independence_Background.Spe":
                 pass
             else:
@@ -114,7 +114,7 @@ def main():
     double_check = []
 
     for sample in sample_measurements:
-        if '_recal.spe' in sample:
+        if '_recal.spe' in sample.lower():
             double_check.append(sample)
             pass
         else:
@@ -132,7 +132,7 @@ def main():
         Recal = SPEFile.SPEFile(check)
         Recal.read()
         status = calibration_check(Recal)[2]
-        if status == 'Fix':
+        if status == 'fix':
             cal_error.append(check.replace('_recal.Spe', '.Spe'))
     if cal_error == []:
         pass
