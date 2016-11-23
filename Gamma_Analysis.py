@@ -286,7 +286,7 @@ def acquire_files():
             else:
                 sample_measurements.append(file)
                 name = os.path.splitext(file)[0].replace("_", " ")
-                sample_names.append(name)
+                sample_names.append(str(name))
     return sample_measurements, sample_names
 
 

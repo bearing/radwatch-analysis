@@ -1,0 +1,9 @@
+C17-01.Spe
+
+Mass: 0.448 g
+
+Flux: 1e11 n/cm2s
+
+Time between irradiation and measurement: 756000 s
+
+Irradiation time: 100 s
