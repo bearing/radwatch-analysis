@@ -58,6 +58,50 @@ def peak_finder(measurement):
     return peaks_found
 
 
+def NAA_net_area(measurement, energy):
+    """
+    NAA_net_area determines the net area of a given peak without the use
+    of compton regions. It generates a region of interest (ROI) based on
+    full width half maximum (FWHM). A line is generated using the edges of the
+    ROI and an integral of the line is determined. The gross counts of the peak
+    are then subtracted by the integral and a net area and uncertainty are
+    determined and returned.
+    """
+    E0 = measurement.energy_cal[0]
+    Eslope = measurement.energy_cal[1]
+    sample_counts = measurement.data
+    energy_channel = int((energy - E0) / Eslope)
+
+    region_size = 1.3
+    # Rough estimate of FWHM.
+    fwhm = 0.05*energy**0.5
+    fwhm_channel = int(region_size * (fwhm - E0) / Eslope)
+    # peak gross area
+    gross_counts_peak = sum(sample_counts[(energy_channel - fwhm_channel):
+                                          (energy_channel + fwhm_channel)])
+    peak_channels = measurement.channel[(energy_channel - fwhm_channel):
+                                        (energy_channel + fwhm_channel)]
+    # first and last channel counts of peak
+    start_peak_c = sample_counts[(energy_channel - fwhm_channel)]
+    end_peak_c = sample_counts[(energy_channel + fwhm_channel)]
+    first_last_channel = [(energy_channel - fwhm_channel),
+                          (energy_channel + fwhm_channel)]
+
+    # generate line under peak
+    a_matrix = np.vstack([first_last_channel, np.ones(2)]).T
+    eslope, e0 = np.linalg.lstsq(a_matrix, [start_peak_c, end_peak_c])[0]
+
+    # integrate line under peak and acquire net area
+    line_integral = 0
+    for channel in peak_channels:
+        line_integral += e0 + eslope*channel
+    net_area = gross_counts_peak - line_integral
+
+    # evaluate uncertainty
+    net_area_uncertainty = (gross_counts_peak + line_integral)**0.5
+    return net_area, net_area_uncertainty
+
+
 def count_rate(M, B, energy):
     """
     Takes in a measured and background spectra and a peak energy and return the
@@ -67,7 +111,8 @@ def count_rate(M, B, energy):
     module, which only does regions of interest. Since peak fitting is not done
     the given count_rate is expected to be systematically higher.
     """
-    pm_results = ga.peak_measurement(M, energy, sub_regions='none')
+    net_area, unc = NAA_net_area(M, energy)
+    pm_results = [net_area, unc]
     bm_results = ga.peak_measurement(B, energy, sub_regions='none')
     sub_peak = ga.background_subtract(pm_results, bm_results, M.livetime,
                                       B.livetime)
