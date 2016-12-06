@@ -1,7 +1,7 @@
 import bs4
 import urllib
 import math
-from Gamma_Isotopes import Isotope 
+from Gamma_Isotopes import Isotope
 
 def search(input):
     """
@@ -12,19 +12,19 @@ def search(input):
     if type(input) == int or type(input) == float:
         if input >= 2000:
             plus_three = input + 3
-            minus_three = input - 3    
+            minus_three = input - 3
             url = 'http://nucleardata.nuclear.lu.se/toi/Gamma.asp?sql=&Min=' \
             + str(minus_three) + '&Max=' + str(plus_three) \
             + '&HlifeMin=3600&tMinStr=1+h'
         elif input >= 1000:
             plus_two = input + 2
-            minus_two = input - 2    
+            minus_two = input - 2
             url = 'http://nucleardata.nuclear.lu.se/toi/Gamma.asp?sql=&Min=' \
             + str(minus_two) + '&Max=' + str(plus_two) \
             + '&HlifeMin=3600&tMinStr=1+h'
         else:
             plus_one = input + 1
-            minus_one = input - 1    
+            minus_one = input - 1
             url = 'http://nucleardata.nuclear.lu.se/toi/Gamma.asp?sql=&Min=' \
             + str(minus_one) + '&Max=' + str(plus_one) \
             + '&HlifeMin=3600&tMinStr=1+h'
@@ -117,6 +117,12 @@ def extract_url(data):
     radionuclide url addon.
     """
     for i in range(len(intensities)):
+        if '(calc)' in intensities[i]:
+            intensities[i] = intensities[i][:-6]
+        if '&gt;' in intensities[i]:
+            intensities[i] = '0'
+        if '&lt;' in intensities[i]:
+            intensities[i] = '0'
         if intensities[i] == '':
             intensities[i] = '0'
         intensities[i] = float(intensities[i])
@@ -155,6 +161,14 @@ def extract_gamma(data):
     Extracts gamma ray energies with intensities of at least 1%.
     """
     for i in range(len(data)):
+        if '(calc)' in data[i]:
+            data[i] = data[i][:-6]
+        if '(' and ')' in data[i]:
+            data[i] = data[i][1:-1]
+        if '&gt;' in data[i]:
+            data[i] = '0'
+        if '&lt;' in data[i]:
+            data[i] = '0'
         if data[i] == '':
             data[i] = '0'
         data[i] = float(data[i])
@@ -208,7 +222,7 @@ def extract_symbol(bsobject, table):
     """
     symbol = symbol.strip() + ' '
     if symbol[0] == 'm':
-        symbol = symbol.replace('m', '')
+        symbol = symbol[1:]
         flag = True
     """
     Acquires the half life and the decay constant of the radionuclide.
@@ -339,18 +353,18 @@ def main(energy):
         bsgammatable takes the gamma ray energy/intensity table from the
         bsobject.
         """
-        bsgammatable = bsobject.table.findAll('table',{'border':'0',
-                                                   'cellpadding':'0',
-                                                   'cellspacing':'0'}, limit=1)
+        bsgammatable = bsobject.table.findAll('table', {'border':'0',
+                                              'cellpadding':'0',
+                                              'cellspacing':'0'}, limit=1)
         table_data = extract_table(bsgammatable)
         gamma_info = extract_gamma(table_data[0])
-        symbol = extract_symbol(bsobject,table_data[1])
-        half_life = extract_half_life(table_data[1],symbol[1])
+        symbol = extract_symbol(bsobject, table_data[1])
+        half_life = extract_half_life(table_data[1], symbol[1])
         atomic_mass_numbers = extract_atomic_mass_numbers(urls[i])
 
-        radionuclide_info = [symbol[0],atomic_mass_numbers[0],
+        radionuclide_info = [symbol[0], atomic_mass_numbers[0],
                              atomic_mass_numbers[1], half_life[0],half_life[1],
-                             gamma_info[0],gamma_info[1]]
+                             gamma_info[0], gamma_info[1]]
 
         info.append(radionuclide_info)
 
