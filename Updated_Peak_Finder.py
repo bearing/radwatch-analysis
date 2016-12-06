@@ -60,6 +60,8 @@ def peak_finder_pro(measurement):
     plt.plot(measurement.channel, np.log(counts))
     plt.plot(measurement.channel[plop], np.log(counts[plop]), 'bo')
     plt.show()
-measurement = SPEFile.SPEFile('Sample_12_Second_Long_Run.Spe')
-measurement.read()
-peak_found = peak_finder_pro(measurement)
+
+if __name__ == "__main__":
+    measurement = SPEFile.SPEFile('Sample_12_Second_Long_Run.Spe')
+    measurement.read()
+    peak_found = peak_finder_pro(measurement)

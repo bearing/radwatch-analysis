@@ -189,16 +189,20 @@ def peak_measurement(M, energy, sub_regions='both'):
     compton_region = [gross_counts_left, gross_counts_right]
 
     if sub_regions == 'left':
-        compton_region = compton_region[0]
+        compton_region = [compton_region[0]]
     elif sub_regions == 'right':
-        compton_region = compton_region[1]
+        compton_region = [compton_region[1]]
     elif sub_regions == 'none':
         compton_region = [0, 0]
     # Net Area
     net_area = gross_counts_peak - np.mean(compton_region)
     # Uncertainty - 2-sigma
     gross_area_uncertainty = (gross_counts_peak)**0.5
-    compton_region_uncertainty = np.std(compton_region)
+    if len(compton_region) < 2:
+        compton_region_uncertainty = (compton_region[0])**0.5
+    else:
+        compton_region_uncertainty = (compton_region[0] +
+                                      compton_region[1])**0.5
     uncertainty = 2 * (gross_area_uncertainty**2 +
                        compton_region_uncertainty**2)**0.5
     # Returning results
