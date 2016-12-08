@@ -57,11 +57,13 @@ def isotope_activity(isotope, emission_rates, emission_uncertainty):
     branching_ratio = isotope.list_sig_g_b_r
     activity = []
     uncertainty = []
+    weight = []
     for i in range(len(branching_ratio)):
         activity.append(emission_rates[i]/branching_ratio[i])
         uncertainty.append(emission_uncertainty[i]/branching_ratio[i])
-    isotope_activity = np.mean(activity)
-    activity_uncertainty = np.mean(uncertainty)
+        weight.append(1/(emission_uncertainty[i]/branching_ratio[i])**2)
+    isotope_activity = np.average(activity, weight)
+    activity_uncertainty = np.average(uncertainty, weights=weight)
     results = [isotope_activity, activity_uncertainty]
     return results
 
