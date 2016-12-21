@@ -1,10 +1,12 @@
-"""Purpose of this code is to define an object
+"""
+Purpose of this code is to define an object
 that represents the physical properties of one
-gamma-emitting radioisotope"""
-"""Attributes include: Atomic number, Mass number,
+gamma-emitting radioisotopes
+Attributes include: Atomic number, Mass number,
 Symbol, Half life [s], Decay constant [1/s], list
 of significant gamma emission energies, list of
-significant gamma emission branching ratios."""
+significant gamma emission branching ratios.
+"""
 
 
 class Isotope(object):
@@ -16,11 +18,7 @@ class Isotope(object):
         self.half_life = half_life
         self.decay_constant = decay_constant
         self.list_sig_g_e = list_sig_g_e
-        if type(list_sig_g_b_r != 'list'):
-            self.list_sig_g_b_r = list_sig_g_b_r
-        else:
-            self.list_sig_g_b_r = [0.01*list_sig_g_b_r[i]
-                                   for i in range(len(list_sig_g_b_r))]
+        self.list_sig_g_b_r = list_sig_g_b_r
 
 Ac_228_g_e = [338.32, 911.204, 964.766, 968.971]
 Ac_228_b_r = [11.27, 25.8, 5, 15.8]

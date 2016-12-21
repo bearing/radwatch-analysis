@@ -58,8 +58,9 @@ def isotope_activity(isotope, emission_rates, emission_uncertainty):
     activity = []
     uncertainty = []
     for i in range(len(branching_ratio)):
-        activity.append(emission_rates[i]/branching_ratio[i])
-        uncertainty.append(emission_uncertainty[i]/branching_ratio[i])
+        activity.append(emission_rates[i] / (0.01 * branching_ratio[i]))
+        uncertainty.append(emission_uncertainty[i] /
+                           (0.01 * branching_ratio[i]))
     isotope_activity = np.mean(activity)
     activity_uncertainty = np.mean(uncertainty)
     results = [isotope_activity, activity_uncertainty]
@@ -111,8 +112,12 @@ def isotope_concentration(isotope, reference, sample_activity,
         reference_conc = 1
         reference_conc_unc = 0
         conversion = 1
+    not_in_dirt = ['Cs134', 'Cs137', 'Co60', 'Pb210']
     ref_specific_activity = reference_activity[0] / reference.mass
-    ref_conc_specact_ratio = reference_conc / ref_specific_activity
+    if isotope.symbol + str(isotope.mass_number) in not_in_dirt:
+        ref_conc_specact_ratio = 1
+    else:
+        ref_conc_specact_ratio = reference_conc / ref_specific_activity
     error_factor = ((sample_activity[1] / sample_activity[0])**2 +
                     (reference_activity[1] / reference_activity[0])**2 +
                     (reference_conc_unc / reference_conc)**2)

@@ -65,14 +65,63 @@ def combine_measurements(sample_array, sample_names,
 
         u_sample_dates = np.sort(u_sample_dates)
         if len(u_sample_dates):
-            u_sample_dates_ = '('+str(len(u_sample_dates))+')'
+            u_sample_dates_ = ' ('+str(len(u_sample_dates))+')'
         else:
-            u_sample_dates_ = '('+str(1)+')'
+            u_sample_dates_ = ' ('+str(1)+')'
 
         for date in u_sample_dates[-3:]:
             u_sample_dates_ += "\n"+date.strftime('%m-%d-%y')
         lst = np.asarray(lst)
-        u_sample_array.append(np.mean(lst, axis=0))
+        # Perform sample group averaging with uncertainty standardization
+        k40avg = []
+        k40unc = []
+        bi214avg = []
+        bi214unc = []
+        tl208avg = []
+        tl208unc = []
+        cs137avg = []
+        cs137unc = []
+        cs134avg = []
+        cs134unc = []
+        sample_summary = []
+        for measure in lst:
+            if measure[0] <= measure[1]:
+                k40avg.append(0)
+            else:
+                k40avg.append(measure[0])
+            k40unc.append(measure[1]**2)
+            if measure[2] <= measure[3]:
+                bi214avg.append(0)
+            else:
+                bi214avg.append(measure[2])
+            bi214unc.append(measure[3]**2)
+            if measure[4] <= measure[5]:
+                tl208avg.append(0)
+            else:
+                tl208avg.append(measure[4])
+            tl208unc.append(measure[5]**2)
+            if measure[6] <= measure[7]:
+                cs137avg.append(0)
+            else:
+                cs137avg.append(measure[6])
+            cs137unc.append(measure[7]**2)
+            if measure[8] <= measure[9]:
+                cs134avg.append(0)
+            else:
+                cs134avg.append(measure[8])
+            cs134unc.append(measure[9]**2)
+
+        sample_summary.extend([np.mean(k40avg),
+                               np.sqrt(sum(k40unc)) / len(k40unc)])
+        sample_summary.extend([np.mean(bi214avg),
+                               np.sqrt(sum(bi214unc)) / len(bi214unc)])
+        sample_summary.extend([np.mean(tl208avg),
+                               np.sqrt(sum(tl208unc)) / len(tl208unc)])
+        sample_summary.extend([np.mean(cs137avg),
+                               np.sqrt(sum(cs137unc)) / len(cs137unc)])
+        sample_summary.extend([np.mean(cs134avg),
+                               np.sqrt(sum(cs134unc)) / len(cs134unc)])
+        u_sample_array.append(sample_summary)
         u_sample_names_ret.append(u_name + u_sample_dates_)
 
     return np.asarray(u_sample_array), u_sample_names_ret
@@ -152,7 +201,7 @@ def generate_barerror_logy(sample_names, data, error, legend_key, title,
         left_edge = index + float(width) * float(sample)
         if np.amin(data[:, sample]) == 0:
             args = np.where(data[:, sample] == 0)
-            data[args, sample] += 1e-2
+            data[args, sample] += 1E-4
             draw_arrows(axes=ax, xlocs=(left_edge + 0.5 * float(width))[args],
                         ylocs=error[args, sample], color=color_scheme[sample])
         for pos, val, err, color in zip(left_edge, data[:, sample],
@@ -176,8 +225,9 @@ def generate_barerror_logy(sample_names, data, error, legend_key, title,
                 arrowstyle='-|>'))
     ax.annotate('Detection Limit', xy=(0.888, 0.905), xytext=(0.888, 0.905),
                 textcoords='axes fraction', ha='left', va='center')
-    ax.set_title(title)
-    ax.set_ylabel('Specific Activity' + legend_key[0].split(' ')[1])
+    ax.set_title(title, fontsize=20)
+    ax.set_ylabel('Specific Activity' + legend_key[0].split(' ')[1],
+                  fontsize=20)
     plt.gcf().subplots_adjust(bottom=0.15, left=0.05, right=0.95)
     plt.show()
     return ax, fig
