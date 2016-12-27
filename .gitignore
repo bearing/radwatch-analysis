@@ -10,3 +10,11 @@ Error_Cal.txt
 # Output sampling table
 Sampling_Table.csv
 
+*.Spe
+*.png
+*.jpg
+*.pdf
+*.pptx
+*.csv
+ROI_Maker_Original.py
+spectrum_peak_visualization_channels.py
