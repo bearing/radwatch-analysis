@@ -177,14 +177,6 @@ def peak_measurement(M, energy, sub_regions='both'):
     region_size = 1.3
     compton_distance = 4
 
-    # Cs134 compton region using Bi214 609 peak.
-    bi_fwhm = 0.05 * (609.31)**0.5
-    bi_fwhm_channel = int(region_size * (bi_fwhm - E0) / Eslope)
-    bi_peak_channel = int((609.31 - E0) / Eslope)
-    bi_right_peak = bi_peak_channel + compton_distance * bi_fwhm_channel
-    bi_right_compton = sum(M_counts[(bi_right_peak - bi_fwhm_channel):
-                                    (bi_right_peak + bi_fwhm_channel)])
-
     # Rough estimate of FWHM.
     fwhm = 0.05*energy**0.5
     fwhm_channel = int(region_size * (fwhm - E0) / Eslope)
@@ -202,6 +194,14 @@ def peak_measurement(M, energy, sub_regions='both'):
                                       (right_peak + fwhm_channel)])
     compton_region = [gross_counts_left, gross_counts_right]
 
+    # Cs134 compton region using Bi214 609 peak.
+    bi_fwhm = 0.05 * (609.31)**0.5
+    bi_fwhm_channel = int(region_size * (bi_fwhm - E0) / Eslope)
+    bi_peak_channel = int((609.31 - E0) / Eslope)
+    bi_right_peak = bi_peak_channel + compton_distance * bi_fwhm_channel
+    bi_right_compton = sum(M_counts[(bi_right_peak - fwhm_channel):
+                                    (bi_right_peak + fwhm_channel)])
+
     if sub_regions == 'left':
         compton_region = [compton_region[0]]
     elif sub_regions == 'right':
@@ -217,8 +217,8 @@ def peak_measurement(M, energy, sub_regions='both'):
     if len(compton_region) < 2:
         compton_region_uncertainty = (compton_region[0])**0.5
     else:
-        compton_region_uncertainty = (2 * (compton_region[0] +
-                                           compton_region[1]))**0.5
+        compton_region_uncertainty = ((compton_region[0] +
+                                      compton_region[1])**0.5) / 2
     uncertainty = 2 * (gross_area_uncertainty**2 +
                        compton_region_uncertainty**2)**0.5
     # Returning results
