@@ -6,21 +6,26 @@ import SPEFile
 import os
 
 
-def acquire_files():
+def acquire_files(files=None):
     """
     acquire_files gathers all the .Spe file in the current file directory and
     returns a list containing all .Spe files.
+    Files is a list of .spe files.
     """
     sample_measurements = []
-    dir_path = os.getcwd()
-    for file in os.listdir(dir_path):
-        if file.lower().endswith(".spe"):
-            if file == "USS_Independence_Background.Spe":
-                pass
-            else:
-                sample_measurements.append(file)
-    return sample_measurements
+    if files == None:
+        dir_path = os.getcwd()
+        for file in os.listdir(dir_path):
+            if file.lower().endswith(".spe"):
+                if file == "USS_Independence_Background.Spe":
+                    pass
+                else:
+                    sample_measurements.append(file)
+        return sample_measurements
 
+    else:
+        return files
+        
 
 def calibration_check(spectrum):
     '''
