@@ -1,3 +1,9 @@
+"""
+In order to run this file, it is necessary to install PeakUtils. 
+Instructions are located in the link below. 
+https://pypi.python.org/pypi/PeakUtils
+-Tyler
+"""
 import matplotlib.pyplot as plt
 import SPEFile
 from ROI_Maker import ROI_Maker
