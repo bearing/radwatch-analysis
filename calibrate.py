@@ -22,27 +22,14 @@ def acquire_files():
     return sample_measurements
 
 
-def calibration_check(spectrum):
-    '''
-    calibration_check will search for certain peaks that are expected to occur
-    in every measured spectra. The energies it searches for are based on peaks
-    that occur in background radiation. Once these peaks are found, it
-    compares the energy of that peak to the actual energy the peak should be
-    at. This check is based on expected detector resolution and if the energy
-    deviates to far from the expected value (if beyond half a FWHM), then
-    calibration_check sends a message indicating a fix is needed. Only Spectra
-    are taken as input.
-    '''
+def peak_offsets(spectrum):
+    offset = []
+    peak_channel = []
+    energy_list = [351.93, 583.19, 609.31, 911.20, 1120.29, 1460.82, 1764.49,
+                   2614.51]
     E0 = spectrum.energy_cal[0]
     Eslope = spectrum.energy_cal[1]
     energy_axis = E0 + Eslope*spectrum.channel
-
-    peak_channel = []
-    found_energy = []
-    energy_list = [351.93, 583.19, 609.31, 911.20, 1120.29, 1460.82, 1764.49,
-                   2614.51]
-    skip = 0
-    fix = 0
     for energy in energy_list:
         # rough estimate of fwhm.
         fwhm = 0.05*energy**0.5
@@ -58,18 +45,49 @@ def calibration_check(spectrum):
         tallest_peak = []
         if indexes.size == 0:
             print('peak not found')
-            skip += 1
+            offset.append(np.nan)
+            peak_channel.append(np.nan)
         else:
             for i in range(indexes.size):
                 spot = spectrum.data[indexes[i]+start_region]
                 tallest_peak.append(spot)
             indexes = indexes[np.argmax(tallest_peak)]
-            peak_channel.append(int(indexes+start_region))
-            found_energy.append(energy)
-            difference = abs((energy -
+            difference = ((energy -
                               float(energy_axis[int(indexes+start_region)])))
-            if difference > 0.5*fwhm:
-                fix += 1
+            offset.append(difference)
+            peak_channel.append(int(indexes + start_region))
+    return offset, peak_channel
+
+
+def calibration_check(spectrum):
+    '''
+    calibration_check will search for certain peaks that are expected to occur
+    in every measured spectra. The energies it searches for are based on peaks
+    that occur in background radiation. Once these peaks are found, it
+    compares the energy of that peak to the actual energy the peak should be
+    at. This check is based on expected detector resolution and if the energy
+    deviates to far from the expected value (if beyond half a FWHM), then
+    calibration_check sends a message indicating a fix is needed. Only Spectra
+    are taken as input.
+    '''
+
+    peak_channel = []
+    found_energy = []
+    energy_list = [351.93, 583.19, 609.31, 911.20, 1120.29, 1460.82, 1764.49,
+                   2614.51]
+    skip = 0
+    fix = 0
+    offsets = peak_offsets(spectrum)
+    difference = offsets[0]
+    channels = offsets[1]
+    for i in range(len(difference)):
+        fwhm = 0.05 * energy_list[i]**0.5
+        if np.isnan(difference[i]):
+            skip += 1
+        if abs(difference[i]) > 0.5 * fwhm:
+            fix += 1
+            peak_channel.append(channels[i])
+            found_energy.append(energy_list[i])
     if skip > 4:
         message = 'error'
     elif fix >= 4:
