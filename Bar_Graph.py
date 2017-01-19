@@ -225,7 +225,8 @@ def generate_barerror_logy(sample_names, data, error, legend_key, title,
                 arrowprops=dict(edgecolor='k', facecolor='k',
                 arrowstyle='-|>'))
     ax.annotate('Detection Limit', xy=(0.888, 0.905), xytext=(0.888, 0.905),
-                textcoords='axes fraction', ha='left', va='center')
+                textcoords='axes fraction', ha='left', va='center',
+                fontsize=20)
     ax.set_title(title, fontsize=30)
     ax.set_ylabel('Specific Activity' + legend_key[0].split(' ')[1],
                   fontsize=30)
