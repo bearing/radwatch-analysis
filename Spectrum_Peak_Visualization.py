@@ -20,6 +20,7 @@ def plot_spectrum(spectrum, title= None, energy_range= None):
     counts = spectrum.data
 
     plt.semilogy(energy_axis, counts, drawstyle='steps-mid')
+    plt.xlim(xmin=0)
     plt.xlabel('Energy (keV)', fontdict=font)
     plt.ylabel('Counts', fontdict=font)
     
@@ -134,8 +135,8 @@ def plot_peaks(spectrum, title= None, energy_range= None, subregion='both', use=
                              (energy_axis <= 
                              energy_axis[right_peak_region[2*i+1]]), 
                              facecolor='g')
-        
-    
+   
+    plt.xlim(xmin=0)
     plt.yscale('log')
     plt.xlabel('Energy (keV)')
     plt.ylabel('Counts')
