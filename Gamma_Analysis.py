@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 import peakutils
 import pandas as pd
 import os
-import shutil
 
 EFFICIENCY_CAL_COEFFS = [-5.1164, 161.65, -3952.3, 30908]
 
@@ -348,10 +347,12 @@ def save_peak(sample, energy):
     fwhm = 0.05 * (energy)**0.5
     energy_range = [(energy - 8 * fwhm), (energy + 8 * fwhm)]
     # generate plot PNG using Spectrum_Peak_Visualization
-    spv.plot_peaks(sample, title=label, energy_range=energy_range)
+    spv.plot_peaks(sample, title=label, energy_range=energy_range,
+                   peak_location=energy)
     PNG_name = label + '.png'
     # move PNGs to newly created folder
-    shutil.move(PNG_name, sample_folder)
+    plt.savefig(sample_folder + '/' + PNG_name)
+    plt.clf()
 
 
 def main():

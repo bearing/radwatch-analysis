@@ -26,7 +26,7 @@ def plot_spectrum(spectrum, title=None, energy_range=None):
 
 
 def plot_peaks(spectrum, title=None, energy_range=None, subregion='both',
-               use='GA'):
+               use='GA', peak_location=[]):
     """
     plot_peaks plots spectra with peaks highlighted.
     """
@@ -39,7 +39,7 @@ def plot_peaks(spectrum, title=None, energy_range=None, subregion='both',
     energy_axis = zero_offset + energy_per_channel * spectrum.channel
     plt.plot(energy_axis, counts)
 
-    ROI_info = ROI_Maker(spectrum, use)
+    ROI_info = ROI_Maker(spectrum, use, peak_location)
     center_peak_region = ROI_info[2]
     left_peak_region = ROI_info[3]
     right_peak_region = ROI_info[4]
@@ -136,8 +136,6 @@ def plot_peaks(spectrum, title=None, energy_range=None, subregion='both',
     plt.yscale('log')
     plt.xlabel('Energy (keV)')
     plt.ylabel('Counts')
-    plt.savefig(str(title) + '.png')
-    plt.clf()
 
 
 def test1():

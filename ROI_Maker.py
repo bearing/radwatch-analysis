@@ -3,7 +3,7 @@ from Updated_Peak_Finder import peak_finder_pro as peak_finder
 import Gamma_Isotopes
 import Gamma_Analysis
 
-def ROI_Maker(spectra, use='NAA'):
+def ROI_Maker(spectra, use='NAA', peak_location=[]):
 
     """
     Takes in a measured spectra and identifies peaks in terms of channel number
@@ -30,21 +30,25 @@ def ROI_Maker(spectra, use='NAA'):
                                  zero_offset)
 
     if use == 'GA':
-        energies_of_interest = [Gamma_Isotopes.actinium_228.list_sig_g_e,
-                                Gamma_Isotopes.bismuth_214.list_sig_g_e,
-                                Gamma_Isotopes.caesium_134.list_sig_g_e,
-                                Gamma_Isotopes.caesium_137.list_sig_g_e,
-                                Gamma_Isotopes.cobalt_60.list_sig_g_e,
-                                Gamma_Isotopes.lead_210.list_sig_g_e,
-                                Gamma_Isotopes.lead_212.list_sig_g_e,
-                                Gamma_Isotopes.lead_214.list_sig_g_e,
-                                Gamma_Isotopes.potassium_40.list_sig_g_e,
-                                Gamma_Isotopes.thallium_208.list_sig_g_e,
-                                Gamma_Isotopes.thorium_234.list_sig_g_e]
+        if not peak_location:
+            energies_of_interest = [Gamma_Isotopes.actinium_228.list_sig_g_e,
+                                    Gamma_Isotopes.bismuth_214.list_sig_g_e,
+                                    Gamma_Isotopes.caesium_134.list_sig_g_e,
+                                    Gamma_Isotopes.caesium_137.list_sig_g_e,
+                                    Gamma_Isotopes.cobalt_60.list_sig_g_e,
+                                    Gamma_Isotopes.lead_210.list_sig_g_e,
+                                    Gamma_Isotopes.lead_212.list_sig_g_e,
+                                    Gamma_Isotopes.lead_214.list_sig_g_e,
+                                    Gamma_Isotopes.potassium_40.list_sig_g_e,
+                                    Gamma_Isotopes.thallium_208.list_sig_g_e,
+                                    Gamma_Isotopes.thorium_234.list_sig_g_e]
 
-        peak_energies_original = [val for sublist in energies_of_interest for
-                                  val in sublist]
-        peak_energies_original.sort()
+            peak_energies_original = [val for sublist in
+                                      energies_of_interest for
+                                      val in sublist]
+            peak_energies_original.sort()
+        else:
+            peak_energies_original = [peak_location]
         peak_energies = []
 
         for i in range(len(peak_energies_original)):
