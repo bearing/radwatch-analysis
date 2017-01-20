@@ -9,6 +9,7 @@ from SpectrumFileBase import SpectrumFileBase
 import Gamma_Isotopes as ii
 import Gamma_Reference as ref
 import SPEFile
+from ROI_Maker import ROI_Maker
 import numpy as np
 import matplotlib.pyplot as plt
 import peakutils
@@ -169,61 +170,32 @@ def peak_measurement(M, energy, sub_regions='both'):
     Takes in a measured spectra alongside a specific energy and returns the net
     area and uncertainty for that energy.
     """
-    E0 = M.energy_cal[0]
-    Eslope = M.energy_cal[1]
-    M_counts = M.data
-    energy_channel = int((energy - E0) / Eslope)
 
-    region_size = 1.3
-    compton_distance = 4
+    peak_ch, side_ch_list = ROI_Maker(M, energy, sub_regions=sub_regions)
+    gross_area_peak = sum(M.data[peak_ch[0]:peak_ch[1]])
+    n_compton = len(side_ch_list)
 
-    # Rough estimate of FWHM.
-    fwhm = 0.05*energy**0.5
-    fwhm_channel = int(region_size * (fwhm - E0) / Eslope)
-    # peak gross area
-    gross_counts_peak = sum(M_counts[(energy_channel - fwhm_channel):
-                                     (energy_channel + fwhm_channel)])
+    if n_compton == 0:
+        compton_area = 0
+        compton_area_unc = 0
+    elif n_compton == 1:
+        compton_ch = side_ch_list[0]
+        compton_area = M.data[compton_ch[0]:compton_ch[1]]
+        compton_area_unc = np.sqrt(compton_area)
+    elif n_compton == 2:
+        compton_1 = side_ch_list[0]
+        compton_2 = side_ch_list[1]
+        compton_area_1 = M.data[compton_1[0]:compton_1[1]]
+        compton_area_2 = M.data[compton_2[0]:compton_2[1]]
+        compton_area = np.mean(compton_area_1, compton_area_2)
+        # compton_area_1_unc = sqrt(compton_area_1)
+        # propagate uncertainty for taking the mean: /2
+        compton_area_unc = np.sqrt(compton_area_1 + compton_area_2) / 2
 
-    # Left Gross Area
-    left_peak = energy_channel - compton_distance * fwhm_channel
-    gross_counts_left = sum(M_counts[(left_peak - fwhm_channel):
-                                     (left_peak + fwhm_channel)])
-    # Right Gross Area
-    right_peak = energy_channel + compton_distance * fwhm_channel
-    gross_counts_right = sum(M_counts[(right_peak - fwhm_channel):
-                                      (right_peak + fwhm_channel)])
-    compton_region = [gross_counts_left, gross_counts_right]
+    net_area = gross_area_peak - compton_area
+    net_area_unc = np.sqrt(gross_area_peak + compton_area_unc**2)
 
-    # Cs134 compton region using Bi214 609 peak.
-    bi_fwhm = 0.05 * (609.31)**0.5
-    bi_fwhm_channel = int(region_size * (bi_fwhm - E0) / Eslope)
-    bi_peak_channel = int((609.31 - E0) / Eslope)
-    bi_right_peak = bi_peak_channel + compton_distance * bi_fwhm_channel
-    bi_right_compton = sum(M_counts[(bi_right_peak - fwhm_channel):
-                                    (bi_right_peak + fwhm_channel)])
-
-    if sub_regions == 'left':
-        compton_region = [compton_region[0]]
-    elif sub_regions == 'right':
-        compton_region = [compton_region[1]]
-    elif sub_regions == 'Cs134':
-        compton_region = [compton_region[0], bi_right_compton]
-    elif sub_regions == 'none':
-        compton_region = [0, 0]
-    # Net Area
-    net_area = gross_counts_peak - np.mean(compton_region)
-    # Uncertainty - 2-sigma
-    gross_area_uncertainty = (gross_counts_peak)**0.5
-    if len(compton_region) < 2:
-        compton_region_uncertainty = (compton_region[0])**0.5
-    else:
-        compton_region_uncertainty = ((compton_region[0] +
-                                      compton_region[1])**0.5) / 2
-    uncertainty = 2 * (gross_area_uncertainty**2 +
-                       compton_region_uncertainty**2)**0.5
-    # Returning results
-    results = [net_area, uncertainty]
-    return results
+    return net_area, net_area_unc
 
 
 def background_subtract(meas_area, back_area, meas_time, back_time):
