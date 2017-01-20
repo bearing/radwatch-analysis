@@ -168,7 +168,7 @@ def peak_finder(spectrum, energy):
 def peak_measurement(M, energy, sub_regions='both'):
     """
     Takes in a measured spectra alongside a specific energy and returns the net
-    area and uncertainty for that energy.
+    area and uncertainty (2-sigma) for that energy.
     """
 
     peak_ch, side_ch_list = ROI_Maker(M, energy, sub_regions=sub_regions)
@@ -195,7 +195,8 @@ def peak_measurement(M, energy, sub_regions='both'):
     net_area = gross_area_peak - compton_area
     net_area_unc = np.sqrt(gross_area_peak + compton_area_unc**2)
 
-    return net_area, net_area_unc
+    # 2 sigma uncertainty
+    return net_area, 2 * net_area_unc
 
 
 def background_subtract(meas_area, back_area, meas_time, back_time):
