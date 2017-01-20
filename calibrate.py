@@ -10,6 +10,7 @@ def acquire_files():
     """
     acquire_files gathers all the .Spe file in the current file directory and
     returns a list containing all .Spe files.
+    Files is a list of .spe files.
     """
     sample_measurements = []
     dir_path = os.getcwd()
@@ -18,9 +19,7 @@ def acquire_files():
             if file == "USS_Independence_Background.Spe":
                 pass
             else:
-                sample_measurements.append(file)
-    return sample_measurements
-
+                return sample_measurements
 
 def calibration_check(spectrum):
     '''
@@ -108,8 +107,7 @@ def calibration_correction(measurement, channel, energy):
     return(cal_file)
 
 
-def main():
-    sample_measurements = acquire_files()
+def recalibrate(files):
     cal_error = []
     double_check = []
 
@@ -140,7 +138,9 @@ def main():
         with open('Error_Cal.txt', 'w') as file:
             file.writelines('Check calibration in %s \n' % error for error in
                             cal_error)
-
+def main(files):
+    sample_measurements = acquire_files()
+    recalibrate(sample_measurements)
 
 if __name__ == '__main__':
     main()
