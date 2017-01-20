@@ -46,11 +46,11 @@ def plot_peaks(spectrum, title=None, energy_range=None, subregion='both',
 
     if subregion == 'NAA':
 
-        for i in range(int(len(center_peak_region)/2)):
-            start_region = energy_axis[center_peak_region[2*i]]
-            end_region = energy_axis[center_peak_region[2*i+1]]
-            start_region_counts = counts[center_peak_region[2*i]]
-            end_region_counts = counts[center_peak_region[2*i+1]]
+        for i in range(int(len(center_peak_region) / 2)):
+            start_region = energy_axis[center_peak_region[2 * i]]
+            end_region = energy_axis[center_peak_region[2 * i + 1]]
+            start_region_counts = counts[center_peak_region[2 * i]]
+            end_region_counts = counts[center_peak_region[2 * i + 1]]
             l = [start_region, end_region]
             m = [start_region_counts, end_region_counts]
             a_matrix = np.vstack([l, np.ones(2)]).T
@@ -146,7 +146,7 @@ def test1():
 def test2():
     measurement = SPEFile.SPEFile('UCB006_Bananas.Spe')
     measurement.read()
-    plot_spectrum(measurement, 'UCB006_Bananas', (1450,1470))
+    plot_spectrum(measurement, 'UCB006_Bananas', (1450, 1470))
 
 def test3():
     measurement = SPEFile.SPEFile('UCB018_Soil_Sample010_2.Spe')
@@ -166,7 +166,7 @@ def test5():
 def test6():
     measurement = SPEFile.SPEFile('UCB006_Bananas.Spe')
     measurement.read()
-    plot_peaks(measurement, 'UCB006_Bananas', (1450,1470), subregion='right')
+    plot_peaks(measurement, 'UCB006_Bananas', (1450, 1470), subregion='right')
 
 def test7():
     measurement = SPEFile.SPEFile('UCB065_Halibut.Spe')

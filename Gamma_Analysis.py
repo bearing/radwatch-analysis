@@ -387,9 +387,7 @@ def main():
                         error_spectrum.append(sample)
                         break
         isotope_list = [ii.potassium_40, ii.bismuth_214, ii.thallium_208,
-                        ii.caesium_137, ii.caesium_134, ii.cobalt_60,
-                        ii.actinium_228, ii.lead_212, ii.lead_214,
-                        ii.thorium_234, ii.lead_210]
+                        ii.caesium_137, ii.caesium_134]
         activity_info = []
         for isotope in isotope_list:
             if isotope.symbol == 'Cs' and isotope.mass_number == 134:
