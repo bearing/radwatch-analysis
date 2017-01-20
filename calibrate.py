@@ -6,7 +6,7 @@ import SPEFile
 import os
 
 
-def acquire_files(files=None):
+def acquire_files():
     """
     acquire_files gathers all the .Spe file in the current file directory and
     returns a list containing all .Spe files.
