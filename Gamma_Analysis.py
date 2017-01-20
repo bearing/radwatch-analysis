@@ -185,9 +185,9 @@ def peak_measurement(M, energy, sub_regions='both'):
     elif n_compton == 2:
         compton_1 = side_ch_list[0]
         compton_2 = side_ch_list[1]
-        compton_area_1 = M.data[compton_1[0]:compton_1[1]]
-        compton_area_2 = M.data[compton_2[0]:compton_2[1]]
-        compton_area = np.mean(compton_area_1, compton_area_2)
+        compton_area_1 = sum(M.data[compton_1[0]:compton_1[1]])
+        compton_area_2 = sum(M.data[compton_2[0]:compton_2[1]])
+        compton_area = np.mean([compton_area_1, compton_area_2])
         # compton_area_1_unc = sqrt(compton_area_1)
         # propagate uncertainty for taking the mean: /2
         compton_area_unc = np.sqrt(compton_area_1 + compton_area_2) / 2
