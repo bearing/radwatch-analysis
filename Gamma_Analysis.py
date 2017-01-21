@@ -351,7 +351,7 @@ def save_peak(sample, energy):
                    peak_location=energy)
     PNG_name = label + '.png'
     # move PNGs to newly created folder
-    plt.savefig(sample_folder + '/' + PNG_name)
+    plt.savefig(os.path.join(sample_folder, PNG_name))
     plt.clf()
 
 
