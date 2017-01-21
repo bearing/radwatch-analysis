@@ -102,7 +102,7 @@ def NAA_net_area(measurement, energy):
     return net_area, net_area_uncertainty
 
 
-def count_rate(M, B, energy, isotope):
+def peak_decay_rate(M, B, energy, isotope):
     """
     Takes in a measured and background spectra and a peak energy and return the
     net area under the peak.
@@ -121,6 +121,7 @@ def count_rate(M, B, energy, isotope):
             break
 
     branching_ratio = isotope.list_sig_g_b_r[index]
+    half_life = isotope.half_life
 
     net_area, unc = NAA_net_area(M, energy)
     pm_results = [net_area, unc]
@@ -134,7 +135,7 @@ def count_rate(M, B, energy, isotope):
     decay_rate_uncertainty = count_rate_uncertainty / (efficiency[0] *
                                                        branching_ratio)
 
-    return [decay_rate, decay_rate_uncertainty]
+    return [decay_rate, decay_rate_uncertainty, half_life, branching_ratio]
 
 
 def isotope_verifier(isotope):
@@ -275,7 +276,8 @@ def acquire_measurement():
                            '-->')
     return acquire
 
-def NAA_table(candidates, energy, isotopes, fractions, uncertainty):
+def NAA_table(candidates, energy, branching_ratios, isotopes, half_lives,
+              fractions, uncertainty):
     """
     NAA_table generates a csv file containing the results of the NAA analysis,
     which includes possible isotopes and their fractions for each energy found
@@ -299,8 +301,9 @@ def NAA_table(candidates, energy, isotopes, fractions, uncertainty):
                                         sorted_info[i][2],
                                         sorted_info[i][3]])
         # sorted by energy
-        data_e[candidates[i]] = np.array([energy[i], isotopes[i], fractions[i],
-                                          uncertainty[i]])
+        data_e[candidates[i]] = np.array([energy[i], isotopes[i],
+                                          half_lives[i], branching_ratios[i],
+                                          fractions[i], uncertainty[i]])
 
     table_headers = []
     table_headers.append('Energy [keV]')
@@ -308,9 +311,14 @@ def NAA_table(candidates, energy, isotopes, fractions, uncertainty):
     table_headers.append('Mass Fraction')
     table_headers.append('Fraction Unc.')
 
+    table_headers_e = []
+    table_headers_e.extend(['Energy [keV]', 'Isotope', 'Half-life [s]',
+                            'Branching Ratio', 'Mass Fraction',
+                            'Fraction Unc.'])
+
     frame = pd.DataFrame(data, index=table_headers)
     frame = frame.T
-    frame_energy = pd.DataFrame(data_e, index=table_headers)
+    frame_energy = pd.DataFrame(data_e, index=table_headers_e)
     frame_energy = frame_energy.T
     frame.to_csv('NAA_Results_Isotope.csv')
     frame_energy.to_csv('NAA_Results_Energy.csv')
@@ -328,7 +336,9 @@ def main():
     energy = []
     candidates = []
     confirmed_energy = []
+    branching_ratio = []
     confirmed_isotopes = []
+    isotope_half_life = []
     isotope_fraction = []
     fraction_uncertainty = []
     count = 0
@@ -344,8 +354,8 @@ def main():
                 pass
             elif flag is True:
                 count += 1
-                decay_rate = count_rate(measurement, background,
-                                        energy[energy_peak], isotope)
+                decay_rate = peak_decay_rate(measurement, background,
+                                             energy[energy_peak], isotope)
                 weight_fraction, uncertainty = element_fraction(decay_rate,
                                                                 isotope,
                                                                 mass,
@@ -357,11 +367,14 @@ def main():
                                                                 weight)
                 candidates.append(count)
                 confirmed_energy.append(energy[energy_peak])
+                branching_ratio.append(decay_rate[2])
                 confirmed_isotopes.append((isotope.symbol +
                                            str(isotope.mass_number)))
+                isotope_half_life.append(decay_rate[3])
                 isotope_fraction.append(weight_fraction)
                 fraction_uncertainty.append(uncertainty)
-    NAA_table(candidates, confirmed_energy, confirmed_isotopes,
+    NAA_table(candidates, confirmed_energy, branching_ratio,
+              confirmed_isotopes, isotope_half_life,
               isotope_fraction, fraction_uncertainty)
 
 
