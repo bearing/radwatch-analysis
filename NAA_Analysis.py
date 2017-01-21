@@ -121,7 +121,6 @@ def peak_decay_rate(M, B, energy, isotope):
             break
 
     branching_ratio = isotope.list_sig_g_b_r[index]
-    half_life = isotope.half_life
 
     net_area, unc = NAA_net_area(M, energy)
     pm_results = [net_area, unc]
@@ -135,7 +134,7 @@ def peak_decay_rate(M, B, energy, isotope):
     decay_rate_uncertainty = count_rate_uncertainty / (efficiency[0] *
                                                        branching_ratio)
 
-    return [decay_rate, decay_rate_uncertainty, half_life, branching_ratio]
+    return [decay_rate, decay_rate_uncertainty, branching_ratio]
 
 
 def isotope_verifier(isotope):
@@ -276,6 +275,7 @@ def acquire_measurement():
                            '-->')
     return acquire
 
+
 def NAA_table(candidates, energy, branching_ratios, isotopes, half_lives,
               fractions, uncertainty):
     """
@@ -370,7 +370,7 @@ def main():
                 branching_ratio.append(decay_rate[2])
                 confirmed_isotopes.append((isotope.symbol +
                                            str(isotope.mass_number)))
-                isotope_half_life.append(decay_rate[3])
+                isotope_half_life.append(isotope.half_life)
                 isotope_fraction.append(weight_fraction)
                 fraction_uncertainty.append(uncertainty)
     NAA_table(candidates, confirmed_energy, branching_ratio,
