@@ -141,8 +141,8 @@ def plot_peaks(spectrum, title=None, energy_range=None, subregion='both',
 
     if energy_range is not None:
         plt.xlim([energy_range[0], energy_range[1]])
-
-    plt.xlim(xmin=0)
+    else:
+        plt.xlim(xmin=0)
     plt.yscale('log')
     plt.xlabel('Energy (keV)')
     plt.ylabel('Counts')
