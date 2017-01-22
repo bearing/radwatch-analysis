@@ -21,7 +21,6 @@ def plot_spectrum(spectrum, title=None, energy_range=None):
     counts = spectrum.data
 
     plt.semilogy(energy_axis, counts, drawstyle='steps-mid')
-    plt.xlim(xmin=0)
     plt.xlabel('Energy (keV)', fontdict=font)
     plt.ylabel('Counts', fontdict=font)
 
@@ -30,6 +29,8 @@ def plot_spectrum(spectrum, title=None, energy_range=None):
 
     if energy_range is not None:
         plt.xlim([energy_range[0], energy_range[1]])
+    else:
+        plt.xlim(xmin=0)
 
 
 def plot_peaks(spectrum, title=None, energy_range=None, subregion='both',
