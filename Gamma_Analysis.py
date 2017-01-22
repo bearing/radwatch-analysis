@@ -8,6 +8,7 @@ from __future__ import print_function
 from SpectrumFileBase import SpectrumFileBase
 import Gamma_Isotopes as ii
 import Gamma_Reference as ref
+import Spectrum_Peak_Visualization as spv
 import SPEFile
 import numpy as np
 import matplotlib.pyplot as plt
@@ -251,6 +252,7 @@ def background_subtract(meas_area, back_area, meas_time, back_time):
 
 def make_table(isotope_list, sample_info, sample_names, dates):
     data = {}
+    web_data = {}
     df = pd.read_csv('RadWatch_Samples.csv')
     mass = pd.Series.tolist(df.ix[:, 2])
     for j in range(len(mass)):
@@ -260,9 +262,17 @@ def make_table(isotope_list, sample_info, sample_names, dates):
             mass[j] = float(mass[j])
         mass[j] = 1000/mass[j]
     for i in range(len(sample_names)):
+        web_value = []
         value = np.array(sample_info[i]) * mass[i]
+        for j in range(0, len(value), 2):
+            if value[j] <= value[j + 1]:
+                web_value.extend(np.array(['N.D.',
+                                           value[j + 1].round(decimals=2)]))
+            else:
+                web_value.extend(np.array([value[j].round(decimals=2),
+                                           value[j + 1].round(decimals=2)]))
         data[sample_names[i]] = np.array(value.round(decimals=2))
-
+        web_data[sample_names[i]] = np.array(web_value)
     isotope_act_unc = []
     for i in range(len(isotope_list)):
         isotope_act_unc.append(str(isotope_list[i].symbol) + '-' +
@@ -285,6 +295,19 @@ def make_table(isotope_list, sample_info, sample_names, dates):
     colnames = colnames[-2:] + colnames[:-2]
     frame = frame[colnames]
     frame.to_csv('Sampling_Table.csv')
+
+    web_frame = pd.DataFrame(web_data, index=isotope_act_unc)
+    web_frame = web_frame.T
+    web_frame.index.name = 'Sample Type'
+    # Adding Date Measured and Sample Weight Columns
+
+    web_frame['Date Measured'] = dates
+    web_frame['Sample Weight (g)'] = pd.Series.tolist(df.ix[:, 2])
+
+    # Reindexing columns to place 'Date Measured' and 'Sample Weight' first.
+    web_frame = web_frame[colnames]
+    web_frame.to_csv('Website_Table.csv')
+
     return frame
 
 
@@ -308,6 +331,28 @@ def acquire_files():
                 name = os.path.splitext(file)[0].replace("_", " ")
                 sample_names.append(str(name))
     return sample_measurements, sample_names
+
+
+def save_peak(sample, energy):
+    cwd = os.getcwd()
+    sample_name = os.path.splitext(sample.filename)[0]
+    sample_folder = os.path.join(cwd, sample_name)
+    # if folder exists, skip next step. Otherwise, create folder for PNGs
+    if not os.path.exists(sample_folder):
+        try:
+            os.makedirs(sample_folder)
+        except OSError:
+            pass
+    label = sample_name + '_' + str(energy) + '_peak'
+    fwhm = 0.05 * (energy)**0.5
+    energy_range = [(energy - 8 * fwhm), (energy + 8 * fwhm)]
+    # generate plot PNG using Spectrum_Peak_Visualization
+    spv.plot_peaks(sample, title=label, energy_range=energy_range,
+                   peak_location=energy)
+    PNG_name = label + '.png'
+    # move PNGs to newly created folder
+    plt.savefig(os.path.join(sample_folder, PNG_name))
+    plt.clf()
 
 
 def main():
@@ -342,9 +387,7 @@ def main():
                         error_spectrum.append(sample)
                         break
         isotope_list = [ii.potassium_40, ii.bismuth_214, ii.thallium_208,
-                        ii.caesium_137, ii.caesium_134, ii.cobalt_60,
-                        ii.actinium_228, ii.lead_212, ii.lead_214,
-                        ii.thorium_234, ii.lead_210]
+                        ii.caesium_137, ii.caesium_134]
         activity_info = []
         for isotope in isotope_list:
             if isotope.symbol == 'Cs' and isotope.mass_number == 134:
@@ -364,6 +407,7 @@ def main():
                                                    background_energy,
                                                    compton_region)
                 sample_energy = peak_finder(measurement, isotope_energy[j])
+                save_peak(measurement, isotope_energy[j])
                 sample_net_area = peak_measurement(measurement, sample_energy,
                                                    compton_region)
                 reference_energy = peak_finder(reference, isotope_energy[j])

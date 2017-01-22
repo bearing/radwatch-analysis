@@ -1,10 +1,14 @@
 import numpy as np
 import peakutils
+import pandas as pd
 import shutil as sh
 import fileinput
 import SPEFile
 import os
-
+energy_list = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
+               2614.51]
+cal_headers = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
+               2614.51, 'Output']
 
 def acquire_files():
     """
@@ -19,7 +23,8 @@ def acquire_files():
             if file == "USS_Independence_Background.Spe":
                 pass
             else:
-                return sample_measurements
+                sample_measurements.append(file)
+    return sample_measurements
 
 def calibration_check(spectrum):
     '''
@@ -38,8 +43,7 @@ def calibration_check(spectrum):
 
     peak_channel = []
     found_energy = []
-    energy_list = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
-                   2614.51]
+    offsets = []
     skip = 0
     fix = 0
     for energy in energy_list:
@@ -57,6 +61,7 @@ def calibration_check(spectrum):
         tallest_peak = []
         if indexes.size == 0:
             print('peak not found')
+            offsets.append(np.nan)
             skip += 1
         else:
             for i in range(indexes.size):
@@ -67,8 +72,8 @@ def calibration_check(spectrum):
             found_energy.append(energy)
             difference = abs((energy -
                               float(energy_axis[int(indexes+start_region)])))
+            offsets.append(difference)
             if difference > 0.5*fwhm:
-                print(energy_axis[indexes+start_region])
                 fix += 1
     if skip > 4:
         message = 'error'
@@ -76,7 +81,8 @@ def calibration_check(spectrum):
         message = 'fix'
     else:
         message = 'fine'
-    return(peak_channel, found_energy, message)
+    offsets.append(message)
+    return(peak_channel, found_energy, message, offsets)
 
 
 def calibration_correction(measurement, channel, energy):
@@ -110,15 +116,17 @@ def calibration_correction(measurement, channel, energy):
 def recalibrate(files):
     cal_error = []
     double_check = []
+    cal_offsets = []
 
-    for sample in sample_measurements:
+    for sample in files:
         if '_recal.spe' in sample.lower():
             double_check.append(sample)
             pass
         else:
             measurement = SPEFile.SPEFile(sample)
             measurement.read()
-            [channel, energy, status] = calibration_check(measurement)
+            [channel, energy, status, offsets] = calibration_check(measurement)
+            cal_offsets.append(offsets)
             if status == 'fix':
                 print(('\nFixing calibration for %s \n' % sample))
                 cal_file = calibration_correction(sample, channel,
@@ -138,7 +146,21 @@ def recalibrate(files):
         with open('Error_Cal.txt', 'w') as file:
             file.writelines('Check calibration in %s \n' % error for error in
                             cal_error)
-def main(files):
+    calibration_table(files, cal_headers, cal_offsets)
+
+
+def calibration_table(samples, headers, offsets):
+
+    cal_results = {}
+    for i in range(len(samples)):
+        cal_results[samples[i]] = np.array(offsets[i])
+    cal_frame = pd.DataFrame(cal_results, index=headers)
+    cal_frame = cal_frame.T
+    cal_frame.index.name = 'Filename'
+    cal_frame.to_csv('calibration_results.csv')
+
+
+def main():
     sample_measurements = acquire_files()
     recalibrate(sample_measurements)
 
