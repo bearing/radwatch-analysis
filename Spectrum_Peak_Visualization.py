@@ -1,6 +1,6 @@
 """
-In order to run this file, it is necessary to install PeakUtils. 
-Instructions are located in the link below. 
+In order to run this file, it is necessary to install PeakUtils.
+Instructions are located in the link below.
 https://pypi.python.org/pypi/PeakUtils
 -Tyler
 """
@@ -138,13 +138,11 @@ def plot_peaks(spectrum, title=None, energy_range=None, subregion='both',
                              (energy_axis <=
                              energy_axis[right_peak_region[2 * i + 1]]),
                              facecolor='g')
-<<<<<<< HEAD
+
     if energy_range is not None:
         plt.xlim([energy_range[0], energy_range[1]])
-=======
-   
+
     plt.xlim(xmin=0)
->>>>>>> refs/remotes/origin/master
     plt.yscale('log')
     plt.xlabel('Energy (keV)')
     plt.ylabel('Counts')
