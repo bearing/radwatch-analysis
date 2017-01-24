@@ -8,7 +8,7 @@ import pandas as pd
 import Gamma_Analysis as ga
 import radionuclide_scraper as rs
 import Isotopic_Abudance as ia
-
+N_0 = 6.022 * 10**23
 
 def peak_finder(measurement):
     """
@@ -58,7 +58,43 @@ def peak_finder(measurement):
     return peaks_found
 
 
-def count_rate(M, B, energy):
+def NAA_net_area(measurement, energy):
+    """
+    NAA_net_area determines the net area of a given peak without the use
+    of compton regions. It generates a region of interest (ROI) based on
+    full width half maximum (FWHM). A line is generated using the edges of the
+    ROI and an integral of the line is determined. The gross counts of the peak
+    are then subtracted by the integral and a net area and uncertainty are
+    determined and returned.
+    """
+    E0 = measurement.energy_cal[0]
+    Eslope = measurement.energy_cal[1]
+    sample_counts = measurement.data
+    energy_channel = int((energy - E0) / Eslope)
+
+    region_size = 1.3
+    # Rough estimate of FWHM.
+    fwhm = 0.05*energy**0.5
+    fwhm_channel = int(region_size * (fwhm - E0) / Eslope)
+    # peak gross area
+    gross_counts_peak = sum(sample_counts[(energy_channel - fwhm_channel):
+                                          (energy_channel + fwhm_channel)])
+    peak_channels = measurement.channel[(energy_channel - fwhm_channel):
+                                        (energy_channel + fwhm_channel)]
+    # first and last channel counts of peak
+    start_peak_c = sample_counts[(energy_channel - fwhm_channel)]
+    end_peak_c = sample_counts[(energy_channel + fwhm_channel)]
+
+    # generate line under peak
+    compton_area = (start_peak_c + end_peak_c) / 2 * len(peak_channels)
+    net_area = gross_counts_peak - compton_area
+
+    # evaluate uncertainty
+    net_area_uncertainty = (gross_counts_peak + compton_area)**0.5
+    return net_area, net_area_uncertainty
+
+
+def peak_decay_rate(M, B, energy, isotope):
     """
     Takes in a measured and background spectra and a peak energy and return the
     net area under the peak.
@@ -67,14 +103,29 @@ def count_rate(M, B, energy):
     module, which only does regions of interest. Since peak fitting is not done
     the given count_rate is expected to be systematically higher.
     """
-    pm_results = ga.peak_measurement(M, energy, sub_regions='none')
+    efficiency = ga.absolute_efficiency([energy])
+
+    # Find branching ratio for isotope at specified energy
+    for isotope_energy in isotope.list_sig_g_e:
+        difference = abs(isotope_energy - energy)
+        if difference < 3:
+            index = isotope.list_sig_g_e.index(isotope_energy)
+            break
+
+    branching_ratio = isotope.list_sig_g_b_r[index]
+
+    pm_results = NAA_net_area(M, energy)
     bm_results = ga.peak_measurement(B, energy, sub_regions='none')
     sub_peak = ga.background_subtract(pm_results, bm_results, M.livetime,
                                       B.livetime)
-    net_area = sub_peak[0]
-    count_rate = net_area/M.livetime
+    count_rate = sub_peak[0] / M.livetime
+    count_rate_uncertainty = sub_peak[1] / M.livetime
 
-    return(count_rate)
+    decay_rate = count_rate / (efficiency[0] * branching_ratio)
+    decay_rate_uncertainty = count_rate_uncertainty / (efficiency[0] *
+                                                       branching_ratio)
+
+    return [decay_rate, decay_rate_uncertainty, branching_ratio]
 
 
 def isotope_verifier(isotope):
@@ -112,14 +163,29 @@ def isotope_verifier(isotope):
 
 def element_fraction(d_per_s, isotope, mass_number, I_A, cross_section,
                      flux, delta, t_irrad, weight):
-    N_0 = 6.022 * 10**23
     """cross section, decay constant, isotopic abundance, atomic weight
        will be obtained from an isotope class"""
-    first = d_per_s * mass_number / (N_0 * weight * I_A)
+    first = d_per_s[0] * mass_number / (N_0 * weight * I_A)
     second = first * isotope.decay_constant**(-1)
     third = second * np.exp(delta * isotope.decay_constant)
     fourth = third / (flux * (cross_section * 10**-24) * t_irrad)
-    return fourth
+
+    # Uncertainty calculations
+    d_per_s_uncertainty = d_per_s[1]
+    flux_uncertainty = flux * 0.1
+    delta_uncertainty = 1000
+    t_irrad_uncertainty = 1
+
+    d_dd_per_s = fourth / d_per_s[0]
+    d_dflux = fourth * (-1 / flux)
+    d_dt_irrad = fourth * (-1 / t_irrad)
+    d_ddelta = fourth * isotope.decay_constant
+
+    uncertainty = (((d_per_s_uncertainty)**2 * d_dd_per_s**2) *
+                   ((flux_uncertainty)**2 * (d_dflux)**2) *
+                   ((delta_uncertainty)**2 * (d_ddelta)**2) *
+                   ((t_irrad_uncertainty)**2 * (d_dt_irrad)**2))**0.5
+    return fourth, uncertainty
 
 
 def sample_questions():
@@ -199,7 +265,8 @@ def acquire_measurement():
                            '-->')
     return acquire
 
-def NAA_table(candidates, energy, isotopes, fractions):
+
+def NAA_table(candidates, energy, isotopes, fractions, uncertainty):
     """
     NAA_table generates a csv file containing the results of the NAA analysis,
     which includes possible isotopes and their fractions for each energy found
@@ -207,24 +274,55 @@ def NAA_table(candidates, energy, isotopes, fractions):
     """
     sorted_info = []
     data = {}
+
+    # Make a dataset sorted by isotope
     for i in range(len(isotopes)):
         sorted_info.append((isotopes[i],
                            energy[i],
-                           fractions[i]))
+                           fractions[i],
+                           uncertainty[i]))
     sorted_info = sorted(sorted_info, key=lambda isotope: isotope[0])
     for i in range(len(candidates)):
+        # sorted by isotope
         data[candidates[i]] = np.array([sorted_info[i][1],
                                         sorted_info[i][0],
-                                        sorted_info[i][2]])
+                                        sorted_info[i][2],
+                                        sorted_info[i][3]])
 
     table_headers = []
     table_headers.append('Energy [keV]')
     table_headers.append('Isotope')
     table_headers.append('Mass Fraction')
+    table_headers.append('Fraction Unc.')
 
     frame = pd.DataFrame(data, index=table_headers)
     frame = frame.T
-    frame.to_csv('NAA_Results.csv')
+    frame.to_csv('NAA_Results_Isotope.csv')
+
+
+def create_cache(candidates, energy, branching_ratios, isotopes, half_lives,
+                 mass_number, isotopic_abundance, cross_section):
+    """
+    create_cache creates an offline database containing all found isotopes
+    along with relevant information needed to calculate concentrations using
+    the NAA weight fraction formula.
+    """
+    data_e = {}
+    for i in range(len(candidates)):
+        # sorted by energy
+        data_e[candidates[i]] = np.array([energy[i], isotopes[i],
+                                          half_lives[i], branching_ratios[i],
+                                          mass_number[i],
+                                          isotopic_abundance[i],
+                                          cross_section[i]])
+    table_headers_e = []
+    table_headers_e.extend(['Energy [keV]', 'Isotope', 'Half-life [s]',
+                            'Branching Ratio', 'Mass Number',
+                            'Isotopic Abundance', 'Cross Section [b]'])
+    frame_energy = pd.DataFrame(data_e, index=table_headers_e)
+    frame_energy = frame_energy.T
+    frame_energy.to_csv('NAA_Results_Energy.csv')
+
 
 
 def main():
@@ -239,8 +337,14 @@ def main():
     energy = []
     candidates = []
     confirmed_energy = []
+    branching_ratio = []
     confirmed_isotopes = []
+    isotope_half_life = []
+    isotope_mass_number = []
+    isotope_abundance = []
+    isotope_cross_section = []
     isotope_fraction = []
+    fraction_uncertainty = []
     count = 0
 
     energy_peaks = peak_finder(measurement)
@@ -248,24 +352,39 @@ def main():
         energy.append(float(energy_peaks[peak]))
     isotopes = rs.isotope_peaks(energy)
     for energy_peak in range(len(energy)):
-        decay_rate = count_rate(measurement, background, energy[energy_peak])
         for isotope in isotopes[energy_peak]:
             flag, mass, abundance, cross_section = isotope_verifier(isotope)
             if flag is False:
                 pass
             elif flag is True:
                 count += 1
-                weight_fraction = element_fraction(decay_rate, isotope,
-                                                   mass, abundance,
-                                                   cross_section, flux,
-                                                   delta_t, t_irrad, weight)
+                decay_rate = peak_decay_rate(measurement, background,
+                                             energy[energy_peak], isotope)
+                weight_fraction, uncertainty = element_fraction(decay_rate,
+                                                                isotope,
+                                                                mass,
+                                                                abundance,
+                                                                cross_section,
+                                                                flux,
+                                                                delta_t,
+                                                                t_irrad,
+                                                                weight)
                 candidates.append(count)
                 confirmed_energy.append(energy[energy_peak])
+                branching_ratio.append(decay_rate[2])
+                isotope_mass_number.append(isotope.mass_number)
+                isotope_abundance.append(abundance)
+                isotope_cross_section.append(cross_section)
                 confirmed_isotopes.append((isotope.symbol +
                                            str(isotope.mass_number)))
+                isotope_half_life.append(isotope.half_life)
                 isotope_fraction.append(weight_fraction)
+                fraction_uncertainty.append(uncertainty)
     NAA_table(candidates, confirmed_energy, confirmed_isotopes,
-              isotope_fraction)
+              isotope_fraction, fraction_uncertainty)
+    create_cache(candidates, confirmed_energy, branching_ratio,
+                 confirmed_isotopes, isotope_half_life,
+                 isotope_mass_number, isotope_abundance, isotope_cross_section)
 
 
 if __name__ == '__main__':
