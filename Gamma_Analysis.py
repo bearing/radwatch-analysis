@@ -17,9 +17,7 @@ import os
 
 EFFICIENCY_CAL_COEFFS = [-5.1164, 161.65, -3952.3, 30908]
 isotope_list = [ii.potassium_40, ii.bismuth_214, ii.thallium_208,
-                ii.caesium_137, ii.caesium_134, ii.cobalt_60,
-                ii.actinium_228, ii.lead_212, ii.lead_214,
-                ii.thorium_234, ii.lead_210]
+                ii.caesium_137, ii.caesium_134]
 
 def absolute_efficiency(energy, coeffs=EFFICIENCY_CAL_COEFFS):
     """
@@ -321,7 +319,6 @@ def acquire_files():
 
 
 def analyze_isotope(measurement, background, reference, isotope):
-    activity_info = []
     sample_comparison = ref.soil_reference
     if isotope.symbol == 'Cs' and isotope.mass_number == 134:
         compton_region = 'Cs134'
@@ -369,11 +366,10 @@ def analyze_isotope(measurement, background, reference, isotope):
                                           ref_uncertainty)
     concentration = isotope_concentration(isotope, sample_comparison,
                                           activity, reference_activity)
-    activity_info.extend(concentration)
-    return activity_info
+    return concentration
 
 
-def analyze_spectra(measurement, background, reference):
+def analyze_spectrum(measurement, background, reference):
     sample_data = []
     for isotope in isotope_list:
         info = analyze_isotope(measurement, background, reference, isotope)
@@ -423,7 +419,7 @@ def main():
         measurement = SPEFile.SPEFile(sample)
         measurement.read()
         measurement_dates.append(measurement.collection_start.split(' ')[0])
-        data = analyze_spectra(measurement, background, reference)
+        data = analyze_spectrum(measurement, background, reference)
         sample_data.append(data)
     make_table(isotope_list, sample_data, sample_names, measurement_dates)
 
