@@ -67,10 +67,10 @@ def isotope_activity(isotope, emission_rates, emission_uncertainty):
         uncertainty.append(emission_uncertainty[i]/branching_ratio[i])
         weight.append(1/(emission_uncertainty[i]/branching_ratio[i])**2)
         squares_unc = uncertainty[i]**2 * weight[i]**2
-        squares_total.append(squares_unc) 
+        squares_total.append(squares_unc)
     sum_of_squares = np.sum(squares_total)
     V_1 = np.sum(weight)
-    weighted_avg_isotope_activity = np.sum(activity * weight) / V_1
+    weighted_avg_isotope_activity = np.sum(np.array(activity) * np.array(weight)) / V_1
     weighted_avg_isotope_unc = sum_of_squares**0.5 / V_1
     results = [weighted_avg_isotope_activity, weighted_avg_isotope_unc]
     return results
@@ -400,7 +400,7 @@ def check_spectra(samples, background, reference):
                 if check[0] < 0:
                     significance = check[0]/check[1]
                     if significance < -1:
-                        error_spectrum.append(sample)
+                        error_spectrum.append(measurement)
                         break
     if error_spectrum == []:
         pass
