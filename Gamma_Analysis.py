@@ -61,26 +61,20 @@ def isotope_activity(isotope, emission_rates, emission_uncertainty):
     activity = []
     uncertainty = []
     weight = []
+    squares_total = []
     for i in range(len(branching_ratio)):
         activity.append(emission_rates[i]/branching_ratio[i])
         uncertainty.append(emission_uncertainty[i]/branching_ratio[i])
         weight.append(1/(emission_uncertainty[i]/branching_ratio[i])**2)
-    isotope_activity = np.average(activity, weights=weight)
-    weight_var = []
+        squares_unc = uncertainty[i]**2 * weight[i]**2
+        squares_total.append(squares_unc) 
+    sum_of_squares = np.sum(squares_total)
     V_1 = np.sum(weight)
-    for i in range(len(weight)):
-        num = weight[i] * (activity[i] - isotope_activity)**2
-        weight_var.append(num)
-    var = np.sum(weight_var) / V_1
-    activity_uncertainty = var**0.5
-    activity.append(emission_rates[i] / (0.01 * branching_ratio[i]))
-    uncertainty.append(emission_uncertainty[i] /
-                           (0.01 * branching_ratio[i]))
-    isotope_activity = np.mean(activity)
-    activity_uncertainty = np.mean(uncertainty)
-    results = [isotope_activity, activity_uncertainty]
+    weighted_avg_isotope_activity = np.sum(activity * weight) / V_1
+    weighted_avg_isotope_unc = sum_of_squares**0.5 / V_1
+    results = [weighted_avg_isotope_activity, weighted_avg_isotope_unc]
     return results
-
+ #
 
 def isotope_concentration(isotope, reference, sample_activity,
                           reference_activity):
