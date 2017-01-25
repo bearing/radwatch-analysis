@@ -467,7 +467,7 @@ def check_spectra(samples, background, reference):
                     significance = check[0]/check[1]
                     if significance < -1:
                         error_spectrum.append(measurement)
-                        print('There is a bias in {}'.format(
+                        print(' * There is a bias in {}'.format(
                             measurement.filename))
                         break
     if error_spectrum == []:
@@ -484,16 +484,21 @@ def main():
     reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
     reference.read()
     sample_measurements, sample_names = acquire_files()
+    print('Found {} spectra'.format(len(sample_names)))
+    print('Checking spectra for calibration bias...')
     check_spectra(sample_measurements, background, reference)
     measurement_dates = []
     sample_data = []
     for sample in sample_measurements:
+        print('Measuring {}...'.format(sample))
         measurement = SPEFile.SPEFile(sample)
         measurement.read()
         measurement_dates.append(measurement.collection_start.split(' ')[0])
         data = analyze_spectrum(measurement, background, reference)
         sample_data.append(data)
+    print('Making table...')
     make_table(isotope_list, sample_data, sample_names, measurement_dates)
+    print('Finished!')
 
 if __name__ == '__main__':
     main()
