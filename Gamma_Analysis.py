@@ -73,7 +73,7 @@ def isotope_activity(isotope, emission_rates, emission_uncertainty):
     weighted_avg_isotope_unc = sum_of_squares**0.5 / V_1
     results = [weighted_avg_isotope_activity, weighted_avg_isotope_unc]
     return results
- #
+
 
 def isotope_concentration(isotope, reference, sample_activity,
                           reference_activity):
@@ -258,10 +258,18 @@ def background_subtract(meas_area, back_area, meas_time, back_time):
 
 
 def make_table(isotope_list, sample_info, sample_names, dates):
+    """
+    Generate files Sampling_Table.csv and Website_Table.csv
+    """
     data = {}
     web_data = {}
     df = pd.read_csv('RadWatch_Samples.csv')
     mass = pd.Series.tolist(df.ix[:, 2])
+    if len(mass) != len(sample_names):
+        print(
+            "\nMetadata in RadWatch_Samples.csv doesn't match the SPE files " +
+            "in this directory!\nNot making output CSV's")
+        return None
     for j in range(len(mass)):
         if np.isnan(mass[j]):
             mass[j] = 1
@@ -329,7 +337,7 @@ def acquire_files():
     dir_path = os.getcwd()
     for file in os.listdir(dir_path):
         if file.lower().endswith(".spe"):
-            "Ignore the background and reference spectra"
+            # Ignore the background and reference spectra
             if file == "USS_Independence_Background.Spe":
                 pass
             elif file == "UCB018_Soil_Sample010_2.Spe":
@@ -342,6 +350,9 @@ def acquire_files():
 
 
 def save_peak(sample, energy):
+    """
+    Plot peak using Spectrum_Peak_Visualization and save into a PNG file.
+    """
     cwd = os.getcwd()
     sample_name = os.path.splitext(sample.filename)[0]
     sample_folder = os.path.join(cwd, sample_name)
@@ -364,6 +375,10 @@ def save_peak(sample, energy):
 
 
 def analyze_isotope(measurement, background, reference, isotope):
+    """
+    Calculate concentration for one isotope in one measurement,
+    using background spectrum and reference spectrum.
+    """
     sample_comparison = ref.soil_reference
     if isotope.symbol == 'Cs' and isotope.mass_number == 134:
         compton_region = 'Cs134'
@@ -416,6 +431,10 @@ def analyze_isotope(measurement, background, reference, isotope):
 
 
 def analyze_spectrum(measurement, background, reference):
+    """
+    Calculate concentrations for isotopes in isotope_list for one spectrum
+    using background spectrum and reference spectrum.
+    """
     sample_data = []
     for isotope in isotope_list:
         info = analyze_isotope(measurement, background, reference, isotope)
@@ -424,6 +443,11 @@ def analyze_spectrum(measurement, background, reference):
 
 
 def check_spectra(samples, background, reference):
+    """
+    Check for bad calibrations in a list of spectra,
+    by seeing if any background peaks in the measurement
+    are significantly lower-rate than in the background.
+    """
     check_energies = [1120.29, 1460.83, 1764.49, 2614.51]
     error_spectrum = []
     for measurement in samples:
@@ -443,6 +467,8 @@ def check_spectra(samples, background, reference):
                     significance = check[0]/check[1]
                     if significance < -1:
                         error_spectrum.append(measurement)
+                        print(' * There is a bias in {}'.format(
+                            measurement.filename))
                         break
     if error_spectrum == []:
         pass
@@ -458,16 +484,21 @@ def main():
     reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
     reference.read()
     sample_measurements, sample_names = acquire_files()
+    print('Found {} spectra'.format(len(sample_names)))
+    print('Checking spectra for calibration bias...')
     check_spectra(sample_measurements, background, reference)
     measurement_dates = []
     sample_data = []
     for sample in sample_measurements:
+        print('Measuring {}...'.format(sample))
         measurement = SPEFile.SPEFile(sample)
         measurement.read()
         measurement_dates.append(measurement.collection_start.split(' ')[0])
         data = analyze_spectrum(measurement, background, reference)
         sample_data.append(data)
+    print('Making table...')
     make_table(isotope_list, sample_data, sample_names, measurement_dates)
+    print('Finished!')
 
 if __name__ == '__main__':
     main()

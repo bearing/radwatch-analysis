@@ -48,9 +48,9 @@ def plot_peaks(spectrum, title=None, energy_range=None, subregion='both',
     plt.plot(energy_axis, counts)
 
     ROI_info = ROI_Maker(spectrum, use, peak_location)
-    center_peak_region = ROI_info[2]
-    left_peak_region = ROI_info[3]
-    right_peak_region = ROI_info[4]
+    center_peak_region = [int(ROI_info[2][0]), int(ROI_info[2][1])]
+    left_peak_region = [int(ROI_info[3][0]), int(ROI_info[3][1])]
+    right_peak_region = [int(ROI_info[4][0]), int(ROI_info[4][1])]
 
     if subregion == 'NAA':
 
