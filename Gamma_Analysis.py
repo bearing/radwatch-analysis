@@ -73,7 +73,7 @@ def isotope_activity(isotope, emission_rates, emission_uncertainty):
     weighted_avg_isotope_unc = sum_of_squares**0.5 / V_1
     results = [weighted_avg_isotope_activity, weighted_avg_isotope_unc]
     return results
- #
+
 
 def isotope_concentration(isotope, reference, sample_activity,
                           reference_activity):
@@ -258,6 +258,9 @@ def background_subtract(meas_area, back_area, meas_time, back_time):
 
 
 def make_table(isotope_list, sample_info, sample_names, dates):
+    """
+    Generate files Sampling_Table.csv and Website_Table.csv
+    """
     data = {}
     web_data = {}
     df = pd.read_csv('RadWatch_Samples.csv')
@@ -329,7 +332,7 @@ def acquire_files():
     dir_path = os.getcwd()
     for file in os.listdir(dir_path):
         if file.lower().endswith(".spe"):
-            "Ignore the background and reference spectra"
+            # Ignore the background and reference spectra
             if file == "USS_Independence_Background.Spe":
                 pass
             elif file == "UCB018_Soil_Sample010_2.Spe":
@@ -342,6 +345,9 @@ def acquire_files():
 
 
 def save_peak(sample, energy):
+    """
+    Plot peak using Spectrum_Peak_Visualization and save into a PNG file.
+    """
     cwd = os.getcwd()
     sample_name = os.path.splitext(sample.filename)[0]
     sample_folder = os.path.join(cwd, sample_name)
@@ -364,6 +370,10 @@ def save_peak(sample, energy):
 
 
 def analyze_isotope(measurement, background, reference, isotope):
+    """
+    Calculate concentration for one isotope in one measurement,
+    using background spectrum and reference spectrum.
+    """
     sample_comparison = ref.soil_reference
     if isotope.symbol == 'Cs' and isotope.mass_number == 134:
         compton_region = 'Cs134'
@@ -416,6 +426,10 @@ def analyze_isotope(measurement, background, reference, isotope):
 
 
 def analyze_spectrum(measurement, background, reference):
+    """
+    Calculate concentrations for isotopes in isotope_list for one spectrum
+    using background spectrum and reference spectrum.
+    """
     sample_data = []
     for isotope in isotope_list:
         info = analyze_isotope(measurement, background, reference, isotope)
@@ -424,6 +438,11 @@ def analyze_spectrum(measurement, background, reference):
 
 
 def check_spectra(samples, background, reference):
+    """
+    Check for bad calibrations in a list of spectra,
+    by seeing if any background peaks in the measurement
+    are significantly lower-rate than in the background.
+    """
     check_energies = [1120.29, 1460.83, 1764.49, 2614.51]
     error_spectrum = []
     for measurement in samples:
