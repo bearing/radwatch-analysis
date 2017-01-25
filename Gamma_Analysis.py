@@ -265,6 +265,11 @@ def make_table(isotope_list, sample_info, sample_names, dates):
     web_data = {}
     df = pd.read_csv('RadWatch_Samples.csv')
     mass = pd.Series.tolist(df.ix[:, 2])
+    if len(mass) != len(sample_names):
+        print(
+            "\nMetadata in RadWatch_Samples.csv doesn't match the SPE files " +
+            "in this directory!\nNot making output CSV's")
+        return None
     for j in range(len(mass)):
         if np.isnan(mass[j]):
             mass[j] = 1
