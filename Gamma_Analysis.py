@@ -443,6 +443,8 @@ def check_spectra(samples, background, reference):
                     significance = check[0]/check[1]
                     if significance < -1:
                         error_spectrum.append(measurement)
+                        print('There is a bias in {}'.format(
+                            measurement.filename))
                         break
     if error_spectrum == []:
         pass
