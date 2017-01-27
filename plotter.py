@@ -9,9 +9,6 @@ from ROI_Maker import ROI_Maker
 import Gamma_Isotopes
 from Updated_Peak_Finder import peak_finder_pro
 
-"""
-spectra plotter for Gamma_Analysis.py
-"""
 def gamma_plotter(SPE_File_Name, use='spectra', subregions=None):
     #loading the SPE_File_Name
     spectra = SPEFile.SPEFile(SPE_File_Name)
@@ -28,17 +25,11 @@ def gamma_plotter(SPE_File_Name, use='spectra', subregions=None):
     #highlights peaks of interest.
     if use == 'peaks':
 
-        energies = [Gamma_Isotopes.actinium_228.list_sig_g_e,
-                    Gamma_Isotopes.bismuth_214.list_sig_g_e,
+        energies = [Gamma_Isotopes.bismuth_214.list_sig_g_e,
                     Gamma_Isotopes.caesium_134.list_sig_g_e,
                     Gamma_Isotopes.caesium_137.list_sig_g_e,
-                    Gamma_Isotopes.cobalt_60.list_sig_g_e,
-                    Gamma_Isotopes.lead_210.list_sig_g_e,
-                    Gamma_Isotopes.lead_212.list_sig_g_e,
-                    Gamma_Isotopes.lead_214.list_sig_g_e,
                     Gamma_Isotopes.potassium_40.list_sig_g_e,
-                    Gamma_Isotopes.thallium_208.list_sig_g_e,
-                    Gamma_Isotopes.thorium_234.list_sig_g_e]
+                    Gamma_Isotopes.thallium_208.list_sig_g_e,]
 
         #flattening the energies list.
         energies = list(itertools.chain(*energies))
