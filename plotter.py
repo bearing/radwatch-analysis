@@ -1,6 +1,3 @@
-"""
-SPE_File_Name needs to be a string.
-"""
 import matplotlib.pyplot as plt
 import numpy as np
 import itertools
@@ -10,6 +7,13 @@ import Gamma_Isotopes
 from Updated_Peak_Finder import peak_finder_pro
 
 def gamma_plotter(SPE_File_Name, use='spectra', subregions=None):
+    """
+    spectra plotter for Gamma_Analysis.py
+    """
+    """
+    SPE_File_Name needs to be a string.
+    """
+
     #loading the SPE_File_Name
     spectra = SPEFile.SPEFile(SPE_File_Name)
     spectra.read()
@@ -57,10 +61,14 @@ def gamma_plotter(SPE_File_Name, use='spectra', subregions=None):
     plt.ylabel('Counts')
 
 
-"""
-spectra plotter for NAA_Analysis.py
-"""
 def naa_plotter(SPE_File_Name, use='spectra', subregions=None):
+    """
+    spectra plotter for NAA_Analysis.py
+    """
+    """
+    SPE_File_Name needs to be a string.
+    """
+
     #loading the SPE_File_Name
     spectra = SPEFile.SPEFile(SPE_File_Name)
     spectra.read()
