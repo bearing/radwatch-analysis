@@ -6,7 +6,7 @@ from ROI_Maker import ROI_Maker
 import Gamma_Isotopes
 from Updated_Peak_Finder import peak_finder_pro
 
-def gamma_plotter(SPE_File_Name, use='spectra', subregions=None):
+def gamma_plotter(SPE_File_Name, energy_range=None, subregions=None, use='spectra'):
     """
     spectra plotter for Gamma_Analysis.py
     """
@@ -33,7 +33,7 @@ def gamma_plotter(SPE_File_Name, use='spectra', subregions=None):
                     Gamma_Isotopes.caesium_134.list_sig_g_e,
                     Gamma_Isotopes.caesium_137.list_sig_g_e,
                     Gamma_Isotopes.potassium_40.list_sig_g_e,
-                    Gamma_Isotopes.thallium_208.list_sig_g_e,]
+                    Gamma_Isotopes.thallium_208.list_sig_g_e]
 
         #flattening the energies list.
         energies = list(itertools.chain(*energies))
@@ -60,8 +60,11 @@ def gamma_plotter(SPE_File_Name, use='spectra', subregions=None):
     plt.xlabel('Energy (keV)')
     plt.ylabel('Counts')
 
+    if energy_range is not None:
+        plt.xlim([energy_range[0], energy_range[1]])
 
-def naa_plotter(SPE_File_Name, use='spectra', subregions=None):
+
+def naa_plotter(SPE_File_Name, energy_range=None, subregions=None, use='spectra'):
     """
     spectra plotter for NAA_Analysis.py
     """
@@ -108,3 +111,6 @@ def naa_plotter(SPE_File_Name, use='spectra', subregions=None):
     plt.yscale('log')
     plt.xlabel('Energy (keV)')
     plt.ylabel('Counts')
+
+    if energy_range is not None:
+        plt.xlim([energy_range[0], energy_range[1]])
