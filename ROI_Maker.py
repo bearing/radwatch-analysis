@@ -1,7 +1,7 @@
 #from Updated_Peak_Finder import peak_finder_pro as peak_finder
 import numpy as np
 import peakutils
-import Isotope_identification
+from Isotope_identification import Cs_134_g_e
 
 
 def ROI_Maker(spectrum, energy,sub_regions='auto'):

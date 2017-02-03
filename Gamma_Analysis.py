@@ -345,11 +345,11 @@ def analyze_isotope(measurement, background, reference, isotope):
     ref_emission = []
     ref_uncertainty = []
 
-    for j in range(len(isotope_energy)):
-        background_peak = peak_measurement(background, background_energy)
-        save_peak(measurement, isotope_energy[j])
-        sample_net_area = peak_measurement(measurement, sample_energy)
-        reference_peak = peak_measurement(reference, reference_energy)
+    for j, energy in enumerate(isotope_energy):
+        background_peak = peak_measurement(background, energy)
+        save_peak(measurement, energy)
+        sample_net_area = peak_measurement(measurement, energy)
+        reference_peak = peak_measurement(reference, energy)
         net_area = background_subtract(sample_net_area,
                                        background_peak,
                                        measurement.livetime,
@@ -392,9 +392,8 @@ def check_spectra(samples, background, reference):
         measurement = SPEFile.SPEFile(measurement)
         measurement.read()
         for energy in check_energies:
-                background_peak = peak_measurement(background,
-                                                   background_energy)
-                sample_net_area = peak_measurement(measurement, sample_energy)
+                background_peak = peak_measurement(background, energy)
+                sample_net_area = peak_measurement(measurement, energy)
                 check = background_subtract(sample_net_area,
                                             background_peak,
                                             measurement.livetime,

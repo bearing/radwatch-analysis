@@ -8,7 +8,7 @@ significant gamma emission branching ratios."""
 
 
 class Isotope(object):
-    def __init__(self, Symbol, Atomic_number, Mass_number, half_life,
+    def __init__(self, symbol, atomic_number, mass_number, half_life,
                  decay_constant, list_sig_g_e, list_sig_g_b_r):
         self.symbol = symbol
         self.atomic_number = atomic_number

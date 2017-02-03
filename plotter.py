@@ -38,9 +38,9 @@ def gamma_plotter(spectrum, energy_range=None, use='spectrum', title_text=None):
 
         for energy in energies:
             peak_ch, side_ch_list = ROI_Maker(spectrum, energy)
-            highlgiht(energy_axis, counts, zero_offset, energy_per_channel, peak_ch, facecolor = 'r')
+            highlight(energy_axis, counts, zero_offset, energy_per_channel, peak_ch, facecolor = 'r')
             for side_energy in side_ch_list:
-                highlgiht(energy_axis, counts, zero_offset, energy_per_channel, side_energy, facecolor = 'b')
+                highlight(energy_axis, counts, zero_offset, energy_per_channel, side_energy, facecolor = 'b')
 
     #rescales linear plot to semilog plot.
     plt.xlim(xmin=0)
