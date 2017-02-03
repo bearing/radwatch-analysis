@@ -8,6 +8,7 @@ from __future__ import print_function
 from SpectrumFileBase import SpectrumFileBase
 import Gamma_Isotopes as ii
 import Gamma_Reference as ref
+import Spectrum_Peak_Visualization as spv
 import SPEFile
 from ROI_Maker import ROI_Maker
 import numpy as np
@@ -17,7 +18,8 @@ import pandas as pd
 import os
 
 EFFICIENCY_CAL_COEFFS = [-5.1164, 161.65, -3952.3, 30908]
-
+isotope_list = [ii.potassium_40, ii.bismuth_214, ii.thallium_208,
+                ii.caesium_137, ii.caesium_134]
 
 def absolute_efficiency(energy, coeffs=EFFICIENCY_CAL_COEFFS):
     """
@@ -58,15 +60,21 @@ def isotope_activity(isotope, emission_rates, emission_uncertainty):
     branching_ratio = isotope.list_sig_g_b_r
     activity = []
     uncertainty = []
+    weight = []
+    squares_total = []
     for i in range(len(branching_ratio)):
-        activity.append(emission_rates[i] / (0.01 * branching_ratio[i]))
-        uncertainty.append(emission_uncertainty[i] /
-                           (0.01 * branching_ratio[i]))
-    isotope_activity = np.mean(activity)
-    activity_uncertainty = np.mean(uncertainty)
-    results = [isotope_activity, activity_uncertainty]
+        activity.append(emission_rates[i]/branching_ratio[i])
+        uncertainty.append(emission_uncertainty[i]/branching_ratio[i])
+        weight.append(1/(emission_uncertainty[i]/branching_ratio[i])**2)
+        squares_unc = uncertainty[i]**2 * weight[i]**2
+        squares_total.append(squares_unc)
+    sum_of_squares = np.sum(squares_total)
+    V_1 = np.sum(weight)
+    weighted_avg_isotope_activity = np.sum(np.array(activity) * np.array(weight)) / V_1
+    weighted_avg_isotope_unc = sum_of_squares**0.5 / V_1
+    results = [weighted_avg_isotope_activity, weighted_avg_isotope_unc]
     return results
-
+ #
 
 def isotope_concentration(isotope, reference, sample_activity,
                           reference_activity):
@@ -165,7 +173,7 @@ def peak_finder(spectrum, energy):
     return(peak_energy)
 
 
-def peak_measurement(M, energy,sub_regions='auto'):
+def peak_measurement(M, energy, sub_regions='auto'):
     """
     Takes in a measured spectra alongside a specific energy and returns the net
     area and uncertainty (2-sigma) for that energy.
@@ -224,6 +232,7 @@ def background_subtract(meas_area, back_area, meas_time, back_time):
 
 def make_table(isotope_list, sample_info, sample_names, dates):
     data = {}
+    web_data = {}
     df = pd.read_csv('RadWatch_Samples.csv')
     mass = pd.Series.tolist(df.ix[:, 2])
     for j in range(len(mass)):
@@ -233,9 +242,17 @@ def make_table(isotope_list, sample_info, sample_names, dates):
             mass[j] = float(mass[j])
         mass[j] = 1000/mass[j]
     for i in range(len(sample_names)):
+        web_value = []
         value = np.array(sample_info[i]) * mass[i]
+        for j in range(0, len(value), 2):
+            if value[j] <= value[j + 1]:
+                web_value.extend(np.array(['N.D.',
+                                           value[j + 1].round(decimals=2)]))
+            else:
+                web_value.extend(np.array([value[j].round(decimals=2),
+                                           value[j + 1].round(decimals=2)]))
         data[sample_names[i]] = np.array(value.round(decimals=2))
-
+        web_data[sample_names[i]] = np.array(web_value)
     isotope_act_unc = []
     for i in range(len(isotope_list)):
         isotope_act_unc.append(str(isotope_list[i].symbol) + '-' +
@@ -244,7 +261,6 @@ def make_table(isotope_list, sample_info, sample_names, dates):
         isotope_act_unc.append(str(isotope_list[i].symbol) + '-' +
                                str(isotope_list[i].mass_number) +
                                ' Unc' + '[Bq/kg]')
-
     frame = pd.DataFrame(data, index=isotope_act_unc)
     frame = frame.T
     frame.index.name = 'Sample Type'
@@ -257,7 +273,22 @@ def make_table(isotope_list, sample_info, sample_names, dates):
     colnames = frame.columns.tolist()
     colnames = colnames[-2:] + colnames[:-2]
     frame = frame[colnames]
+
+    # Saving all acquired results to Sampling_Table.csv file
     frame.to_csv('Sampling_Table.csv')
+
+    web_frame = pd.DataFrame(web_data, index=isotope_act_unc)
+    web_frame = web_frame.T
+    web_frame.index.name = 'Sample Type'
+    # Adding Date Measured and Sample Weight Columns
+
+    web_frame['Date Measured'] = dates
+    web_frame['Sample Weight (g)'] = pd.Series.tolist(df.ix[:, 2])
+
+    # Reindexing columns to place 'Date Measured' and 'Sample Weight' first.
+    web_frame = web_frame[colnames]
+    web_frame.to_csv('Website_Table.csv')
+
     return frame
 
 
@@ -283,27 +314,87 @@ def acquire_files():
     return sample_measurements, sample_names
 
 
-def main():
-    background = SPEFile.SPEFile("USS_Independence_Background.Spe")
-    background.read()
-    reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
-    reference.read()
-    sample_comparison = ref.soil_reference
-    sample_measurements, sample_names = acquire_files()
-    measurement_dates = []
-    sample_data = []
-    error_spectrum = []
+def save_peak(sample, energy):
+    cwd = os.getcwd()
+    sample_name = os.path.splitext(sample.filename)[0]
+    sample_folder = os.path.join(cwd, sample_name)
+    # if folder exists, skip next step. Otherwise, create folder for PNGs
+    if not os.path.exists(sample_folder):
+        try:
+            os.makedirs(sample_folder)
+        except OSError:
+            pass
+    label = sample_name + '_' + str(energy) + '_peak'
+    fwhm = 0.05 * (energy)**0.5
+    energy_range = [(energy - 8 * fwhm), (energy + 8 * fwhm)]
+    # generate plot PNG using Spectrum_Peak_Visualization
+    spv.plot_peaks(sample, title=label, energy_range=energy_range,
+                   peak_location=energy)
+    PNG_name = label + '.png'
+    # move PNGs to newly created folder
+    plt.savefig(os.path.join(sample_folder, PNG_name))
+    plt.clf()
 
-    for sample in sample_measurements:
-        measurement = SPEFile.SPEFile(sample)
+
+def analyze_isotope(measurement, background, reference, isotope):
+    sample_comparison = ref.soil_reference
+    # ROI sub_regions handled in ROI_Maker.
+    isotope_efficiency = absolute_efficiency(isotope.list_sig_g_e)
+    isotope_energy = isotope.list_sig_g_e
+    gamma_emission = []
+    gamma_uncertainty = []
+    ref_emission = []
+    ref_uncertainty = []
+
+    for j in range(len(isotope_energy)):
+        background_peak = peak_measurement(background, background_energy)
+        save_peak(measurement, isotope_energy[j])
+        sample_net_area = peak_measurement(measurement, sample_energy)
+        reference_peak = peak_measurement(reference, reference_energy)
+        net_area = background_subtract(sample_net_area,
+                                       background_peak,
+                                       measurement.livetime,
+                                       background.livetime)
+        peak_emission = emission_rate(net_area, isotope_efficiency[j],
+                                      measurement.livetime)
+        reference_area = background_subtract(reference_peak,
+                                             background_peak,
+                                             reference.livetime,
+                                             background.livetime)
+        reference_emission = emission_rate(reference_area,
+                                           isotope_efficiency[j],
+                                           reference.livetime)
+        gamma_emission.append(peak_emission[0])
+        gamma_uncertainty.append(peak_emission[1])
+        ref_emission.append(reference_emission[0])
+        ref_uncertainty.append(reference_emission[1])
+    activity = isotope_activity(isotope, gamma_emission,
+                                gamma_uncertainty)
+    reference_activity = isotope_activity(isotope,
+                                          ref_emission,
+                                          ref_uncertainty)
+    concentration = isotope_concentration(isotope, sample_comparison,
+                                          activity, reference_activity)
+    return concentration
+
+
+def analyze_spectrum(measurement, background, reference):
+    sample_data = []
+    for isotope in isotope_list:
+        info = analyze_isotope(measurement, background, reference, isotope)
+        sample_data.extend(info)
+    return sample_data
+
+
+def check_spectra(samples, background, reference):
+    check_energies = [1120.29, 1460.83, 1764.49, 2614.51]
+    error_spectrum = []
+    for measurement in samples:
+        measurement = SPEFile.SPEFile(measurement)
         measurement.read()
-        measurement_dates.append(measurement.collection_start.split(' ')[0])
-        check_energies = [1120.29, 1460.83, 1764.49, 2614.51]
         for energy in check_energies:
-                background_energy = peak_finder(background, energy)
                 background_peak = peak_measurement(background,
                                                    background_energy)
-                sample_energy = peak_finder(measurement, energy)
                 sample_net_area = peak_measurement(measurement, sample_energy)
                 check = background_subtract(sample_net_area,
                                             background_peak,
@@ -312,62 +403,31 @@ def main():
                 if check[0] < 0:
                     significance = check[0]/check[1]
                     if significance < -1:
-                        error_spectrum.append(sample)
+                        error_spectrum.append(measurement)
                         break
-        isotope_list = [ii.potassium_40, ii.bismuth_214, ii.thallium_208,
-                        ii.caesium_137, ii.caesium_134, ii.cobalt_60,
-                        ii.actinium_228, ii.lead_212, ii.lead_214,
-                        ii.thorium_234, ii.lead_210]
-        activity_info = []
-        for isotope in isotope_list:
-            # ROI sub_regions handled in ROI_Maker.
-            isotope_efficiency = absolute_efficiency(isotope.list_sig_g_e)
-            isotope_energy = isotope.list_sig_g_e
-            gamma_emission = []
-            gamma_uncertainty = []
-            ref_emission = []
-            ref_uncertainty = []
-
-            for j in range(len(isotope_energy)):
-                background_energy = peak_finder(background, isotope_energy[j])
-                background_peak = peak_measurement(background,
-                                                   background_energy)
-                sample_energy = peak_finder(measurement, isotope_energy[j])
-                sample_net_area = peak_measurement(measurement, sample_energy)
-                reference_energy = peak_finder(reference, isotope_energy[j])
-                reference_peak = peak_measurement(reference, reference_energy)
-                net_area = background_subtract(sample_net_area,
-                                               background_peak,
-                                               measurement.livetime,
-                                               background.livetime)
-                peak_emission = emission_rate(net_area, isotope_efficiency[j],
-                                              measurement.livetime)
-                reference_area = background_subtract(reference_peak,
-                                                     background_peak,
-                                                     reference.livetime,
-                                                     background.livetime)
-                reference_emission = emission_rate(reference_area,
-                                                   isotope_efficiency[j],
-                                                   reference.livetime)
-                gamma_emission.append(peak_emission[0])
-                gamma_uncertainty.append(peak_emission[1])
-                ref_emission.append(reference_emission[0])
-                ref_uncertainty.append(reference_emission[1])
-            activity = isotope_activity(isotope, gamma_emission,
-                                        gamma_uncertainty)
-            reference_activity = isotope_activity(isotope,
-                                                  ref_emission,
-                                                  ref_uncertainty)
-            concentration = isotope_concentration(isotope, sample_comparison,
-                                                  activity, reference_activity)
-            activity_info.extend(concentration)
-        sample_data.append(activity_info)
     if error_spectrum == []:
         pass
     else:
         with open('Error.txt', 'w') as file:
             file.writelines('There is a bias in %s \n' % bias for bias in
                             error_spectrum)
+
+
+def main():
+    background = SPEFile.SPEFile("USS_Independence_Background.Spe")
+    background.read()
+    reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
+    reference.read()
+    sample_measurements, sample_names = acquire_files()
+    check_spectra(sample_measurements, background, reference)
+    measurement_dates = []
+    sample_data = []
+    for sample in sample_measurements:
+        measurement = SPEFile.SPEFile(sample)
+        measurement.read()
+        measurement_dates.append(measurement.collection_start.split(' ')[0])
+        data = analyze_spectrum(measurement, background, reference)
+        sample_data.append(data)
     make_table(isotope_list, sample_data, sample_names, measurement_dates)
 
 if __name__ == '__main__':
