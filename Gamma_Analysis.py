@@ -8,8 +8,9 @@ from __future__ import print_function
 from SpectrumFileBase import SpectrumFileBase
 import Gamma_Isotopes as ii
 import Gamma_Reference as ref
-import Spectrum_Peak_Visualization as spv
 import SPEFile
+from ROI_Maker import ROI_Maker
+import plotter
 import numpy as np
 import matplotlib.pyplot as plt
 import peakutils
@@ -172,66 +173,38 @@ def peak_finder(spectrum, energy):
     return(peak_energy)
 
 
-def peak_measurement(M, energy, sub_regions='both'):
+def peak_measurement(M, energy, sub_regions='auto'):
     """
     Takes in a measured spectra alongside a specific energy and returns the net
-    area and uncertainty for that energy.
+    area and uncertainty (2-sigma) for that energy.
     """
-    E0 = M.energy_cal[0]
-    Eslope = M.energy_cal[1]
-    M_counts = M.data
-    energy_channel = int((energy - E0) / Eslope)
 
-    region_size = 1.3
-    compton_distance = 4
+    peak_ch, side_ch_list = ROI_Maker(M, energy, sub_regions=sub_regions)
+    gross_area_peak = sum(M.data[peak_ch[0]:peak_ch[1]])
+    n_compton = len(side_ch_list)
 
-    # Rough estimate of FWHM.
-    fwhm = 0.05*energy**0.5
-    fwhm_channel = int(region_size * (fwhm - E0) / Eslope)
-    # peak gross area
-    gross_counts_peak = sum(M_counts[(energy_channel - fwhm_channel):
-                                     (energy_channel + fwhm_channel)])
+    if n_compton == 0:
+        compton_area = 0
+        compton_area_unc = 0
+    elif n_compton == 1:
+        compton_ch = side_ch_list[0]
+        compton_area = M.data[compton_ch[0]:compton_ch[1]]
+        compton_area_unc = np.sqrt(compton_area)
+    elif n_compton == 2:
+        compton_1 = side_ch_list[0]
+        compton_2 = side_ch_list[1]
+        compton_area_1 = sum(M.data[compton_1[0]:compton_1[1]])
+        compton_area_2 = sum(M.data[compton_2[0]:compton_2[1]])
+        compton_area = np.mean([compton_area_1, compton_area_2])
+        # compton_area_1_unc = sqrt(compton_area_1)
+        # propagate uncertainty for taking the mean: /2
+        compton_area_unc = np.sqrt(compton_area_1 + compton_area_2) / 2
 
-    # Left Gross Area
-    left_peak = energy_channel - compton_distance * fwhm_channel
-    gross_counts_left = sum(M_counts[(left_peak - fwhm_channel):
-                                     (left_peak + fwhm_channel)])
-    # Right Gross Area
-    right_peak = energy_channel + compton_distance * fwhm_channel
-    gross_counts_right = sum(M_counts[(right_peak - fwhm_channel):
-                                      (right_peak + fwhm_channel)])
-    compton_region = [gross_counts_left, gross_counts_right]
+    net_area = gross_area_peak - compton_area
+    net_area_unc = np.sqrt(gross_area_peak + compton_area_unc**2)
 
-    # Cs134 compton region using Bi214 609 peak.
-    bi_fwhm = 0.05 * (609.31)**0.5
-    bi_fwhm_channel = int(region_size * (bi_fwhm - E0) / Eslope)
-    bi_peak_channel = int((609.31 - E0) / Eslope)
-    bi_right_peak = bi_peak_channel + compton_distance * bi_fwhm_channel
-    bi_right_compton = sum(M_counts[(bi_right_peak - fwhm_channel):
-                                    (bi_right_peak + fwhm_channel)])
-
-    if sub_regions == 'left':
-        compton_region = [compton_region[0]]
-    elif sub_regions == 'right':
-        compton_region = [compton_region[1]]
-    elif sub_regions == 'Cs134':
-        compton_region = [compton_region[0], bi_right_compton]
-    elif sub_regions == 'none':
-        compton_region = [0, 0]
-    # Net Area
-    net_area = gross_counts_peak - np.mean(compton_region)
-    # Uncertainty - 2-sigma
-    gross_area_uncertainty = (gross_counts_peak)**0.5
-    if len(compton_region) < 2:
-        compton_region_uncertainty = (compton_region[0])**0.5
-    else:
-        compton_region_uncertainty = ((compton_region[0] +
-                                      compton_region[1])**0.5) / 2
-    uncertainty = 2 * (gross_area_uncertainty**2 +
-                       compton_region_uncertainty**2)**0.5
-    # Returning results
-    results = [net_area, uncertainty]
-    return results
+    # 2 sigma uncertainty
+    return net_area, 2 * net_area_unc
 
 
 def background_subtract(meas_area, back_area, meas_time, back_time):
@@ -365,9 +338,8 @@ def save_peak(sample, energy):
     label = sample_name + '_' + str(energy) + '_peak'
     fwhm = 0.05 * (energy)**0.5
     energy_range = [(energy - 8 * fwhm), (energy + 8 * fwhm)]
-    # generate plot PNG using Spectrum_Peak_Visualization
-    spv.plot_peaks(sample, title=label, energy_range=energy_range,
-                   peak_location=energy)
+    # generate plot PNG using plotter
+    plotter.gamma_plotter(sample, energy_range=energy_range, use='peaks', title_text=label)
     PNG_name = label + '.png'
     # move PNGs to newly created folder
     plt.savefig(os.path.join(sample_folder, PNG_name))
@@ -380,10 +352,7 @@ def analyze_isotope(measurement, background, reference, isotope):
     using background spectrum and reference spectrum.
     """
     sample_comparison = ref.soil_reference
-    if isotope.symbol == 'Cs' and isotope.mass_number == 134:
-        compton_region = 'Cs134'
-    else:
-        compton_region = 'both'
+    # ROI sub_regions handled in ROI_Maker.
     isotope_efficiency = absolute_efficiency(isotope.list_sig_g_e)
     isotope_energy = isotope.list_sig_g_e
     gamma_emission = []
@@ -391,18 +360,11 @@ def analyze_isotope(measurement, background, reference, isotope):
     ref_emission = []
     ref_uncertainty = []
 
-    for j in range(len(isotope_energy)):
-        background_energy = peak_finder(background, isotope_energy[j])
-        background_peak = peak_measurement(background,
-                                           background_energy,
-                                           compton_region)
-        sample_energy = peak_finder(measurement, isotope_energy[j])
-        save_peak(measurement, isotope_energy[j])
-        sample_net_area = peak_measurement(measurement, sample_energy,
-                                           compton_region)
-        reference_energy = peak_finder(reference, isotope_energy[j])
-        reference_peak = peak_measurement(reference, reference_energy,
-                                          compton_region)
+    for j, energy in enumerate(isotope_energy):
+        background_peak = peak_measurement(background, energy)
+        save_peak(measurement, energy)
+        sample_net_area = peak_measurement(measurement, energy)
+        reference_peak = peak_measurement(reference, energy)
         net_area = background_subtract(sample_net_area,
                                        background_peak,
                                        measurement.livetime,
@@ -454,11 +416,8 @@ def check_spectra(samples, background, reference):
         measurement = SPEFile.SPEFile(measurement)
         measurement.read()
         for energy in check_energies:
-                background_energy = peak_finder(background, energy)
-                background_peak = peak_measurement(background,
-                                                   background_energy)
-                sample_energy = peak_finder(measurement, energy)
-                sample_net_area = peak_measurement(measurement, sample_energy)
+                background_peak = peak_measurement(background, energy)
+                sample_net_area = peak_measurement(measurement, energy)
                 check = background_subtract(sample_net_area,
                                             background_peak,
                                             measurement.livetime,
