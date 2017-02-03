@@ -8,9 +8,9 @@ from __future__ import print_function
 from SpectrumFileBase import SpectrumFileBase
 import Gamma_Isotopes as ii
 import Gamma_Reference as ref
-import Spectrum_Peak_Visualization as spv
 import SPEFile
 from ROI_Maker import ROI_Maker
+import plotter
 import numpy as np
 import matplotlib.pyplot as plt
 import peakutils
@@ -327,9 +327,8 @@ def save_peak(sample, energy):
     label = sample_name + '_' + str(energy) + '_peak'
     fwhm = 0.05 * (energy)**0.5
     energy_range = [(energy - 8 * fwhm), (energy + 8 * fwhm)]
-    # generate plot PNG using Spectrum_Peak_Visualization
-    spv.plot_peaks(sample, title=label, energy_range=energy_range,
-                   peak_location=energy)
+    # generate plot PNG using plotter
+    plotter.gamma_plotter(sample, energy_range=energy_range, use='peaks', title_text=label)
     PNG_name = label + '.png'
     # move PNGs to newly created folder
     plt.savefig(os.path.join(sample_folder, PNG_name))

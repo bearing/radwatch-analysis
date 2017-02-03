@@ -6,23 +6,23 @@ from ROI_Maker import ROI_Maker
 import Gamma_Isotopes
 from Updated_Peak_Finder import peak_finder_pro
 
-def gamma_plotter(SPE_File_Name, energy_range=None, use='spectrum'):
+def gamma_plotter(spectrum, energy_range=None, use='spectrum', title_text=None):
     """
     spectrum plotter for Gamma_Analysis.py
-    SPE_File_Name needs to be a string.
+    spectrum needs to be a spectrum object.
     """
 
-    #loading the SPE_File_Name
-    spectrum = SPEFile.SPEFile(SPE_File_Name)
-    spectrum.read()
+    # title text
+    if title_text is None:
+        title_text = spectrum.filename
 
-    #plots the spectrum only.
+    # plots the spectrum only.
     counts = spectrum.data
     zero_offset = spectrum.energy_cal[0]
     energy_per_channel = spectrum.energy_cal[1]
-    energy_axis = zero_offset + energy_per_channel*spectrum.channel
+    energy_axis = zero_offset + energy_per_channel * spectrum.channel
     plt.plot(energy_axis, counts)
-    plt.title(SPE_File_Name)
+    plt.title(title_text)
 
     #highlights peaks of interest.
     if use == 'peaks':
