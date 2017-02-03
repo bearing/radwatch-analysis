@@ -165,7 +165,7 @@ def peak_finder(spectrum, energy):
     return(peak_energy)
 
 
-def peak_measurement(M, energy, sub_regions='both'):
+def peak_measurement(M, energy,sub_regions='auto'):
     """
     Takes in a measured spectra alongside a specific energy and returns the net
     area and uncertainty (2-sigma) for that energy.
@@ -320,10 +320,7 @@ def main():
                         ii.thorium_234, ii.lead_210]
         activity_info = []
         for isotope in isotope_list:
-            if isotope.symbol == 'Cs' and isotope.mass_number == 134:
-                compton_region = 'Cs134'
-            else:
-                compton_region = 'both'
+            # ROI sub_regions handled in ROI_Maker.
             isotope_efficiency = absolute_efficiency(isotope.list_sig_g_e)
             isotope_energy = isotope.list_sig_g_e
             gamma_emission = []
@@ -334,14 +331,11 @@ def main():
             for j in range(len(isotope_energy)):
                 background_energy = peak_finder(background, isotope_energy[j])
                 background_peak = peak_measurement(background,
-                                                   background_energy,
-                                                   compton_region)
+                                                   background_energy)
                 sample_energy = peak_finder(measurement, isotope_energy[j])
-                sample_net_area = peak_measurement(measurement, sample_energy,
-                                                   compton_region)
+                sample_net_area = peak_measurement(measurement, sample_energy)
                 reference_energy = peak_finder(reference, isotope_energy[j])
-                reference_peak = peak_measurement(reference, reference_energy,
-                                                  compton_region)
+                reference_peak = peak_measurement(reference, reference_energy)
                 net_area = background_subtract(sample_net_area,
                                                background_peak,
                                                measurement.livetime,
