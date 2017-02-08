@@ -1,10 +1,12 @@
-"""Purpose of this code is to define an object
-that represents the physical properties of one
-gamma-emitting radioisotope"""
-"""Attributes include: Atomic number, Mass number,
-Symbol, Half life [s], Decay constant [1/s], list
-of significant gamma emission energies, list of
-significant gamma emission branching ratios."""
+"""
+The purpose of this code is to define an object that represents the physical
+properties of one gamma-emitting radioisotope.
+
+Attributes include:
+Atomic number, Mass number, Symbol, Half life [s], Decay constant [1/s],
+list of significant gamma emission energies,
+list of significant gamma emission branching ratios.
+"""
 
 
 class Isotope(object):
@@ -107,8 +109,10 @@ Boron = Isotope("B", 5, 12, 0.02, 34.66, 3214.83, "Unknown")
 Br_80_g_e = [616.6, 666.14]
 Br_80_b_r = [7, 1.08]
 Bromine_80 = Isotope("Br", 35, 80, 1060.8, 6.53E-4, Br_80_g_e, Br_80_b_r)
-Br_82_g_e = [221.48, 554.35, 606.34, 619.11, 698.374, 776.57, 827.828, 1007.6, 1044, 1317.47, 1474.88]
-Br_82_b_r = [2.26, 70.8, 1.2, 43.4, 28.49, 83.5, 24.03, 1.271, 27.23, 26.48, 16.32]
+Br_82_g_e = [221.48, 554.35, 606.34, 619.11, 698.374, 776.57, 827.828, 1007.6,
+             1044, 1317.47, 1474.88]
+Br_82_b_r = [2.26, 70.8, 1.2, 43.4, 28.49, 83.5, 24.03, 1.271,
+             27.23, 26.48, 16.32]
 Bromine_82 = Isotope("Br", 35, 82, 127080, 5.45E-6, Br_82_g_e, Br_82_b_r)
 
 Cadmium_107 = Isotope("Cd", 48, 107, 23400, 2.96E-5, 93.124, 4.8)
@@ -305,7 +309,8 @@ Manganese_56 = Isotope("Mn", 25, 56, 9280.8, 7.47E-5, Mn_56_g_e, Mn_56_b_r)
 
 Md_258_g_e = [71.1, 276.8, 296.7, 367.8, 447.9]
 Md_258_b_r = [8, 20.2, 5.4, 100, 37]
-Mendelevium_258 = Isotope("Md", 101, 258, 4.45E+6, 1.56E-7, Md_258_g_e, Md_258_b_r)
+Mendelevium_258 = Isotope("Md", 101, 258, 4.45E+6, 1.56E-7, Md_258_g_e,
+                          Md_258_b_r)
 
 Hg_195_g_e = [61.46, 180.11, 585.13, 779.8, 1111.04]
 Hg_195_b_r = [6.2, 1.9, 1.99, 7, 1.44]
@@ -382,7 +387,8 @@ Palladium_109 = Isotope("Pd", 46, 109, 49320, 1.47E-5, Pd_109_g_e, Pd_109_b_r)
 Palladium_109m = Isotope("Pd", 46, 109, 282, 0.00246, 188.99, 55.9)
 Pd_111m_g_e = [172.18, 391.28, 632.76]
 Pd_111m_b_r = [34, 1.53, 1.01]
-Palladium_111m = Isotope("Pd", 46, 111, 19800, 3.5E-5, Pd_111m_g_e, Pd_111m_b_r)
+Palladium_111m = Isotope("Pd", 46, 111, 19800, 3.5E-5, Pd_111m_g_e,
+                         Pd_111m_b_r)
 
 Pt_191_g_e = [172.18, 351.21, 359.9, 409.44, 538.9]
 Pt_191_b_r = [3.52, 3.36, 6, 8, 13.7]
@@ -542,13 +548,13 @@ Tl_208_b_r = [30.6, 35.9]
 Thallium_208 = Isotope("Tl", 81, 208, 183.18, 0.003784, Tl_208_g_e, Tl_208_b_r)
 
 Th_233_g_e = [86.48, 169.16, 459.22, 669.9, 890.1]
-Th_233_b_r = [2.7, 0.34, 1.4,  0.68, 0.14]
+Th_233_b_r = [2.7, 0.34, 1.4, 0.68, 0.14]
 Thorium_233 = Isotope("Th", 90, 233, 1338, 5.2E-4, Th_233_g_e, Th_233_b_r)
 
 Thorium_234 = Isotope("Th", 90, 234, 2.08E6, 3.33E-7, [92.58], [5.58])
 
 Thulium_170 = Isotope("Tm", 69, 170, 1.1E+7, 6.23E-8, 84.25, 2.5)
-Tm_172_g_e = [181.53, 912.13,  1093.66, 1387.1, 1465.9, 1529.7, 1608.6]
+Tm_172_g_e = [181.53, 912.13, 1093.66, 1387.1, 1465.9, 1529.7, 1608.6]
 Tm_172_b_r = [2.75, 1.42, 6, 5.6, 4.5, 5.1, 4.14]
 Thulium_172 = Isotope("Tm", 69, 172, 228960, 3E-6, Tm_172_g_e, Tm_172_b_r)
 
