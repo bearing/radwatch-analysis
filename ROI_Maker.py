@@ -1,13 +1,12 @@
-#from Updated_Peak_Finder import peak_finder_pro as peak_finder
 import numpy as np
 import peakutils
 from Isotope_identification import Cs_134_g_e
 
 
-def ROI_Maker(spectrum, energy,sub_regions='auto'):
+def ROI_Maker(spectrum, energy, sub_regions='auto'):
     """
-    Takes in a measured spectrum and identifies peaks in terms of channel number
-    and energy. Uses peak_finder to localize the peak more precisely from the
+    Takes in a measured spectrum and identifies peaks by energy.
+    Uses peak_finder to localize the peak more precisely from the
     given energy. Also returns peak and compton ROIs as well as each ROIs gross
     area.
     """
@@ -16,7 +15,6 @@ def ROI_Maker(spectrum, energy,sub_regions='auto'):
 
     E0 = spectrum.energy_cal[0]
     Eslope = spectrum.energy_cal[1]
-    M_counts = spectrum.data
     energy_channel = int((peak_energy - E0) / Eslope)
 
     region_size = 1.3
@@ -50,10 +48,8 @@ def ROI_Maker(spectrum, energy,sub_regions='auto'):
         bi_fwhm_channel = int(region_size * (bi_fwhm - E0) / Eslope)
         bi_peak_channel = int((609.31 - E0) / Eslope)
         bi_right_peak = bi_peak_channel + compton_distance * bi_fwhm_channel
-        bi_right_compton = sum(M_counts[(bi_right_peak - fwhm_channel):
-                                        (bi_right_peak + fwhm_channel)])
-
-        bi_right_ch = (bi_right_peak - fwhm_channel, bi_right_peak + fwhm_channel)
+        bi_right_ch = (bi_right_peak - fwhm_channel,
+                       bi_right_peak + fwhm_channel)
         side_region_list = [left_ch, bi_right_ch]
     elif sub_regions == 'none':
         side_region_list = []
