@@ -5,6 +5,8 @@ import shutil as sh
 import fileinput
 import SPEFile
 import os
+import sys
+
 energy_list = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
                2614.51]
 cal_headers = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
@@ -19,12 +21,26 @@ def acquire_files():
     """
     sample_measurements = []
     dir_path = os.getcwd()
+
+    recal_id = False
+    sample_measurements = []
+
     for file in os.listdir(dir_path):
-        if file.lower().endswith(".spe"):
-            if file == "USS_Independence_Background.Spe":
-                pass
-            else:
-                sample_measurements.append(file)
+
+        if '_recal' in file.lower():
+            recal_id = True
+        else:
+            pass
+
+        if recal_id is True:
+            if file.lower().endswith(".spe"):
+                if file == "USS_Independence_Background.Spe":
+                    pass
+                else:
+                    sample_measurements.append(file)
+        else:
+            pass
+
     return sample_measurements.sort()
 
 
