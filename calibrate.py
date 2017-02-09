@@ -25,7 +25,7 @@ def acquire_files():
                 pass
             else:
                 sample_measurements.append(file)
-    return sample_measurements
+    return sample_measurements.sort()
 
 
 def calibration_check(spectrum):
