@@ -63,9 +63,9 @@ def isotope_activity(isotope, emission_rates, emission_uncertainty):
     weight = []
     squares_total = []
     for i in range(len(branching_ratio)):
-        activity.append(emission_rates[i]/(.01*branching_ratio[i]))
-        uncertainty.append(emission_uncertainty[i]/(.01*branching_ratio[i]))
-        weight.append(1/(emission_uncertainty[i]/branching_ratio[i])**2)
+        activity.append(emission_rates[i] / (.01 * branching_ratio[i]))
+        uncertainty.append(emission_uncertainty[i] / (.01 * branching_ratio[i]))
+        weight.append(1 / (emission_uncertainty[i] / branching_ratio[i])**2)
         squares_unc = uncertainty[i]**2 * weight[i]**2
         squares_total.append(squares_unc)
     sum_of_squares = np.sum(squares_total)
