@@ -439,12 +439,13 @@ def check_spectra(samples, background, reference):
                             error_spectrum)
 
 
-def main():
-    background = SPEFile.SPEFile("USS_Independence_Background.Spe")
+def main(background_filename="USS_Independence_Background.Spe", reference_filename="UCB018_Soil_Sample010_2.Spe", file_list=None):
+    background = SPEFile.SPEFile(background_filename)
     background.read()
-    reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
+    reference = SPEFile.SPEFile(reference_filename)
     reference.read()
-    sample_measurements, sample_names = acquire_files()
+    if file_list is None:
+        sample_measurements, sample_names = acquire_files()
     print('Found {} spectra'.format(len(sample_names)))
     print('Checking spectra for calibration bias...')
     check_spectra(sample_measurements, background, reference)
