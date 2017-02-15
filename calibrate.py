@@ -12,36 +12,37 @@ energy_list = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
 cal_headers = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
                2614.51, 'Output']
 
-
 def acquire_files():
     """
     acquire_files gathers all the .Spe file in the current file directory and
     returns a list containing all .Spe files.
-    Files is a list of .spe files.
     """
     sample_measurements = []
+    sample_names = []
     dir_path = os.getcwd()
-
-    recal_id = False
-    sample_measurements = []
-
+    skip_file = ''
     for file in os.listdir(dir_path):
-
-        if '_recal' in file.lower():
-            recal_id = True
-        else:
-            pass
-
-        if recal_id is True:
-            if file.lower().endswith(".spe"):
-                if file == "USS_Independence_Background.Spe":
-                    pass
+        if file.lower().endswith(".spe"):
+            # Ignore the background and reference spectra
+            if file == skip_file:
+                pass
+            elif file == "USS_Independence_Background.Spe":
+                pass
+            elif file == "UCB018_Soil_Sample010_2.Spe":
+                pass
+            else:
+                if '_recal' in file:
+                    skip_file = file
+                    skip_file.replace('_recal.Spe', '.Spe')
                 else:
-                    sample_measurements.append(file)
-        else:
-            pass
+                    pass
 
-    return sample_measurements.sort()
+                sample_measurements.append(file)
+                name = os.path.splitext(file)[0].replace("_", " ")
+                sample_names.append(str(name))
+                sample_names.sort()
+
+    return sample_measurements, sample_names
 
 
 def calibration_check(spectrum):
@@ -179,7 +180,8 @@ def calibration_table(samples, headers, offsets):
 
 
 def main():
-    sample_measurements = acquire_files()
+    array = acquire_files()
+    sample_measurements = array[0]
     recalibrate(sample_measurements)
 
 if __name__ == '__main__':
