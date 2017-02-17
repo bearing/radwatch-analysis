@@ -14,24 +14,25 @@ def ROI_Maker(spectrum, energy,sub_regions='auto'):
 
     E0 = spectrum.energy_cal[0]
     Eslope = spectrum.energy_cal[1]
-    energy_channel = int((peak_energy - E0) / Eslope)
+    energy_ch = int((peak_energy - E0) / Eslope)
 
     region_size = 1.3
-    compton_distance = 4
+    separation_parameter = 2
 
     # Rough estimate of FWHM.
-    fwhm = 0.05*peak_energy**0.5
+    fwhm_kev = 0.05*peak_energy**0.5
+    fwhm_ch = (fwhm_kev - E0)/Eslope
 
-    region_width = int(region_size * (fwhm - E0) / Eslope)
-    region_separation = int(compton_distance*region_width)
+    region_half_width = int(region_size * fwhm_ch)
+    region_separation = int(separation_parameter*region_half_width)
 
-    peak_ch = (energy_channel - region_width, energy_channel + region_width)
+    peak_ch = (energy_ch - region_half_width, energy_ch + region_half_width)
 
-    left_center = energy_channel - region_separation
-    left_ch = (left_center - region_width, left_center + region_width)
+    left_ch = (energy_ch - region_separation - 3*region_half_width,
+               energy_ch - region_separation - region_half_width)
 
-    right_center = energy_channel + region_separation
-    right_ch = (right_center - region_width, right_center + region_width)
+    right_ch = (energy_ch + region_separation + region_half_width,
+                energy_ch + region_separation + 3*region_half_width)
 
     if sub_regions == 'auto':
         if energy == Cs_134_g_e[2]:
@@ -45,12 +46,13 @@ def ROI_Maker(spectrum, energy,sub_regions='auto'):
         side_region_list = [right_ch]
     elif sub_regions == 'Cs134':
         # Cs134 compton region using Bi214 609 peak.
-        bi_fwhm = 0.05 * (609.31)**0.5
-        bi_region_width = int(region_size * (bi_fwhm - E0) / Eslope)
-        bi_region_separation = int(compton_distance*bi_region_width)
-        bi_peak_channel = int((609.31 - E0) / Eslope)
-        bi_right_peak = bi_peak_channel + bi_region_separation
-        bi_right_ch = (bi_right_peak - region_width, bi_right_peak + region_width)
+        bi_fwhm_kev = 0.05 * (609.31)**0.5
+        bi_fwhm_ch = (bi_fwhm_kev - E0)/Eslope
+        bi_region_half_width = int(region_size * bi_fwhm_ch) 
+        bi_region_separation = int(separation_parameter*bi_region_half_width)
+        bi_energy_ch = int((609.31 - E0) / Eslope)
+        bi_right_ch = (bi_energy_ch + bi_region_separation + bi_region_half_width,
+                       bi_energy_ch + bi_region_separation + 3*bi_region_half_width)
         side_region_list = [left_ch, bi_right_ch]
     elif sub_regions == 'none':
         side_region_list = []
