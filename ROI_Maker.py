@@ -50,17 +50,17 @@ def ROI_Maker(spectrum, energy, sub_regions='auto'):
         bi_fwhm_channel = int(region_size * (bi_fwhm - E0) / Eslope)
         bi_peak_channel = int((609.31 - E0) / Eslope)
         bi_right_peak = bi_peak_channel + compton_distance * bi_fwhm_channel
-        bi_right_ch = (bi_right_peak + fwhm_channel,
-                       bi_right_peak - fwhm_channel)
+        bi_right_ch = (bi_right_peak - fwhm_channel,
+                       bi_right_peak + fwhm_channel)
         side_region_list = [left_ch, bi_right_ch]
     elif sub_regions == 'Bi214':
         # Bi214 compton region using Cs134 604 peak.
         cs_fwhm = 0.05 * (604.72)**0.5
         cs_fwhm_channel = int(region_size * (cs_fwhm - E0) / Eslope)
         cs_peak_channel = int((604.72 - E0) / Eslope)
-        cs_left_peak = cs_peak_channel + compton_distance * cs_fwhm_channel
-        cs_left_ch = (cs_left_peak + fwhm_channel, 
-                     cs_left_peak - fwhm_channel)
+        cs_left_peak = cs_peak_channel - compton_distance * cs_fwhm_channel
+        cs_left_ch = (cs_left_peak - fwhm_channel, 
+                     cs_left_peak + fwhm_channel)
         side_region_list = [cs_left_ch, right_ch]
     elif sub_regions == 'none':
         side_region_list = []
