@@ -5,27 +5,48 @@ import shutil as sh
 import fileinput
 import SPEFile
 import os
+
 energy_list = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
                2614.51]
 cal_headers = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
                2614.51, 'Output']
 
-
 def acquire_files():
     """
     acquire_files gathers all the .Spe file in the current file directory and
     returns a list containing all .Spe files.
-    Files is a list of .spe files.
     """
     sample_measurements = []
+    sample_names = []
+    f = []
     dir_path = os.getcwd()
     for file in os.listdir(dir_path):
         if file.lower().endswith(".spe"):
+            # Ignore the background and reference spectra
             if file == "USS_Independence_Background.Spe":
                 pass
+            elif file == "UCB018_Soil_Sample010_2.Spe":
+                pass
             else:
+                if '_recal' in file:
+                    f.append(file)
+                    f[-1].replace('_recal.Spe', '.Spe')
+
                 sample_measurements.append(file)
-    return sample_measurements
+                sample_names.append(file)
+
+    for file in os.listdir(dir_path):
+        if file == f:
+            os.remove(file)
+
+    sample_measurements.sort()
+    sample_names.sort()
+
+    for i in np.arange(len(f)):
+        sample_names = [os.path.splitext(f[i])[0].replace("_", " ")
+                        for f[i] in sample_measurements]
+
+    return sample_measurements, sample_names
 
 
 def calibration_check(spectrum):
@@ -163,7 +184,7 @@ def calibration_table(samples, headers, offsets):
 
 
 def main():
-    sample_measurements = acquire_files()
+    sample_measurements, _ = acquire_files()
     recalibrate(sample_measurements)
 
 if __name__ == '__main__':
