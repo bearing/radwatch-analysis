@@ -301,7 +301,6 @@ def make_table(isotope_list, sample_info, sample_names, dates):
 
     return frame
 
-
 def save_peak(sample, energy):
     """
     Plot peak using Spectrum_Peak_Visualization and save into a PNG file.
