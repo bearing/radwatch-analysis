@@ -1,6 +1,7 @@
 import numpy as np
 import peakutils
 from Isotope_identification import Cs_134_g_e
+from Isotope_identification import Bi_214_g_e
 
 
 def ROI_Maker(spectrum, energy,sub_regions='auto'):
@@ -17,14 +18,14 @@ def ROI_Maker(spectrum, energy,sub_regions='auto'):
     energy_ch = int((peak_energy - E0) / Eslope)
 
     region_size = 1.3
-    separation_parameter = 2
+    separation_parameter = 2.6
 
     # Rough estimate of FWHM.
     fwhm_kev = 0.05*peak_energy**0.5
     fwhm_ch = (fwhm_kev - E0)/Eslope
 
     region_half_width = int(region_size * fwhm_ch)
-    region_separation = int(separation_parameter*region_half_width)
+    region_separation = separation_parameter*fwhm_ch
 
     peak_ch = (energy_ch - region_half_width, energy_ch + region_half_width)
 
@@ -37,25 +38,42 @@ def ROI_Maker(spectrum, energy,sub_regions='auto'):
     if sub_regions == 'auto':
         if energy == Cs_134_g_e[2]:
             sub_regions = 'Cs134'
+        elif energy == Bi_214_g_e[0]:
+            sub_regions = 'Bi214'
         else:
             sub_regions = 'both'
 
     if sub_regions == 'left':
         side_region_list = [left_ch]
+        
     elif sub_regions == 'right':
         side_region_list = [right_ch]
+        
     elif sub_regions == 'Cs134':
         # Cs134 compton region using Bi214 609 peak.
         bi_fwhm_kev = 0.05 * (609.31)**0.5
         bi_fwhm_ch = (bi_fwhm_kev - E0)/Eslope
         bi_region_half_width = int(region_size * bi_fwhm_ch) 
-        bi_region_separation = int(separation_parameter*bi_region_half_width)
+        bi_region_separation = separation_parameter*bi_fwhm_ch
         bi_energy_ch = int((609.31 - E0) / Eslope)
         bi_right_ch = (bi_energy_ch + bi_region_separation + bi_region_half_width,
                        bi_energy_ch + bi_region_separation + 3*bi_region_half_width)
         side_region_list = [left_ch, bi_right_ch]
+        
+    elif sub_regions == 'Bi214':
+        # Bi214 compton region using Cs134 604 peak.
+        cs_fwhm_kev = 0.05 * (604.72)**0.5
+        cs_fwhm_ch = (cs_fwhm_kev - E0)/Eslope
+        cs_region_half_width = int(region_size*cs_fwhm_ch)
+        cs_region_separation = separation_parameter*cs_fwhm_ch
+        cs_energy_ch = int((604.72 - E0) / Eslope)
+        cs_left_ch = (cs_energy_ch - cs_region_separation - 3*cs_region_half_width,
+                      cs_energy_ch - cs_region_separation - cs_region_half_width)
+        side_region_list = [cs_left_ch, right_ch]
+        
     elif sub_regions == 'none':
         side_region_list = []
+        
     else:
         side_region_list = [left_ch, right_ch]
 
