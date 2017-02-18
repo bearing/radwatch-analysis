@@ -20,7 +20,6 @@ def acquire_files():
     sample_names = []
     f = []
     dir_path = os.getcwd()
-    skip_file = ''
     for file in os.listdir(dir_path):
         if file.lower().endswith(".spe"):
             # Ignore the background and reference spectra
