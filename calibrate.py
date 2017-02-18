@@ -5,7 +5,6 @@ import shutil as sh
 import fileinput
 import SPEFile
 import os
-import sys
 
 energy_list = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
                2614.51]
@@ -19,28 +18,34 @@ def acquire_files():
     """
     sample_measurements = []
     sample_names = []
+    f = []
     dir_path = os.getcwd()
     skip_file = ''
     for file in os.listdir(dir_path):
         if file.lower().endswith(".spe"):
             # Ignore the background and reference spectra
-            if file == skip_file:
-                pass
-            elif file == "USS_Independence_Background.Spe":
+            if file == "USS_Independence_Background.Spe":
                 pass
             elif file == "UCB018_Soil_Sample010_2.Spe":
                 pass
             else:
                 if '_recal' in file:
-                    skip_file = file
-                    skip_file.replace('_recal.Spe', '.Spe')
-                else:
-                    pass
+                    f.append(file)
+                    f[-1].replace('_recal.Spe', '.Spe')
 
                 sample_measurements.append(file)
-                name = os.path.splitext(file)[0].replace("_", " ")
-                sample_names.append(str(name))
-                sample_names.sort()
+                sample_names.append(file)
+
+    for file in os.listdir(dir_path):
+        if file == f:
+            os.remove(file)
+
+    sample_measurements.sort()
+    sample_names.sort()
+
+    for i in np.arange(len(f)):
+        sample_names = [os.path.splitext(f[i])[0].replace("_", " ")
+                        for f[i] in sample_measurements]
 
     return sample_measurements, sample_names
 
@@ -180,8 +185,7 @@ def calibration_table(samples, headers, offsets):
 
 
 def main():
-    array = acquire_files()
-    sample_measurements = array[0]
+    sample_measurements, _ = acquire_files()
     recalibrate(sample_measurements)
 
 if __name__ == '__main__':
