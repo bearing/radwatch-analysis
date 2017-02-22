@@ -19,8 +19,8 @@ def acquire_files():
     sample_measurements = []
     sample_names = []
     f = []
+    s = []
     dir_path = os.getcwd()
-    skip_file = ''
     for file in os.listdir(dir_path):
         if file.lower().endswith(".spe"):
             # Ignore the background and reference spectra
@@ -30,15 +30,16 @@ def acquire_files():
                 pass
             else:
                 if '_recal' in file:
-                    f.append(file)
-                    f[-1].replace('_recal.Spe', '.Spe')
+                    s = file
+                    s.replace('_recal.Spe', '.Spe')
+                    f.append(s)
 
                 sample_measurements.append(file)
                 sample_names.append(file)
 
-    for file in os.listdir(dir_path):
-        if file == f:
-            os.remove(file)
+    for i in np.arange(len(f)):
+        os.remove(f[i])
+        f.remove(f[i])
 
     sample_measurements.sort()
     sample_names.sort()
