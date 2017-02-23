@@ -10,6 +10,7 @@ energy_list = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
 cal_headers = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
                2614.51, 'Output']
 
+
 def acquire_files():
     """
     acquire_files gathers all the .Spe file in the current file directory and
@@ -25,6 +26,7 @@ def acquire_files():
             else:
                 sample_measurements.append(file)
     return sample_measurements
+
 
 def calibration_check(spectrum):
     '''

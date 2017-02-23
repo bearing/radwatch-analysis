@@ -3,18 +3,19 @@ import peakutils
 from Isotope_identification import Cs_134_g_e
 from Isotope_identification import Bi_214_g_e
 
-
-def ROI_Maker(spectrum, energy,sub_regions='auto'):
+def ROI_Maker(spectrum, energy, sub_regions='auto'):
     """
-    Takes in a measured spectrum and identifies peaks in terms of channel number
-    and energy. Uses peak_finder to localize the peak more precisely from the
-    given energy. Also returns peak and compton ROIs.
+    Takes in a measured spectrum and identifies peaks by energy.
+    Uses peak_finder to localize the peak more precisely from the
+    given energy. Also returns peak and compton ROIs as well as each ROIs gross
+    area.
     """
 
     peak_energy = peak_finder(spectrum, energy)
 
     E0 = spectrum.energy_cal[0]
     Eslope = spectrum.energy_cal[1]
+
     energy_ch = int((peak_energy - E0) / Eslope)
 
     region_size = 1.3
@@ -45,21 +46,21 @@ def ROI_Maker(spectrum, energy,sub_regions='auto'):
 
     if sub_regions == 'left':
         side_region_list = [left_ch]
-        
+
     elif sub_regions == 'right':
         side_region_list = [right_ch]
-        
+
     elif sub_regions == 'Cs134':
         # Cs134 compton region using Bi214 609 peak.
         bi_fwhm_kev = 0.05 * (609.31)**0.5
         bi_fwhm_ch = (bi_fwhm_kev - E0)/Eslope
-        bi_region_half_width = int(region_size * bi_fwhm_ch) 
+        bi_region_half_width = int(region_size * bi_fwhm_ch)
         bi_region_separation = separation_parameter*bi_fwhm_ch
         bi_energy_ch = int((609.31 - E0) / Eslope)
         bi_right_ch = (bi_energy_ch + bi_region_separation + bi_region_half_width,
                        bi_energy_ch + bi_region_separation + 3*bi_region_half_width)
         side_region_list = [left_ch, bi_right_ch]
-        
+
     elif sub_regions == 'Bi214':
         # Bi214 compton region using Cs134 604 peak.
         cs_fwhm_kev = 0.05 * (604.72)**0.5
@@ -70,10 +71,10 @@ def ROI_Maker(spectrum, energy,sub_regions='auto'):
         cs_left_ch = (cs_energy_ch - cs_region_separation - 3*cs_region_half_width,
                       cs_energy_ch - cs_region_separation - cs_region_half_width)
         side_region_list = [cs_left_ch, right_ch]
-        
+
     elif sub_regions == 'none':
         side_region_list = []
-        
+
     else:
         side_region_list = [left_ch, right_ch]
 

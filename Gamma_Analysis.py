@@ -5,7 +5,6 @@ M = Measurement Spectrum
 B = Background Spectrum
 """
 from __future__ import print_function
-from SpectrumFileBase import SpectrumFileBase
 import Gamma_Isotopes as ii
 import Gamma_Reference as ref
 import SPEFile
@@ -20,6 +19,7 @@ import os
 EFFICIENCY_CAL_COEFFS = [-5.1164, 161.65, -3952.3, 30908]
 isotope_list = [ii.potassium_40, ii.bismuth_214, ii.thallium_208,
                 ii.caesium_137, ii.caesium_134]
+
 
 def absolute_efficiency(energy, coeffs=EFFICIENCY_CAL_COEFFS):
     """
@@ -63,14 +63,15 @@ def isotope_activity(isotope, emission_rates, emission_uncertainty):
     weight = []
     squares_total = []
     for i in range(len(branching_ratio)):
-        activity.append(emission_rates[i]/branching_ratio[i])
-        uncertainty.append(emission_uncertainty[i]/branching_ratio[i])
-        weight.append(1/(emission_uncertainty[i]/branching_ratio[i])**2)
+        activity.append(emission_rates[i] / (.01 * branching_ratio[i]))
+        uncertainty.append(emission_uncertainty[i] / (.01 * branching_ratio[i]))
+        weight.append(1 / (emission_uncertainty[i] / branching_ratio[i])**2)
         squares_unc = uncertainty[i]**2 * weight[i]**2
         squares_total.append(squares_unc)
     sum_of_squares = np.sum(squares_total)
     V_1 = np.sum(weight)
-    weighted_avg_isotope_activity = np.sum(np.array(activity) * np.array(weight)) / V_1
+    weighted_avg_isotope_activity = np.sum(
+        np.array(activity) * np.array(weight)) / V_1
     weighted_avg_isotope_unc = sum_of_squares**0.5 / V_1
     results = [weighted_avg_isotope_activity, weighted_avg_isotope_unc]
     return results
@@ -339,7 +340,8 @@ def save_peak(sample, energy):
     fwhm = 0.05 * (energy)**0.5
     energy_range = [(energy - 8 * fwhm), (energy + 8 * fwhm)]
     # generate plot PNG using plotter
-    plotter.gamma_plotter(sample, energy_range=energy_range, use='peaks', title_text=label)
+    plotter.gamma_plotter(
+        sample, energy_range=energy_range, use='peaks', title_text=label)
     PNG_name = label + '.png'
     # move PNGs to newly created folder
     plt.savefig(os.path.join(sample_folder, PNG_name))
