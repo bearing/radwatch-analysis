@@ -33,18 +33,15 @@ def acquire_files():
                     f[-1].replace('_recal.Spe', '.Spe')
 
                 sample_measurements.append(file)
-                sample_names.append(file)
-
-    for file in os.listdir(dir_path):
-        if file == f:
-            os.remove(file)
 
     sample_measurements.sort()
-    sample_names.sort()
 
     for i in np.arange(len(f)):
-        sample_names = [os.path.splitext(f[i])[0].replace("_", " ")
-                        for f[i] in sample_measurements]
+        sample_measurements.remove(f[i])
+
+    sample_names = [os.path.splitext(sample_measurements[i])[0]
+                    .replace("_", " ") for i in np
+                    .arange(len(sample_measurements))]
 
     return sample_measurements, sample_names
 
