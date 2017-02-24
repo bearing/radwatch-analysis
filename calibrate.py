@@ -19,7 +19,6 @@ def acquire_files():
     sample_measurements = []
     sample_names = []
     f = []
-    s = []
     dir_path = os.getcwd()
     for file in os.listdir(dir_path):
         if file.lower().endswith(".spe"):
@@ -30,23 +29,19 @@ def acquire_files():
                 pass
             else:
                 if '_recal' in file:
-                    s = file
-                    s.replace('_recal.Spe', '.Spe')
-                    f.append(s)
+                    f.append(file)
+                    f[-1].replace('_recal.Spe', '.Spe')
 
                 sample_measurements.append(file)
-                sample_names.append(file)
-
-    for i in np.arange(len(f)):
-        os.remove(f[i])
-        f.remove(f[i])
 
     sample_measurements.sort()
-    sample_names.sort()
 
     for i in np.arange(len(f)):
-        sample_names = [os.path.splitext(f[i])[0].replace("_", " ")
-                        for f[i] in sample_measurements]
+        sample_measurements.remove(f[i])
+
+    sample_names = [os.path.splitext(sample_measurements[i])[0]
+                    .replace("_", " ") for i in np
+                    .arange(len(sample_measurements))]
 
     return sample_measurements, sample_names
 
