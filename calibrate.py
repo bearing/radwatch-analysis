@@ -17,29 +17,31 @@ def acquire_files():
     returns a list containing all .Spe files.
     """
     sample_measurements = []
-    sample_names = []
-    f = []
+    recal_names = []
     dir_path = os.getcwd()
-    for file in os.listdir(dir_path):
-        if file.lower().endswith(".spe"):
+    for filename in os.listdir(dir_path):
+        if filename.lower().endswith(".spe"):
             # Ignore the background and reference spectra
-            if file == "USS_Independence_Background.Spe":
+            if filename == "USS_Independence_Background.Spe":
                 pass
-            elif file == "UCB018_Soil_Sample010_2.Spe":
+            elif filename == "UCB018_Soil_Sample010_2.Spe":
                 pass
             else:
-                if '_recal' in file:
-                    f.append(file)
-                sample_measurements.append(file)
+                if '_recal' in filename:
+                    recal_names.append(filename)
+                sample_measurements.append(filename)
 
     sample_measurements.sort()
 
-    for i in np.arange(len(f)):
-        sample_measurements.remove(f[i].replace('_recal', ''))
+    for i in np.arange(len(recal_names)):
+        recal_focus = recal_names[i].replace('_recal', '')
 
-    sample_names = [os.path.splitext(sample_measurements[i])[0]
-                    .replace("_", " ") for i in np
-                    .arange(len(sample_measurements))]
+        if recal_focus in sample_measurements:
+            sample_measurements.remove(recal_focus)
+
+    sample_names = [os.path.splitext(sample_measurements[i])
+                    [0].replace("_", " ")
+                    for i in np.arange(len(sample_measurements))]
 
     return sample_measurements, sample_names
 
