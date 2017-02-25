@@ -33,8 +33,8 @@ def acquire_files():
 
     sample_measurements.sort()
 
-    for i in np.arange(len(recal_names)):
-        recal_focus = recal_names[i].replace('_recal', '')
+    for recal_name in recal_names:
+        recal_focus = recal_name.replace('_recal', '')
 
         if recal_focus in sample_measurements:
             sample_measurements.remove(recal_focus)
