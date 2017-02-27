@@ -9,6 +9,7 @@ import Gamma_Isotopes as ii
 import Gamma_Reference as ref
 import SPEFile
 from ROI_Maker import ROI_Maker
+from calibrate import acquire_files
 import plotter
 import numpy as np
 import matplotlib.pyplot as plt
@@ -299,28 +300,6 @@ def make_table(isotope_list, sample_info, sample_names, dates):
     web_frame.to_csv('Website_Table.csv')
 
     return frame
-
-
-def acquire_files():
-    """
-    acquire_files gathers all the .Spe file in the current file directory and
-    returns a list containing all .Spe files.
-    """
-    sample_measurements = []
-    sample_names = []
-    dir_path = os.getcwd()
-    for file in os.listdir(dir_path):
-        if file.lower().endswith(".spe"):
-            # Ignore the background and reference spectra
-            if file == "USS_Independence_Background.Spe":
-                pass
-            elif file == "UCB018_Soil_Sample010_2.Spe":
-                pass
-            else:
-                sample_measurements.append(file)
-                name = os.path.splitext(file)[0].replace("_", " ")
-                sample_names.append(str(name))
-    return sample_measurements, sample_names
 
 
 def save_peak(sample, energy):
