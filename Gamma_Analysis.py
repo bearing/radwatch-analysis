@@ -366,6 +366,12 @@ def analyze_isotope(measurement, background, reference, isotope):
         background_peak = peak_measurement(background, energy)
         save_peak(measurement, energy)
         sample_net_area = peak_measurement(measurement, energy)
+        fstr = '{}: peak at {:4.0f} keV: {:8.1f} counts +/- {:5.1f} (1-sigma)'
+        print(fstr.format(
+            measurement.filename,
+            energy,
+            sample_net_area[0],
+            sample_net_area[1] / 2))
         reference_peak = peak_measurement(reference, energy)
         net_area = background_subtract(sample_net_area,
                                        background_peak,
