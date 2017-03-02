@@ -27,7 +27,7 @@ def ROI_Maker(spectrum, energy, sub_regions='auto'):
     fwhm_ch = (fwhm_kev - E0)/Eslope
 
     region_half_width = int(region_size * fwhm_ch)
-    region_separation = separation_parameter*fwhm_ch
+    region_separation = int(separation_parameter*fwhm_ch)
 
     peak_ch = (energy_ch - region_half_width, energy_ch + region_half_width)
 
@@ -56,7 +56,7 @@ def ROI_Maker(spectrum, energy, sub_regions='auto'):
         bi_fwhm_kev = 0.05 * (609.31)**0.5
         bi_fwhm_ch = (bi_fwhm_kev - E0)/Eslope
         bi_region_half_width = int(region_size * bi_fwhm_ch)
-        bi_region_separation = separation_parameter*bi_fwhm_ch
+        bi_region_separation = int(separation_parameter*bi_fwhm_ch)
         bi_energy_ch = int((609.31 - E0) / Eslope)
         bi_right_ch = (
             bi_energy_ch + bi_region_separation + bi_region_half_width,
@@ -68,7 +68,7 @@ def ROI_Maker(spectrum, energy, sub_regions='auto'):
         cs_fwhm_kev = 0.05 * (604.72)**0.5
         cs_fwhm_ch = (cs_fwhm_kev - E0)/Eslope
         cs_region_half_width = int(region_size*cs_fwhm_ch)
-        cs_region_separation = separation_parameter*cs_fwhm_ch
+        cs_region_separation = int(separation_parameter*cs_fwhm_ch)
         cs_energy_ch = int((604.72 - E0) / Eslope)
         cs_left_ch = (
             cs_energy_ch - cs_region_separation - 3*cs_region_half_width,
