@@ -317,7 +317,7 @@ def save_peak(sample, energy):
             pass
     label = sample_name + '_' + str(energy) + '_peak'
     fwhm = 0.05 * (energy)**0.5
-    energy_range = [(energy - 8 * fwhm), (energy + 8 * fwhm)]
+    energy_range = [(energy - 11 * fwhm), (energy + 11 * fwhm)]
     # generate plot PNG using plotter
     plotter.gamma_plotter(
         sample, energy_range=energy_range, use='peaks', title_text=label)
