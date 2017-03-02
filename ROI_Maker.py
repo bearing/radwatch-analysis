@@ -3,6 +3,7 @@ import peakutils
 from Isotope_identification import Cs_134_g_e
 from Isotope_identification import Bi_214_g_e
 
+
 def ROI_Maker(spectrum, energy, sub_regions='auto'):
     """
     Takes in a measured spectrum and identifies peaks by energy.
@@ -15,22 +16,26 @@ def ROI_Maker(spectrum, energy, sub_regions='auto'):
 
     E0 = spectrum.energy_cal[0]
     Eslope = spectrum.energy_cal[1]
-    energy_channel = int((peak_energy - E0) / Eslope)
 
-    region_size = 1.3
-    compton_distance = 4
+    energy_ch = int((peak_energy - E0) / Eslope)
+
+    region_size = 2.0
+    separation_parameter = 1.2
 
     # Rough estimate of FWHM.
-    fwhm = 0.05*peak_energy**0.5
-    fwhm_channel = int(region_size * (fwhm - E0) / Eslope)
-    # peak gross area
-    peak_ch = (energy_channel - fwhm_channel, energy_channel + fwhm_channel)
+    fwhm_kev = 0.05*peak_energy**0.5
+    fwhm_ch = (fwhm_kev - E0)/Eslope
 
-    left_center = energy_channel - compton_distance * fwhm_channel
-    left_ch = (left_center - fwhm_channel, left_center + fwhm_channel)
+    region_half_width = int(region_size * fwhm_ch)
+    region_separation = int(separation_parameter*fwhm_ch)
 
-    right_center = energy_channel + compton_distance * fwhm_channel
-    right_ch = (right_center - fwhm_channel, right_center + fwhm_channel)
+    peak_ch = (energy_ch - region_half_width, energy_ch + region_half_width)
+
+    left_ch = (energy_ch - region_separation - 3*region_half_width,
+               energy_ch - region_separation - region_half_width)
+
+    right_ch = (energy_ch + region_separation + region_half_width,
+                energy_ch + region_separation + 3*region_half_width)
 
     if sub_regions == 'auto':
         if energy == Cs_134_g_e[2]:
@@ -42,28 +47,37 @@ def ROI_Maker(spectrum, energy, sub_regions='auto'):
 
     if sub_regions == 'left':
         side_region_list = [left_ch]
+
     elif sub_regions == 'right':
         side_region_list = [right_ch]
+
     elif sub_regions == 'Cs134':
         # Cs134 compton region using Bi214 609 peak.
-        bi_fwhm = 0.05 * (609.31)**0.5
-        bi_fwhm_channel = int(region_size * (bi_fwhm - E0) / Eslope)
-        bi_peak_channel = int((609.31 - E0) / Eslope)
-        bi_right_peak = bi_peak_channel + compton_distance * bi_fwhm_channel
-        bi_right_ch = (bi_right_peak - fwhm_channel,
-                       bi_right_peak + fwhm_channel)
+        bi_fwhm_kev = 0.05 * (609.31)**0.5
+        bi_fwhm_ch = (bi_fwhm_kev - E0)/Eslope
+        bi_region_half_width = int(region_size * bi_fwhm_ch)
+        bi_region_separation = int(separation_parameter*bi_fwhm_ch)
+        bi_energy_ch = int((609.31 - E0) / Eslope)
+        bi_right_ch = (
+            bi_energy_ch + bi_region_separation + bi_region_half_width,
+            bi_energy_ch + bi_region_separation + 3*bi_region_half_width)
         side_region_list = [left_ch, bi_right_ch]
+
     elif sub_regions == 'Bi214':
         # Bi214 compton region using Cs134 604 peak.
-        cs_fwhm = 0.05 * (604.72)**0.5
-        cs_fwhm_channel = int(region_size * (cs_fwhm - E0) / Eslope)
-        cs_peak_channel = int((604.72 - E0) / Eslope)
-        cs_left_peak = cs_peak_channel - compton_distance * cs_fwhm_channel
-        cs_left_ch = (cs_left_peak - fwhm_channel, 
-                     cs_left_peak + fwhm_channel)
+        cs_fwhm_kev = 0.05 * (604.72)**0.5
+        cs_fwhm_ch = (cs_fwhm_kev - E0)/Eslope
+        cs_region_half_width = int(region_size*cs_fwhm_ch)
+        cs_region_separation = int(separation_parameter*cs_fwhm_ch)
+        cs_energy_ch = int((604.72 - E0) / Eslope)
+        cs_left_ch = (
+            cs_energy_ch - cs_region_separation - 3*cs_region_half_width,
+            cs_energy_ch - cs_region_separation - cs_region_half_width)
         side_region_list = [cs_left_ch, right_ch]
+
     elif sub_regions == 'none':
         side_region_list = []
+
     else:
         side_region_list = [left_ch, right_ch]
 
