@@ -3,6 +3,7 @@ import peakutils
 from Isotope_identification import Cs_134_g_e
 from Isotope_identification import Bi_214_g_e
 
+
 def ROI_Maker(spectrum, energy, sub_regions='auto'):
     """
     Takes in a measured spectrum and identifies peaks by energy.
@@ -57,8 +58,9 @@ def ROI_Maker(spectrum, energy, sub_regions='auto'):
         bi_region_half_width = int(region_size * bi_fwhm_ch)
         bi_region_separation = separation_parameter*bi_fwhm_ch
         bi_energy_ch = int((609.31 - E0) / Eslope)
-        bi_right_ch = (bi_energy_ch + bi_region_separation + bi_region_half_width,
-                       bi_energy_ch + bi_region_separation + 3*bi_region_half_width)
+        bi_right_ch = (
+            bi_energy_ch + bi_region_separation + bi_region_half_width,
+            bi_energy_ch + bi_region_separation + 3*bi_region_half_width)
         side_region_list = [left_ch, bi_right_ch]
 
     elif sub_regions == 'Bi214':
@@ -68,8 +70,9 @@ def ROI_Maker(spectrum, energy, sub_regions='auto'):
         cs_region_half_width = int(region_size*cs_fwhm_ch)
         cs_region_separation = separation_parameter*cs_fwhm_ch
         cs_energy_ch = int((604.72 - E0) / Eslope)
-        cs_left_ch = (cs_energy_ch - cs_region_separation - 3*cs_region_half_width,
-                      cs_energy_ch - cs_region_separation - cs_region_half_width)
+        cs_left_ch = (
+            cs_energy_ch - cs_region_separation - 3*cs_region_half_width,
+            cs_energy_ch - cs_region_separation - cs_region_half_width)
         side_region_list = [cs_left_ch, right_ch]
 
     elif sub_regions == 'none':
