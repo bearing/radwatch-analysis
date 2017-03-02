@@ -19,8 +19,8 @@ def ROI_Maker(spectrum, energy, sub_regions='auto'):
 
     energy_ch = int((peak_energy - E0) / Eslope)
 
-    region_size = 1.3
-    separation_parameter = 2.6
+    region_size = 2.0
+    separation_parameter = 1.2
 
     # Rough estimate of FWHM.
     fwhm_kev = 0.05*peak_energy**0.5
