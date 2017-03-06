@@ -9,6 +9,7 @@ import Gamma_Isotopes as ii
 import Gamma_Reference as ref
 import SPEFile
 from ROI_Maker import ROI_Maker
+from calibrate import acquire_files
 import plotter
 import numpy as np
 import matplotlib.pyplot as plt
@@ -301,28 +302,6 @@ def make_table(isotope_list, sample_info, sample_names, dates):
     return frame
 
 
-def acquire_files():
-    """
-    acquire_files gathers all the .Spe file in the current file directory and
-    returns a list containing all .Spe files.
-    """
-    sample_measurements = []
-    sample_names = []
-    dir_path = os.getcwd()
-    for file in os.listdir(dir_path):
-        if file.lower().endswith(".spe"):
-            # Ignore the background and reference spectra
-            if file == "USS_Independence_Background.Spe":
-                pass
-            elif file == "UCB018_Soil_Sample010_2.Spe":
-                pass
-            else:
-                sample_measurements.append(file)
-                name = os.path.splitext(file)[0].replace("_", " ")
-                sample_names.append(str(name))
-    return sample_measurements, sample_names
-
-
 def save_peak(sample, energy):
     """
     Plot peak using Spectrum_Peak_Visualization and save into a PNG file.
@@ -338,7 +317,7 @@ def save_peak(sample, energy):
             pass
     label = sample_name + '_' + str(energy) + '_peak'
     fwhm = 0.05 * (energy)**0.5
-    energy_range = [(energy - 8 * fwhm), (energy + 8 * fwhm)]
+    energy_range = [(energy - 11 * fwhm), (energy + 11 * fwhm)]
     # generate plot PNG using plotter
     plotter.gamma_plotter(
         sample, energy_range=energy_range, use='peaks', title_text=label)
