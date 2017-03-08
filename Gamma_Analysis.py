@@ -418,7 +418,8 @@ def check_spectra(samples, background, reference):
                             error_spectrum)
 
 
-def main(background_filename="USS_Independence_Background.Spe", reference_filename="UCB018_Soil_Sample010_2.Spe", file_list=None):
+def main(background_filename="USS_Independence_Background.Spe", 
+         reference_filename="UCB018_Soil_Sample010_2.Spe", file_list=None):
     background = SPEFile.SPEFile(background_filename)
     background.read()
     reference = SPEFile.SPEFile(reference_filename)
