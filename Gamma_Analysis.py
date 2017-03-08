@@ -21,6 +21,8 @@ EFFICIENCY_CAL_COEFFS = [-5.1164, 161.65, -3952.3, 30908]
 isotope_list = [ii.potassium_40, ii.bismuth_214, ii.thallium_208,
                 ii.caesium_137, ii.caesium_134]
 
+BACKGROUND = "USS_Independence_Background.Spe"
+REFERENCE = "UCB018_Soil_Sample010_2.Spe"
 
 def absolute_efficiency(energy, coeffs=EFFICIENCY_CAL_COEFFS):
     """
@@ -418,8 +420,9 @@ def check_spectra(samples, background, reference):
                             error_spectrum)
 
 
-def main(background_filename="USS_Independence_Background.Spe", 
-         reference_filename="UCB018_Soil_Sample010_2.Spe", file_list=None):
+def main(background_filename=BACKGROUND, reference_filename=REFERENCE, 
+         file_list=None):
+    
     background = SPEFile.SPEFile(background_filename)
     background.read()
     reference = SPEFile.SPEFile(reference_filename)
