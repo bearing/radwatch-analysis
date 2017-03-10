@@ -9,7 +9,7 @@ import Gamma_Isotopes as ii
 import Gamma_Reference as ref
 import SPEFile
 from ROI_Maker import ROI_Maker
-from calibrate import acquire_files
+from calibrate import acquire_files, get_sample_names
 import plotter
 import numpy as np
 import matplotlib.pyplot as plt
@@ -429,6 +429,11 @@ def main(background_filename=BACKGROUND, reference_filename=REFERENCE,
     reference.read()
     if file_list is None:
         sample_measurements, sample_names = acquire_files()
+    else:
+    	  temp_sample_measurements, temp_sample_names = acquire_files()
+    	  sample_measurements, sample_names = get_sample_names(temp_sample_measurements, temp_sample_names, file_list)
+    	  print(sample_measurements)
+    	  print(sample_names)
     print('Found {} spectra'.format(len(sample_names)))
     print('Checking spectra for calibration bias...')
     check_spectra(sample_measurements, background, reference)
