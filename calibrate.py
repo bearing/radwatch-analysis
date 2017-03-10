@@ -39,9 +39,7 @@ def acquire_files():
         if recal_focus in sample_measurements:
             sample_measurements.remove(recal_focus)
 
-    sample_names = [os.path.splitext(sample_measurements[i])
-                    [0].replace("_", " ")
-                    for i in np.arange(len(sample_measurements))]
+    sample_names = get_sample_names(sample_measurements)
 
     return sample_measurements, sample_names
 
@@ -179,20 +177,11 @@ def calibration_table(samples, headers, offsets):
     cal_frame.index.name = 'Filename'
     cal_frame.to_csv('calibration_results.csv')
     
-def get_sample_names(measurements, names, file_list):
-    sample_measurements = []
-    sample_names = []
-    for i in file_list:
-        j = 0
-        while j < len(names):
-            if i[0:6] == names[j][0:6]:
-                sample_measurements.append(measurements[j])
-                sample_names.append(names[j])
-                j = len(measurements)
-            else:
-                j += 1
-    return sample_measurements, sample_names
-
+def get_sample_names(sample_measurements):
+       sample_names = [os.path.splitext(sample_measurements[i])
+                   [0].replace("_", " ")
+                   for i in np.arange(len(sample_measurements))]
+    return sample_names
 
 def main():
     sample_measurements, _ = acquire_files()
