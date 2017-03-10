@@ -9,7 +9,7 @@ import Gamma_Isotopes as ii
 import Gamma_Reference as ref
 import SPEFile
 from ROI_Maker import ROI_Maker
-from calibrate import acquire_files
+from calibrate import acquire_files, get_sample_names
 import plotter
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,6 +21,8 @@ EFFICIENCY_CAL_COEFFS = [-5.1164, 161.65, -3952.3, 30908]
 isotope_list = [ii.potassium_40, ii.bismuth_214, ii.thallium_208,
                 ii.caesium_137, ii.caesium_134]
 
+BACKGROUND = "USS_Independence_Background.Spe"
+REFERENCE = "UCB018_Soil_Sample010_2.Spe"
 
 def absolute_efficiency(energy, coeffs=EFFICIENCY_CAL_COEFFS):
     """
@@ -418,12 +420,18 @@ def check_spectra(samples, background, reference):
                             error_spectrum)
 
 
-def main():
-    background = SPEFile.SPEFile("USS_Independence_Background.Spe")
+def main(background_filename=BACKGROUND, reference_filename=REFERENCE, 
+         file_list=None):
+    
+    background = SPEFile.SPEFile(background_filename)
     background.read()
-    reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
+    reference = SPEFile.SPEFile(reference_filename)
     reference.read()
-    sample_measurements, sample_names = acquire_files()
+    if file_list is None:
+        sample_measurements, sample_names = acquire_files()
+    else:
+        sample_measurements = file_list
+        sample_names = get_sample_names(sample_measurements)
     print('Found {} spectra'.format(len(sample_names)))
     print('Checking spectra for calibration bias...')
     check_spectra(sample_measurements, background, reference)
