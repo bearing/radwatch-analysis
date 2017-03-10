@@ -430,10 +430,8 @@ def main(background_filename=BACKGROUND, reference_filename=REFERENCE,
     if file_list is None:
         sample_measurements, sample_names = acquire_files()
     else:
-    	  temp_sample_measurements, temp_sample_names = acquire_files()
-    	  sample_measurements, sample_names = get_sample_names(temp_sample_measurements, temp_sample_names, file_list)
-    	  print(sample_measurements)
-    	  print(sample_names)
+    	  sample_measurements = file_list
+        sample_names = get_sample_names(sample_measurements)
     print('Found {} spectra'.format(len(sample_names)))
     print('Checking spectra for calibration bias...')
     check_spectra(sample_measurements, background, reference)
