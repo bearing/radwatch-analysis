@@ -27,7 +27,7 @@ def acquire_files():
             elif filename == "UCB018_Soil_Sample010_2.Spe":
                 pass
             else:
-                if '_recal' in filename:
+                if '_recal.spe' in filename:
                     recal_names.append(filename)
                 sample_measurements.append(filename)
 
@@ -166,6 +166,10 @@ def recalibrate(files):
         with open('Error_Cal.txt', 'w') as file:
             file.writelines('Check calibration in %s \n' % error for error in
                             cal_error)
+    for file in files:
+        if '_recal.Spe' in file:
+            files.remove(file)
+
     calibration_table(files, cal_headers, cal_offsets)
 
 
@@ -173,7 +177,9 @@ def calibration_table(samples, headers, offsets):
 
     cal_results = {}
     for i in range(len(samples)):
+
         cal_results[samples[i]] = np.array(offsets[i])
+
     cal_frame = pd.DataFrame(cal_results, index=headers)
     cal_frame = cal_frame.T
     cal_frame.index.name = 'Filename'
