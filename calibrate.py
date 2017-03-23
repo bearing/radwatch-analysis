@@ -184,7 +184,12 @@ def calibration_table(samples, headers, offsets):
     cal_frame = cal_frame.T
     cal_frame.index.name = 'Filename'
     cal_frame.to_csv('calibration_results.csv')
-
+    
+def get_sample_names(sample_measurements):
+    sample_names = [os.path.splitext(sample_measurements[i])
+                   [0].replace("_", " ")
+                   for i in np.arange(len(sample_measurements))]
+    return sample_names
 
 def main():
     sample_measurements, _ = acquire_files()

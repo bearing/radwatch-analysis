@@ -9,7 +9,7 @@ import Gamma_Isotopes as ii
 import Gamma_Reference as ref
 import SPEFile
 from ROI_Maker import ROI_Maker
-from calibrate import acquire_files
+from calibrate import acquire_files, get_sample_names
 import plotter
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,6 +21,8 @@ EFFICIENCY_CAL_COEFFS = [-5.1164, 161.65, -3952.3, 30908]
 isotope_list = [ii.potassium_40, ii.bismuth_214, ii.thallium_208,
                 ii.caesium_137, ii.caesium_134]
 
+BACKGROUND = "USS_Independence_Background.Spe"
+REFERENCE = "UCB018_Soil_Sample010_2.Spe"
 
 def absolute_efficiency(energy, coeffs=EFFICIENCY_CAL_COEFFS):
     """
@@ -64,9 +66,9 @@ def isotope_activity(isotope, emission_rates, emission_uncertainty):
     weight = []
     squares_total = []
     for i in range(len(branching_ratio)):
-        activity.append(emission_rates[i]/branching_ratio[i])
-        uncertainty.append(emission_uncertainty[i]/branching_ratio[i])
-        weight.append(1/(emission_uncertainty[i]/branching_ratio[i])**2)
+        activity.append(emission_rates[i] / (.01 * branching_ratio[i]))
+        uncertainty.append(emission_uncertainty[i] / (.01 * branching_ratio[i]))
+        weight.append(1 / (emission_uncertainty[i] / branching_ratio[i])**2)
         squares_unc = uncertainty[i]**2 * weight[i]**2
         squares_total.append(squares_unc)
     sum_of_squares = np.sum(squares_total)
@@ -301,6 +303,7 @@ def make_table(isotope_list, sample_info, sample_names, dates):
 
     return frame
 
+
 def save_peak(sample, energy):
     """
     Plot peak using Spectrum_Peak_Visualization and save into a PNG file.
@@ -316,7 +319,7 @@ def save_peak(sample, energy):
             pass
     label = sample_name + '_' + str(energy) + '_peak'
     fwhm = 0.05 * (energy)**0.5
-    energy_range = [(energy - 8 * fwhm), (energy + 8 * fwhm)]
+    energy_range = [(energy - 11 * fwhm), (energy + 11 * fwhm)]
     # generate plot PNG using plotter
     plotter.gamma_plotter(
         sample, energy_range=energy_range, use='peaks', title_text=label)
@@ -417,12 +420,18 @@ def check_spectra(samples, background, reference):
                             error_spectrum)
 
 
-def main():
-    background = SPEFile.SPEFile("USS_Independence_Background.Spe")
+def main(background_filename=BACKGROUND, reference_filename=REFERENCE, 
+         file_list=None):
+    
+    background = SPEFile.SPEFile(background_filename)
     background.read()
-    reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
+    reference = SPEFile.SPEFile(reference_filename)
     reference.read()
-    sample_measurements, sample_names = acquire_files()
+    if file_list is None:
+        sample_measurements, sample_names = acquire_files()
+    else:
+        sample_measurements = file_list
+        sample_names = get_sample_names(sample_measurements)
     print('Found {} spectra'.format(len(sample_names)))
     print('Checking spectra for calibration bias...')
     check_spectra(sample_measurements, background, reference)
