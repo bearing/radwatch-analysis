@@ -18,15 +18,15 @@ class petri_reference_class(base_reference_class):
     """
     def spec_count_rate(self, mass, ref_concentration, ref_concentration_error,
                  conversion, ref_specific_count_rate):
-        self.ref_spec_ct_rate = ref_specific_activity
+        self.ref_spec_ct_rate = ref_specific_count_rate
 
 # Create a list of samples that uses an alternate reference.
 alt_ref_samples = ['UCB027']
 # Define the mass for the Petri soil reference sample.
 dirt_petri_mass = 1.18360
-petri_specific_count_rate = [2.15E-01, 9.35E-03, 2.17E-02, 1.05E-02, 1.75E-02,
-                             1.56E-02, 7.27E-02, 8.28E-03, 8.56E-03, 4.11E-02,
-                             5.25E-02, 3.10E-02, 1.07E-02, 1.50E-02]
+petri_specific_count_rate = [3.11E-04, 2.15E-01, 9.35E-03, 2.17E-02, 1.05E-02,
+                             1.75E-02, 1.56E-02, 7.27E-02, 8.28E-03, 8.56E-03,
+                             4.11E-02, 5.25E-02, 3.10E-02, 1.07E-02, 1.50E-02]
 
 # Define the mass for the S5F soil reference sample.
 dirt_S5F_mass = 1.19300
