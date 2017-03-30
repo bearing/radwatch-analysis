@@ -9,7 +9,7 @@ import Gamma_Isotopes as ii
 import Gamma_Reference as ref
 import SPEFile
 from ROI_Maker import ROI_Maker
-from calibrate import acquire_files, get_sample_names
+from calibrate import acquire_files
 import plotter
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,9 +20,6 @@ import os
 EFFICIENCY_CAL_COEFFS = [-5.1164, 161.65, -3952.3, 30908]
 isotope_list = [ii.potassium_40, ii.bismuth_214, ii.thallium_208,
                 ii.caesium_137, ii.caesium_134]
-
-BACKGROUND = "USS_Independence_Background.Spe"
-REFERENCE = "UCB018_Soil_Sample010_2.Spe"
 
 def absolute_efficiency(energy, coeffs=EFFICIENCY_CAL_COEFFS):
     """
@@ -43,13 +40,16 @@ def absolute_efficiency(energy, coeffs=EFFICIENCY_CAL_COEFFS):
     return efficiency
 
 
-def emission_rate(net_area, efficiency, livetime):
+def emission_rate(net_area, livetime):
     """
     this function returns the emission rate of gammas per second
     alongside its uncertainty.
     """
-    emission_rate = [net_area[0]/(efficiency*livetime),
-                     net_area[1]/(efficiency*livetime)]
+    # Note: The emission rate calculation excludes the efficiency in the
+    #       denominator because the emission rates of the sample and the
+    #       reference are divided eventually in the analysis.
+    emission_rate = [net_area[0]/livetime, net_area[1]/livetime]
+
     return emission_rate
 
 
@@ -66,9 +66,9 @@ def isotope_activity(isotope, emission_rates, emission_uncertainty):
     weight = []
     squares_total = []
     for i in range(len(branching_ratio)):
-        activity.append(emission_rates[i] / (.01 * branching_ratio[i]))
-        uncertainty.append(emission_uncertainty[i] / (.01 * branching_ratio[i]))
-        weight.append(1 / (emission_uncertainty[i] / branching_ratio[i])**2)
+        activity.append(emission_rates[i]/branching_ratio[i])
+        uncertainty.append(emission_uncertainty[i]/branching_ratio[i])
+        weight.append(1/(emission_uncertainty[i]/branching_ratio[i])**2)
         squares_unc = uncertainty[i]**2 * weight[i]**2
         squares_total.append(squares_unc)
     sum_of_squares = np.sum(squares_total)
@@ -127,6 +127,10 @@ def isotope_concentration(isotope, reference, sample_activity,
         conversion = 1
     not_in_dirt = ['Cs134', 'Cs137', 'Co60', 'Pb210']
     ref_specific_activity = reference_activity[0] / reference.mass
+
+    if type(reference) is ref.base_reference_class():
+    elif type(reference) is ref.petri_reference_class():
+
     if isotope.symbol + str(isotope.mass_number) in not_in_dirt:
         ref_conc_specact_ratio = 1
     else:
@@ -242,6 +246,14 @@ def make_table(isotope_list, sample_info, sample_names, dates):
     web_data = {}
     df = pd.read_csv('RadWatch_Samples.csv')
     mass = pd.Series.tolist(df.ix[:, 2])
+
+    for file in sample_names:
+        if 'recal' in file:
+            sample_names.remove(file)
+
+    print("mass: ", mass)
+    print(sample_names)
+
     if len(mass) != len(sample_names):
         print(
             "\nMetadata in RadWatch_Samples.csv doesn't match the SPE files " +
@@ -319,7 +331,7 @@ def save_peak(sample, energy):
             pass
     label = sample_name + '_' + str(energy) + '_peak'
     fwhm = 0.05 * (energy)**0.5
-    energy_range = [(energy - 11 * fwhm), (energy + 11 * fwhm)]
+    energy_range = [(energy - 8 * fwhm), (energy + 8 * fwhm)]
     # generate plot PNG using plotter
     plotter.gamma_plotter(
         sample, energy_range=energy_range, use='peaks', title_text=label)
@@ -334,9 +346,14 @@ def analyze_isotope(measurement, background, reference, isotope):
     Calculate concentration for one isotope in one measurement,
     using background spectrum and reference spectrum.
     """
-    sample_comparison = ref.soil_reference
+    if type(reference) is ref.base_reference_class():
+        sample_comparison = ref.soil_reference
+    elif type(reference) is ref.petri_reference_class():
+        sample_comparison = ref.petri_reference
     # ROI sub_regions handled in ROI_Maker.
-    isotope_efficiency = absolute_efficiency(isotope.list_sig_g_e)
+
+    # isotope_efficiency = absolute_efficiency(isotope.list_sig_g_e)
+
     isotope_energy = isotope.list_sig_g_e
     gamma_emission = []
     gamma_uncertainty = []
@@ -347,29 +364,37 @@ def analyze_isotope(measurement, background, reference, isotope):
         background_peak = peak_measurement(background, energy)
         save_peak(measurement, energy)
         sample_net_area = peak_measurement(measurement, energy)
-        reference_peak = peak_measurement(reference, energy)
+
+        # Only find the reference peak identifier, peak area, and emission
+        # if the reference is the S5F reference spectrum. Ignore if the
+        # reference is the Petri reference class.
+        if type(reference) is ref.base_reference_class():
+            reference_peak = peak_measurement(reference, energy)
+            reference_area = background_subtract(reference_peak,
+                                                 background_peak,
+                                                 reference.livetime,
+                                                 background.livetime)
+            reference_emission = emission_rate(reference_area,
+                                               reference.livetime)
+            ref_emission.append(reference_emission[0])
+            ref_uncertainty.append(reference_emission[1])
+            reference_activity = isotope_activity(isotope,
+                                                  ref_emission,
+                                                  ref_uncertainty)
+        elif type(reference) is ref.petri_reference_class():
+            reference_activity = sample_comparison.ref_spec_ct_rate
+
         net_area = background_subtract(sample_net_area,
                                        background_peak,
                                        measurement.livetime,
                                        background.livetime)
-        peak_emission = emission_rate(net_area, isotope_efficiency[j],
+        peak_emission = emission_rate(net_area,
                                       measurement.livetime)
-        reference_area = background_subtract(reference_peak,
-                                             background_peak,
-                                             reference.livetime,
-                                             background.livetime)
-        reference_emission = emission_rate(reference_area,
-                                           isotope_efficiency[j],
-                                           reference.livetime)
+
         gamma_emission.append(peak_emission[0])
         gamma_uncertainty.append(peak_emission[1])
-        ref_emission.append(reference_emission[0])
-        ref_uncertainty.append(reference_emission[1])
     activity = isotope_activity(isotope, gamma_emission,
                                 gamma_uncertainty)
-    reference_activity = isotope_activity(isotope,
-                                          ref_emission,
-                                          ref_uncertainty)
     concentration = isotope_concentration(isotope, sample_comparison,
                                           activity, reference_activity)
     return concentration
@@ -387,7 +412,7 @@ def analyze_spectrum(measurement, background, reference):
     return sample_data
 
 
-def check_spectra(samples, background, reference):
+def check_spectra(samples, background):
     """
     Check for bad calibrations in a list of spectra,
     by seeing if any background peaks in the measurement
@@ -420,24 +445,29 @@ def check_spectra(samples, background, reference):
                             error_spectrum)
 
 
-def main(background_filename=BACKGROUND, reference_filename=REFERENCE, 
-         file_list=None):
-    
-    background = SPEFile.SPEFile(background_filename)
+def main():
+    background = SPEFile.SPEFile("USS_Independence_Background.Spe")
     background.read()
-    reference = SPEFile.SPEFile(reference_filename)
-    reference.read()
-    if file_list is None:
-        sample_measurements, sample_names = acquire_files()
-    else:
-        sample_measurements = file_list
-        sample_names = get_sample_names(sample_measurements)
+    S5F_reference = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
+    S5F_reference.read()
+    sample_measurements, sample_names = acquire_files()
     print('Found {} spectra'.format(len(sample_names)))
     print('Checking spectra for calibration bias...')
-    check_spectra(sample_measurements, background, reference)
+    check_spectra(sample_measurements, background)
+
     measurement_dates = []
     sample_data = []
+
     for sample in sample_measurements:
+
+        # Assign the default reference as the S5F reference.
+        reference = S5F_reference
+
+        # Assign the Petri reference for samples which utilized that reference.
+        for alt_sample in ref.alt_ref_samples:
+            if alt_sample in sample:
+                reference = ref.petri_reference
+
         print('Measuring {}...'.format(sample))
         measurement = SPEFile.SPEFile(sample)
         measurement.read()
