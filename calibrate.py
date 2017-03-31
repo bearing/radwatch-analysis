@@ -13,7 +13,7 @@ cal_headers = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
 
 def acquire_files():
     """
-    acquire_files gathers all the .Spe file in the current file directory and
+    acquire_files gathers all the .Spe files in the current file directory and
     returns a list containing all .Spe files.
     """
     sample_measurements = []
@@ -27,7 +27,7 @@ def acquire_files():
             elif filename == "UCB018_Soil_Sample010_2.Spe":
                 pass
             else:
-                if '_recal.Spe' in filename:
+                if '_recal.spe' in filename.lower():
                     recal_names.append(filename)
                 sample_measurements.append(filename)
 
@@ -141,47 +141,35 @@ def calibration_correction(measurement, channel, energy):
 
 
 def recalibrate(files):
+    """
+    
+    """
     cal_error = []
     double_check = []
     cal_offsets = []
 
     for sample in files:
-        if '_recal.Spe' in sample.lower():
-            double_check.append(sample)
-            pass
-        else:
-            measurement = SPEFile.SPEFile(sample)
-            measurement.read()
-            [channel, energy, status, offsets] = calibration_check(measurement)
-            cal_offsets.append(offsets)
-            if status == 'fix':
-                print(('\nFixing calibration for %s \n' % sample))
-                cal_file = calibration_correction(sample, channel,
-                                                  energy)
-                double_check.append(cal_file)
-            elif status == 'error':
-                cal_error.append(sample)
-    for check in double_check:
-        Recal = SPEFile.SPEFile(check)
-        Recal.read()
-        status = calibration_check(Recal)[2]
-        if status == 'fix':
-            cal_error.append(check.replace('_recal.Spe', '.Spe'))
-    if cal_error == []:
-        pass
-    else:
-        with open('Error_Cal.txt', 'w') as file:
-            file.writelines('Check calibration in %s \n' % error for error in
-                            cal_error)
-    # for file in files:
-    #     if '_recal.Spe' in file:
-    #         files.remove(file)
-
-    files_updated = [os.path.splitext(files[i])
-                     [0].replace("_recal", "")
-                     for i in np.arange(len(files))]
-
-    calibration_table(files_updated, cal_headers, cal_offsets)
+        measurement = SPEFile.SPEFile(sample)
+        measurement.read()
+        [channel, energy, status, offsets] = calibration_check(measurement)
+        cal_offsets.append(offsets)
+        if status == 'fix' and '_recal.spe' not in sample.lower():
+            print(('\nFixing calibration for %s \n' % sample))
+            cal_file = calibration_correction(sample, channel,
+                                              energy)
+            cal_file_spectrum = SPEFile.SPEFile(cal_file)
+            cal_file_spectrum.read()
+            cal_check = calibration_check(cal_file_spectrum)[2]
+            if cal_check == 'fix':
+                print('Spectrum', sample, ' was run through a calibration ',
+                      ' correction, but still had a calibration issue.',
+                      '\n\n')
+        elif status == 'fix' and '_recal.spe' in sample.lower():
+            print('Spectrum', sample, ' was recalibrated and still had a ',
+                  ' calibration issue.', '\n\n')
+        elif status == 'error':
+            print('Check calibration for errors in spectrum ', sample)
+    calibration_table(files, cal_headers, cal_offsets)
 
 
 def calibration_table(samples, headers, offsets):
