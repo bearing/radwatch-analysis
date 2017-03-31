@@ -47,8 +47,8 @@ def acquire_files():
                     [0].replace("_", " ")
                     for i in np.arange(len(sample_measurements))]
 
-    print("sample_names: ", sample_names, '\n\n')
-    print("sample_measurements: ", sample_measurements, '\n\n')
+    # print("sample_names: ", sample_names, '\n\n')
+    # print("sample_measurements: ", sample_measurements, '\n\n')
 
     return sample_measurements, sample_names
 
