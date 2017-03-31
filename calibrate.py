@@ -177,9 +177,8 @@ def recalibrate(files):
     #     if '_recal.Spe' in file:
     #         files.remove(file)
 
-    files_updated = [os.path.splitext(files[i])
-                     [0].replace("_recal", "")
-                     for i in np.arange(len(files))]
+    files_updated = [os.path.splitext(f)[0].replace("_recal", "")
+                     for f in files]
 
     calibration_table(files_updated, cal_headers, cal_offsets)
 
