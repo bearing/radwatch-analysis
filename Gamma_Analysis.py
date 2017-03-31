@@ -39,18 +39,14 @@ def absolute_efficiency(energy, coeffs=EFFICIENCY_CAL_COEFFS):
                           coeffs[0]))
     return efficiency
 
-
-def emission_rate(net_area, livetime):
+def emission_rate(net_area, efficiency, livetime):
     """
     this function returns the emission rate of gammas per second
     alongside its uncertainty.
     """
-    # Note: The emission rate calculation excludes the efficiency in the
-    #       denominator because the emission rates of the sample and the
-    #       reference are divided eventually in the analysis.
-    emission_rate = [net_area[0]/livetime, net_area[1]/livetime]
-
-    return emission_rate
+    emission_rate = [net_area[0]/(efficiency*livetime),
+                     net_area[1]/(efficiency*livetime)]
+return emission_rate
 
 
 def isotope_activity(isotope, emission_rates, emission_uncertainty):
@@ -128,8 +124,8 @@ def isotope_concentration(isotope, reference, sample_activity,
     not_in_dirt = ['Cs134', 'Cs137', 'Co60', 'Pb210']
     ref_specific_activity = reference_activity[0] / reference.mass
 
-    if type(reference) is ref.base_reference_class():
-    elif type(reference) is ref.petri_reference_class():
+    if isinstance(reference, PetriReference):
+    else:
 
     if isotope.symbol + str(isotope.mass_number) in not_in_dirt:
         ref_conc_specact_ratio = 1
@@ -346,13 +342,13 @@ def analyze_isotope(measurement, background, reference, isotope):
     Calculate concentration for one isotope in one measurement,
     using background spectrum and reference spectrum.
     """
-    if type(reference) is ref.base_reference_class():
-        sample_comparison = ref.soil_reference
-    elif type(reference) is ref.petri_reference_class():
+    if isinstance(reference, PetriReference):
         sample_comparison = ref.petri_reference
+    else:
+        sample_comparison = ref.soil_reference
     # ROI sub_regions handled in ROI_Maker.
 
-    # isotope_efficiency = absolute_efficiency(isotope.list_sig_g_e)
+    isotope_efficiency = absolute_efficiency(isotope.list_sig_g_e)
 
     isotope_energy = isotope.list_sig_g_e
     gamma_emission = []
@@ -368,27 +364,28 @@ def analyze_isotope(measurement, background, reference, isotope):
         # Only find the reference peak identifier, peak area, and emission
         # if the reference is the S5F reference spectrum. Ignore if the
         # reference is the Petri reference class.
-        if type(reference) is ref.base_reference_class():
+        if isinstance(reference, PetriReference):
             reference_peak = peak_measurement(reference, energy)
             reference_area = background_subtract(reference_peak,
                                                  background_peak,
                                                  reference.livetime,
                                                  background.livetime)
             reference_emission = emission_rate(reference_area,
+                                               isotope_efficiency,
                                                reference.livetime)
             ref_emission.append(reference_emission[0])
             ref_uncertainty.append(reference_emission[1])
             reference_activity = isotope_activity(isotope,
                                                   ref_emission,
                                                   ref_uncertainty)
-        elif type(reference) is ref.petri_reference_class():
+        else:
             reference_activity = sample_comparison.ref_spec_ct_rate
 
         net_area = background_subtract(sample_net_area,
                                        background_peak,
                                        measurement.livetime,
                                        background.livetime)
-        peak_emission = emission_rate(net_area,
+        peak_emission = emission_rate(net_area, isotope_efficiency,
                                       measurement.livetime)
 
         gamma_emission.append(peak_emission[0])
