@@ -128,8 +128,8 @@ def isotope_concentration(isotope, reference, sample_activity,
     not_in_dirt = ['Cs134', 'Cs137', 'Co60', 'Pb210']
     ref_specific_activity = reference_activity[0] / reference.mass
 
-    if type(reference) is ref.base_reference_class():
-    elif type(reference) is ref.petri_reference_class():
+    if isinstance(reference, PetriReference):
+    else:
 
     if isotope.symbol + str(isotope.mass_number) in not_in_dirt:
         ref_conc_specact_ratio = 1
@@ -346,10 +346,10 @@ def analyze_isotope(measurement, background, reference, isotope):
     Calculate concentration for one isotope in one measurement,
     using background spectrum and reference spectrum.
     """
-    if type(reference) is ref.base_reference_class():
-        sample_comparison = ref.soil_reference
-    elif type(reference) is ref.petri_reference_class():
+    if isinstance(reference, PetriReference):
         sample_comparison = ref.petri_reference
+    else:
+        sample_comparison = ref.soil_reference
     # ROI sub_regions handled in ROI_Maker.
 
     # isotope_efficiency = absolute_efficiency(isotope.list_sig_g_e)
@@ -368,7 +368,7 @@ def analyze_isotope(measurement, background, reference, isotope):
         # Only find the reference peak identifier, peak area, and emission
         # if the reference is the S5F reference spectrum. Ignore if the
         # reference is the Petri reference class.
-        if type(reference) is ref.base_reference_class():
+        if isinstance(reference, PetriReference):
             reference_peak = peak_measurement(reference, energy)
             reference_area = background_subtract(reference_peak,
                                                  background_peak,
@@ -381,7 +381,7 @@ def analyze_isotope(measurement, background, reference, isotope):
             reference_activity = isotope_activity(isotope,
                                                   ref_emission,
                                                   ref_uncertainty)
-        elif type(reference) is ref.petri_reference_class():
+        else:
             reference_activity = sample_comparison.ref_spec_ct_rate
 
         net_area = background_subtract(sample_net_area,
