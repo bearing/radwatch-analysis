@@ -39,18 +39,14 @@ def absolute_efficiency(energy, coeffs=EFFICIENCY_CAL_COEFFS):
                           coeffs[0]))
     return efficiency
 
-
-def emission_rate(net_area, livetime):
+def emission_rate(net_area, efficiency, livetime):
     """
     this function returns the emission rate of gammas per second
     alongside its uncertainty.
     """
-    # Note: The emission rate calculation excludes the efficiency in the
-    #       denominator because the emission rates of the sample and the
-    #       reference are divided eventually in the analysis.
-    emission_rate = [net_area[0]/livetime, net_area[1]/livetime]
-
-    return emission_rate
+    emission_rate = [net_area[0]/(efficiency*livetime),
+                     net_area[1]/(efficiency*livetime)]
+return emission_rate
 
 
 def isotope_activity(isotope, emission_rates, emission_uncertainty):
@@ -352,7 +348,7 @@ def analyze_isotope(measurement, background, reference, isotope):
         sample_comparison = ref.soil_reference
     # ROI sub_regions handled in ROI_Maker.
 
-    # isotope_efficiency = absolute_efficiency(isotope.list_sig_g_e)
+    isotope_efficiency = absolute_efficiency(isotope.list_sig_g_e)
 
     isotope_energy = isotope.list_sig_g_e
     gamma_emission = []
@@ -375,6 +371,7 @@ def analyze_isotope(measurement, background, reference, isotope):
                                                  reference.livetime,
                                                  background.livetime)
             reference_emission = emission_rate(reference_area,
+                                               isotope_efficiency,
                                                reference.livetime)
             ref_emission.append(reference_emission[0])
             ref_uncertainty.append(reference_emission[1])
@@ -388,7 +385,7 @@ def analyze_isotope(measurement, background, reference, isotope):
                                        background_peak,
                                        measurement.livetime,
                                        background.livetime)
-        peak_emission = emission_rate(net_area,
+        peak_emission = emission_rate(net_area, isotope_efficiency,
                                       measurement.livetime)
 
         gamma_emission.append(peak_emission[0])
