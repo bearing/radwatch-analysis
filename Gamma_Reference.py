@@ -1,4 +1,4 @@
-class base_reference_class(object):
+class ReferenceBase(object):
     """
     Generates a reference object that contains a reference mass and
     concentrations. Mass is in kg and concentrations are in percent for
@@ -12,7 +12,7 @@ class base_reference_class(object):
         self.ref_concentration_error = ref_concentration_error
         self.conversion = conversion
 
-class petri_reference_class(base_reference_class):
+class PetriReference(ReferenceBase):
     """
     Uses the Petri dish sample data as the reference.
     """
@@ -52,8 +52,8 @@ dirt_concentrations_uncertainty = [dirt_k_40_unc, dirt_bi_214_unc,
                                    dirt_tl_208_unc, dirt_ac_228_unc,
                                    dirt_pb_212_unc]
 dirt_conversions = [309.6, 12.3, 4.07]
-soil_reference = base_reference_class(dirt_S5F_mass, dirt_concentrations,
+soil_reference = ReferenceBase(dirt_S5F_mass, dirt_concentrations,
                            dirt_concentrations_uncertainty, dirt_conversions)
-petri_reference = petri_reference_class(dirt_petri_mass, dirt_concentrations,
+petri_reference = PetriReference(dirt_petri_mass, dirt_concentrations,
                            dirt_concentrations_uncertainty, dirt_conversions,
                            petri_specific_activity)
