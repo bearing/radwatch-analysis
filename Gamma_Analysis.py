@@ -132,8 +132,8 @@ def make_table(isotope_list, sample_info, sample_names, dates):
         if 'recal' in file:
             sample_names.remove(file)
 
-    print("mass: ", mass)
-    print(sample_names)
+    # print("mass: ", mass)
+    # print(sample_names)
 
     if len(mass) != len(sample_names):
         print(
