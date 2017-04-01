@@ -11,6 +11,7 @@ energy_list = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
 cal_headers = [351.93, 583.19, 609.31, 911.20, 1460.82, 1764.49,
                2614.51, 'Output']
 
+
 def acquire_files():
     """
     acquire_files gathers all the .Spe files in the current file directory and
@@ -38,17 +39,10 @@ def acquire_files():
     for recal_name in recal_names:
         recal_focus = recal_name.replace('_recal', '')
 
-        print(recal_focus)
-
         if recal_focus in sample_measurements:
             sample_measurements.remove(recal_focus)
 
-    sample_names = [os.path.splitext(sample_measurements[i])
-                    [0].replace("_", " ")
-                    for i in np.arange(len(sample_measurements))]
-
-    print("sample_names: ", sample_names, '\n\n')
-    print("sample_measurements: ", sample_measurements, '\n\n')
+    sample_names = get_sample_names(sample_measurements)
 
     return sample_measurements, sample_names
 
@@ -142,10 +136,8 @@ def calibration_correction(measurement, channel, energy):
 
 def recalibrate(files):
     """
-    
+
     """
-    cal_error = []
-    double_check = []
     cal_offsets = []
 
     for sample in files:
@@ -183,6 +175,12 @@ def calibration_table(samples, headers, offsets):
     cal_frame = cal_frame.T
     cal_frame.index.name = 'Filename'
     cal_frame.to_csv('calibration_results.csv')
+
+
+def get_sample_names(sample_measurements):
+    sample_names = [os.path.splitext(s)[0].replace("_", " ")
+                    for s in sample_measurements]
+    return sample_names
 
 
 def main():

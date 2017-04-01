@@ -8,9 +8,9 @@ from __future__ import print_function
 import Gamma_Isotopes as ii
 import Gamma_Reference as ref
 import SPEFile
-from ROI_Maker import (ROI_Maker, peak_measurement, emission_rate,
-                      background_subtract, absolute_efficiency, isotope_activity)
-from calibrate import acquire_files
+from ROI_Maker import peak_measurement, emission_rate, isotope_activity
+from ROI_Maker import background_subtract, absolute_efficiency
+from calibrate import acquire_files, get_sample_names
 import plotter
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,7 +18,7 @@ import peakutils
 import pandas as pd
 import os
 
-
+BACKGROUND = "USS_Independence_Background.Spe"
 isotope_list = [ii.potassium_40, ii.bismuth_214, ii.thallium_208,
                 ii.caesium_137, ii.caesium_134]
 
@@ -119,6 +119,7 @@ def peak_finder(spectrum, energy):
     peak_energy = float(energy_axis[peak_energy])
     return(peak_energy)
 
+
 def make_table(isotope_list, sample_info, sample_names, dates):
     """
     Generate files Sampling_Table.csv and Website_Table.csv
@@ -212,7 +213,7 @@ def save_peak(sample, energy):
             pass
     label = sample_name + '_' + str(energy) + '_peak'
     fwhm = 0.05 * (energy)**0.5
-    energy_range = [(energy - 8 * fwhm), (energy + 8 * fwhm)]
+    energy_range = [(energy - 11 * fwhm), (energy + 11 * fwhm)]
     # generate plot PNG using plotter
     plotter.gamma_plotter(
         sample, energy_range=energy_range, use='peaks', title_text=label)
@@ -292,8 +293,8 @@ def check_spectra(samples, background):
                     significance = check[0]/check[1]
                     if significance < -1:
                         error_spectrum.append(measurement)
-                        print(' * There is a bias in {}'.format(
-                            measurement.filename))
+                        print(' * {}: peak at {} less than background'.format(
+                            measurement.filename, energy))
                         break
     if error_spectrum == []:
         pass
@@ -303,11 +304,15 @@ def check_spectra(samples, background):
                             error_spectrum)
 
 
-def main():
-    background = SPEFile.SPEFile("USS_Independence_Background.Spe")
+def main(background_filename=BACKGROUND, file_list=None):
+    background = SPEFile.SPEFile(background_filename)
     background.read()
-    sample_measurements, sample_names = acquire_files()
-    print('Found {} spectra'.format(len(sample_names)))
+    if file_list is None:
+        sample_measurements, sample_names = acquire_files()
+    else:
+        sample_measurements = file_list
+        sample_names = get_sample_names(sample_measurements)
+    print('Got {} spectra'.format(len(sample_names)))
     print('Checking spectra for calibration bias...')
     check_spectra(sample_measurements, background)
 
@@ -318,7 +323,6 @@ def main():
 
         # Assign the default reference as the S5F reference.
         reference = ref.S5F_reference
-
         # Assign the Petri reference for samples which utilized that reference.
         for alt_sample in ref.alt_ref_samples:
             if alt_sample in sample:

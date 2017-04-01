@@ -1,6 +1,7 @@
-from ROI_Maker import (ROI_Maker, peak_measurement, emission_rate,
-                      background_subtract, absolute_efficiency, isotope_activity)
+from ROI_Maker import peak_measurement, background_subtract
+from ROI_Maker import absolute_efficiency, isotope_activity
 import SPEFile
+
 
 class ReferenceBase(object):
     """
@@ -10,7 +11,6 @@ class ReferenceBase(object):
     origin and derivation.
     """
 
-
     def __init__(self, mass, ref_concentration, ref_concentration_error,
                  conversion, spectrum=None):
         self.mass = mass
@@ -18,7 +18,6 @@ class ReferenceBase(object):
         self.ref_concentration_error = ref_concentration_error
         self.conversion = conversion
         self.spectrum = spectrum
-
 
     def get_spec_countrates(self, isotope, background):
         reference = self.spectrum
@@ -32,14 +31,16 @@ class ReferenceBase(object):
                                                  background_peak,
                                                  reference.livetime,
                                                  background.livetime)
-            ref_spec_count_rate.append(reference_area[0]/(reference.livetime*self.mass))
-            ref_spec_ct_rate_error.append(reference_area[1]/(reference.livetime*self.mass))
+            ref_spec_count_rate.append(
+                reference_area[0]/(reference.livetime*self.mass))
+            ref_spec_ct_rate_error.append(
+                reference_area[1]/(reference.livetime*self.mass))
 
         return ref_spec_count_rate, ref_spec_ct_rate_error
 
-
     def get_spec_activity(self, isotope, background):
-        spec_countrates, spec_countrates_error = self.get_spec_countrates(isotope, background=background)
+        spec_countrates, spec_countrates_error = self.get_spec_countrates(
+            isotope, background=background)
         spec_emissions = []
         spec_emissions_error = []
         for i, energy in enumerate(isotope.list_sig_g_e):
@@ -78,8 +79,8 @@ petri_specific_count_rate = {'K40': [2.15E-01],
                              'Tl208': [9.35E-03, 2.17E-02]}
 
 petri_spec_ct_rate_error = {'K40': [1.55E-03],
-                             'Bi214': [3.54E-04, 4.69E-04, 8.05E-04],
-                             'Tl208': [3.96E-04, 6.59E-04]}
+                            'Bi214': [3.54E-04, 4.69E-04, 8.05E-04],
+                            'Tl208': [3.96E-04, 6.59E-04]}
 
 # Define the mass for the S5F soil reference sample.
 dirt_S5F_mass = 1.19300
@@ -110,13 +111,13 @@ dirt_conversions = [309.6, 12.3, 4.07]
 S5F_spectrum = SPEFile.SPEFile("UCB018_Soil_Sample010_2.Spe")
 S5F_spectrum.read()
 
-S5F_reference = ReferenceBase(dirt_S5F_mass, dirt_concentrations,
-                           dirt_concentrations_uncertainty, dirt_conversions,
-                           S5F_spectrum)
+S5F_reference = ReferenceBase(
+    dirt_S5F_mass, dirt_concentrations, dirt_concentrations_uncertainty,
+    dirt_conversions, S5F_spectrum)
 petri_reference = PetriReference(
-    mass=dirt_petri_mass, 
+    mass=dirt_petri_mass,
     ref_concentration=dirt_concentrations,
-    ref_concentration_error=dirt_concentrations_uncertainty, 
+    ref_concentration_error=dirt_concentrations_uncertainty,
     conversion=dirt_conversions,
     ref_specific_count_rate=petri_specific_count_rate,
     ref_spec_ct_rate_error=petri_spec_ct_rate_error)
