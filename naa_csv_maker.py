@@ -9,13 +9,13 @@ def csv_maker(dictionary):
     branching rations, neat area, net area uncertainty, and fwhm.
     """
     csv_filename = dictionary['csv_filename']
-    ordered_isotopes = dictionary['ordered_isotopes']
-    ordered_energies = dictionary['ordered_energies']
-    ordered_br = dictionary['ordered_br']
-    ordered_net_area = dictionary['ordered_net_area']
-    ordered_net_area_unc = dictionary['ordered_net_area_unc']
-    ordered_peak_cps = dictionary['ordered_peak_cps']
-    ordered_fwhm = dictionary['ordered_fwhm']
+    ordered_isotopes = dictionary['isotopes']
+    ordered_energies = dictionary['energies']
+    ordered_br = dictionary['branching ratios']
+    ordered_net_area = dictionary['net areas']
+    ordered_net_area_unc = dictionary['net area uncertainties']
+    ordered_peak_cps = dictionary['peak cps']
+    ordered_fwhm = dictionary['fwhm']
 
     if (csv_filename[-4:] == '.csv' or csv_filename[-4:] == '.CSV'):
         new_csv_filename = csv_filename[:-4] + '_identified_isotopes.csv'

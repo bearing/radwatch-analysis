@@ -83,7 +83,7 @@ def naa_isotope_analyzer(filename):
     unpacked_isotopes = list(chain.from_iterable(nndc_info_verified_isotope))
     tally = [ (i,unpacked_isotopes.count(i)) for i in set(unpacked_isotopes) ]
     tally.sort(key=itemgetter(1), reverse=True)
-
+    
     #chooses most probable isotope for energies in which multiple isotopes emit
     #at the same energy. Criteria is based on the total amount of times an
     #isotope appears as a possible candidate for all peak energies.
@@ -155,12 +155,14 @@ def naa_isotope_analyzer(filename):
                 isotopes[j].extend(['DE Unidentified'])
                 pass
 
+    """
     results1 = {'Peak Energy (keV)':energies,'Isotope':isotopes,
                 'Isotopes Branching Ratio':isotopes_br,'Net Area':net_area,
                 'Net Area Uncertainty':net_area_unc,'Peak CPS':peak_cps,
                 'fwhm':fwhm}
 
     df1 = DataFrame(results1)
+    """
 
     #Formats the data to output to a csv file in which the isotopes will be
     #listed in descending order (along with their relevant peak information) 
@@ -205,10 +207,10 @@ def naa_isotope_analyzer(filename):
         ordered_peak_cps.append(temp_ordered_peak_cps)        
         ordered_fwhm.append(temp_ordered_fwhm)
 
-    results2 = {'ordered_isotopes':ordered_isotopes,'ordered_energies':ordered_energies,
-                'ordered_br':ordered_br,'ordered_net_area':ordered_net_area,
-                'ordered_net_area_unc':ordered_net_area_unc,'ordered_peak_cps':ordered_peak_cps,
-                'ordered_fwhm':ordered_fwhm}
+    results2 = {'isotopes':ordered_isotopes,'energies':ordered_energies,
+                'branching ratios':ordered_br,'net areas':ordered_net_area,
+                'net area uncertainties':ordered_net_area_unc,'peak cps':ordered_peak_cps,
+                'fwhm':ordered_fwhm}
 
     df2 = DataFrame(results2)
 
@@ -216,4 +218,4 @@ def naa_isotope_analyzer(filename):
 
     naa_csv_maker.csv_maker(results2)
 
-    return(df1,df2)
+    return(df2)
