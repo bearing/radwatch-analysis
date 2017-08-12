@@ -10,12 +10,9 @@ import math
 import NAA_Isotopes as na
 
 
-"""What if I create a library of isotopes and their registered peaks
-and then use that info to search for those peaks in a provided spectra which
-then finds the cps (if there is one)"""
 
 #load a spectra for testing
-spec_S1 = Spectrum.from_file('/Users/jackiegasca/Documents/spectras/Sample8_24hr_C.Spe')
+spec_S1 = Spectrum.from_file('/Users/jackiegasca/Documents/spectras/Sample3_24h_C.Spe')
 
 back_spec = Spectrum.from_file('/Users/jackiegasca/Documents/2017.5.1_long_background.Spe')
 
@@ -44,15 +41,24 @@ def IsotopeActivity():
         E = iso.energies['energy'][0]
         FWHM = ((2.355 * (0.09 * 0.00296 * E) ** 0.5) ** 2
                 + (1.3) ** 2) ** 0.5 #keV
-        start = E - 1.5 * FWHM
-        end = E + 1.5 * FWHM
-        bkgd_start = E - 2.3 * FWHM
-        bkgd_end = E + 2.3 * FWHM
+        start = E - 1 * FWHM
+        end = E + 1 * FWHM
+        bkgd_start = E - 2 * FWHM
+        bkgd_end = E + 2 * FWHM
 
+        en = (np.abs(spec_S1_ener_spec - E)).argmin()
         val1 = (np.abs(spec_S1_ener_spec - start)).argmin()
         val2 = (np.abs(spec_S1_ener_spec - end)).argmin()
         val3 = (np.abs(spec_S1_ener_spec - bkgd_start)).argmin()
         val4 = (np.abs(spec_S1_ener_spec - bkgd_end)).argmin()
+
+        cps_values = spec_S1.cps_vals[val1:val2]
+        max_cps_index = np.argmax(cps_values)
+        ex_val = max_cps_index - (en - val1)
+        val1 = val1 + ex_val
+        val2 = val2 + ex_val
+        val3 = val3 + ex_val
+        val4 = val4 + ex_val
 
         peak_vals = spec_S1.cps_vals[val1:val2]
         back_vals = back_spec.cps_vals[val1:val2]
