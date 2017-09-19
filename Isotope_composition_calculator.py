@@ -12,7 +12,7 @@ import NAA_Isotopes as na
 
 
 #load a spectra for testing
-spec_S1 = Spectrum.from_file('/Users/jackiegasca/Documents/spectras/Sample3_24h_C.Spe')
+spec_S1 = Spectrum.from_file('/Users/jackiegasca/Documents/spectras/Sample4_24h_C.Spe')
 
 back_spec = Spectrum.from_file('/Users/jackiegasca/Documents/2017.5.1_long_background.Spe')
 
