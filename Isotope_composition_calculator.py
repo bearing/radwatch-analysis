@@ -99,12 +99,9 @@ def IsotopeActivity():
 lists = IsotopeActivity()
 iso_cps = lists[2]
 iso_name = lists[0]
-print(iso_name)
 iso_energy = lists[1]
 iso_br = lists[3]
 isotope_activities = lists[4]
-print(iso_energy)
-print(type(isotope_activities[0]))
 
 #Remove any negative activity from the queue
 def Remover():
@@ -195,6 +192,7 @@ def Concentration():
         irrad_act = IsotopeQuantity(nuclide, date=irr_stop, bq=irrad_quan)
         ni = NeutronIrradiation(irr_start, irr_stop, n_cm2_s=flux)
         init_comp = ni.activate(x_val, initial=Isotope(iso_2), activated=irrad_act)
+        init_comp.is_stable = True
         print(init_comp)
         #conc.extend[str(init_comp)]
     #return(conc)
