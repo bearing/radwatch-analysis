@@ -8,11 +8,12 @@ from bs4 import BeautifulSoup
 import urllib.request
 import math
 import NAA_Isotopes as na
+from uncertainties import ufloat
 
 
 
 #load a spectra for testing
-spec_S1 = Spectrum.from_file('/Users/jackiegasca/Documents/spectras/Sample4_24h_C.Spe')
+spec_S1 = Spectrum.from_file('/Users/jackiegasca/Documents/spectras/Sample1_30m_C.Spe')
 
 back_spec = Spectrum.from_file('/Users/jackiegasca/Documents/2017.5.1_long_background.Spe')
 
@@ -21,10 +22,7 @@ back_spec = Spectrum.from_file('/Users/jackiegasca/Documents/2017.5.1_long_backg
 spec_S1_ener_spec = spec_S1.energies_kev[0:len(spec_S1)]
 back_ener_spec = back_spec.energies_kev[0:len(back_spec)]
 
-isotope_list = [na.Na_24, na.Br_82, na.Cs_134, na.K_40, na.Se_75, na.Sr_85,
-                na.Ca_47, na.Rb_86, na.Zn_65, na.K_42, na.Fe_59, na.Au_198,
-                na.Co_60, na.As_76, na.Hg_203, na.Cr_51, na.Sb_122, na.Sb_124]
-
+isotope_list = [na.Br_82, na.Na_24, na.Sb_122, na.K_42]
 #Info regarding the irradiation:
 irr_start = '2017-04-27 14:02:00'
 irr_stop = '2017-04-27 14:12:00'
@@ -85,11 +83,14 @@ def IsotopeActivity():
         iso_br.append(iso.energies['branching_ratio'][0])
     #return(iso_name, iso_energy, iso_cps, iso_br)
     isotope_activities = []
+    stat_uncertainties = []
     for j in range(len(iso_name)):
         ef_en = (np.abs(ef.x - iso_energy[j])).argmin()
-        activ = iso_cps[j] / (ef.fit[ef_en] * iso_br[j])
+        stat_unc = (((iso_cps[j]) ** 0.5) / (spec_S1.livetime ** 0.5)) / (ef.high[ef_en] * iso_br[j])
+        activ = iso_cps[j] / (ef.high[ef_en] * iso_br[j])
         isotope_activities.append(activ)
-    return(iso_name, iso_energy, iso_cps, iso_br, isotope_activities)
+        stat_uncertainties.append(stat_unc)
+    return(iso_name, iso_energy, iso_cps, iso_br, isotope_activities, stat_uncertainties)
     for n in range(len(isotope_activities)):
         #statement = 'The activity of ' + '{0}'.format(iso_name[n]) + ' at ' + '{0}'.format(spec_S1.start_time) + ' is ' + '{0}'.format(iso_cps[n])
         statement = 'The activity of {0} at {1} is {2} bq'.format(iso_name[n], spec_S1.start_time, iso_cps[n])
@@ -102,6 +103,7 @@ iso_name = lists[0]
 iso_energy = lists[1]
 iso_br = lists[3]
 isotope_activities = lists[4]
+stat_uncertainties = lists[5]
 
 #Remove any negative activity from the queue
 def Remover():
@@ -113,14 +115,14 @@ def Remover():
             iso_br.remove(iso_br[n])
             isotope_activities.remove(isotope_activities[n])
             iso_cps.remove(iso_cps[n])
+            stat_uncertainties.remove(stat_uncertainties[n])
         else:
             pass
-    return(iso_name, iso_cps, iso_energy, iso_br, isotope_activities)
+    return(iso_name, iso_cps, iso_energy, iso_br, isotope_activities, stat_uncertainties)
 
 lists = Remover()
 lists = Remover()
 lists = Remover()
-
 
 def Concentration():
     conc = []
@@ -188,14 +190,27 @@ def Concentration():
         #print(x_val)
 
         quantity = IsotopeQuantity(nuclide, date=spec_S1.start_time, bq=isotope_activities[i])
+        unc_quantity = IsotopeQuantity(nuclide, date=spec_S1.start_time, bq=stat_uncertainties[i])
         irrad_quan = quantity.bq_at(irr_stop)
+        unc_irrad_quan = unc_quantity.bq_at(irr_stop)
         irrad_act = IsotopeQuantity(nuclide, date=irr_stop, bq=irrad_quan)
+        unc_irrad_act = IsotopeQuantity(nuclide, date=irr_stop, bq=unc_irrad_quan)
         ni = NeutronIrradiation(irr_start, irr_stop, n_cm2_s=flux)
         init_comp = ni.activate(x_val, initial=Isotope(iso_2), activated=irrad_act)
+        unc_init_comp = ni.activate(x_val, initial=Isotope(iso_2), activated=unc_irrad_act)
         init_comp.is_stable = True
-        print(init_comp)
+        unc_init_comp.is_stable = True
+        sinit_comp = str(init_comp)
+        sunc_init_comp = str(unc_init_comp)
+        #print(sinit_comp, sunc_init_comp)
+        s2 = sinit_comp.split(' ')
+        s0 = s2[0]
+        sunc2 = sunc_init_comp.split(' ')
+        sunc0 = sunc2[0]
+        isotope_type = ' ' + s2[1] + ' ' + s2[2] + ' ' + s2[3]
+        print(s0+' +/- '+sunc0 +isotope_type)
+
         #conc.extend[str(init_comp)]
     #return(conc)
 
-u = Concentration()
-print(u)
+Concentration()

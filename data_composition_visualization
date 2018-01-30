@@ -1,0 +1,74 @@
+import csv
+import numpy as np
+import matplotlib.pyplot as plt
+import plotly.plotly as py
+import plotly.graph_objs as go
+#visualize the data from the composition measurements
+"""each spectra contains 27 data entries with uncertainties: three different efficiency
+measurements, three different time measurements, and three different peak entries"""
+
+#build a function that reads the csv file
+
+spectraQuantity = np.linspace(1,16,16)
+for quan in spectraQuantity:
+    quan = int(quan)
+    spectra = '/Users/jackiegasca/Documents/radwatch-analysis/NAA_results_with_efficiencies'+str(quan)+'.csv'
+
+f = open('/Users/jackiegasca/Documents/radwatch-analysis/NAA_results_with_efficiencies1.csv', 'r')
+reader = csv.reader(f)
+
+rows = []
+for row in reader:
+    rows.append(row)
+
+contents = rows[len(rows)-1][1]
+elements = contents.split(', ')
+print(elements)
+
+values = {}
+for i in elements:
+    # i an isotope in the list of isotopes in the csv file
+    #this step is to locate all the cells that contain the isotope and extract their quantity
+
+    iso_conc = []
+    iso_unc = []
+    for row in rows:
+        for j in row:
+            string = 'g of ' + i
+            if string in j:
+                num, unc = j.split(' +/- ')
+                unc, extra = unc.split(' g')
+                if num in iso_conc:
+                    pass
+                else:
+                    iso_conc.append(float(num))
+                    iso_unc.append(float(unc))
+                    #print(num)
+
+            else:
+                pass
+    values[i] = iso_conc, iso_unc
+lowef_avg_conc = []
+lowef_avg_unc = []
+midef_avg_conc = []
+midef_avg_unc = []
+highef_avg_conc = []
+highef_avg_unc = []
+for i in elements:
+    arr_size =len(values[i][0])
+    amount = int(arr_size / 3)
+    lowef_avg_conc.append(np.mean(values[i][0][0:amount]))
+    lowef_avg_unc.append(np.mean(values[i][1][0:amount]))
+    midef_avg_conc.append(np.mean(values[i][0][amount:amount+amount]))
+    midef_avg_unc.append(np.mean(values[i][1][amount:amount+amount]))
+    highef_avg_conc.append(np.mean(values[i][0][amount+amount:arr_size]))
+    highef_avg_unc.append(np.mean(values[i][1][amount+amount:arr_size]))
+
+print(lowef_avg_conc, midef_avg_conc, midef_avg_unc, )
+
+x=np.linspace(1,len(elements),len(elements))
+print(x)
+plt.errorbar(x, midef_avg_conc, yerr=midef_avg_unc, 'o')
+plt.show()
+#include the fish data on the csv file
+#maybe make a cell that contains the isotopes in the sample
