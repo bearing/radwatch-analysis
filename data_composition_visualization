@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import plotly.plotly as py
 import plotly.graph_objs as go
+from matplotlib.dates import DateFormatter
 #visualize the data from the composition measurements
 """each spectra contains 27 data entries with uncertainties: three different efficiency
 measurements, three different time measurements, and three different peak entries"""
@@ -54,6 +55,7 @@ midef_avg_conc = []
 midef_avg_unc = []
 highef_avg_conc = []
 highef_avg_unc = []
+total_error = []
 for i in elements:
     arr_size =len(values[i][0])
     amount = int(arr_size / 3)
@@ -63,12 +65,27 @@ for i in elements:
     midef_avg_unc.append(np.mean(values[i][1][amount:amount+amount]))
     highef_avg_conc.append(np.mean(values[i][0][amount+amount:arr_size]))
     highef_avg_unc.append(np.mean(values[i][1][amount+amount:arr_size]))
+    total_error.append(np.mean(values[i][0][0:amount])-np.mean(values[i][0][amount+amount:arr_size]))
 
 print(lowef_avg_conc, midef_avg_conc, midef_avg_unc, )
 
 x=np.linspace(1,len(elements),len(elements))
 print(x)
-plt.errorbar(x, midef_avg_conc, yerr=midef_avg_unc, 'o')
+
+mpl_fig = plt.figure()
+ax = mpl_fig.add_subplot(111)
+width = 0.35
+#p0 = plt.plot(x,midef_avg_conc, 'o')
+p3 = plt.errorbar(x, midef_avg_conc, yerr=midef_avg_unc, fmt='.', ecolor='black', capthick=2, capsize=1)
+p1 = ax.bar(x, midef_avg_conc, width, color='white')
+p2 = ax.bar(x, lowef_avg_conc, width, color=(1.0,0.7,0.68),
+             bottom=highef_avg_conc)
+plt.xlabel('Isotope')
+plt.ylabel('Concentration in grams')
+#plt.title('Isotope Concentration Present in sample ' + str(quan))
+
+plt.xticks(x, elements)
+ax.set_yscale('log')
 plt.show()
 #include the fish data on the csv file
 #maybe make a cell that contains the isotopes in the sample
