@@ -66,7 +66,7 @@ for quan in spectraQuantity:
 
     x=np.linspace(1,len(elements),len(elements))
 
-    mpl_fig = plt.figure()
+    mpl_fig = plt.figure(figsize=(12,6))
     ax = mpl_fig.add_subplot(111)
     width = 0.35
     p3 = plt.errorbar(x, midef_avg_conc, yerr=midef_avg_unc, fmt='.', ecolor='black', capthick=2, capsize=1)
@@ -79,3 +79,4 @@ for quan in spectraQuantity:
     plt.xticks(x, elements)
     ax.set_yscale('log')
     plt.show()
+    print(midef_avg_conc)
