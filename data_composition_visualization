@@ -1,0 +1,81 @@
+import csv
+import numpy as np
+import matplotlib.pyplot as plt
+
+#visualize the data from the composition measurements
+"""each spectra contains 27 data entries with uncertainties: three different efficiency
+measurements, three different time measurements, and three different peak entries"""
+
+#build a function that reads the csv file
+
+spectraQuantity = np.linspace(1,16,16)
+for quan in spectraQuantity:
+    quan = int(quan)
+    spectra = '/Users/jackiegasca/Documents/radwatch-analysis/NAA_results_with_efficiencies'+str(quan)+'.csv'
+
+    f = open(spectra, 'r')
+    reader = csv.reader(f)
+
+    rows = []
+    for row in reader:
+        rows.append(row)
+
+    contents = rows[len(rows)-1][1]
+    fish = rows[len(rows)-1][2]
+    elements = contents.split(', ')
+    print(elements)
+
+    values = {}
+    for i in elements:
+
+        iso_conc = []
+        iso_unc = []
+        for row in rows:
+            for j in row:
+                string = 'g of ' + i
+                if string in j:
+                    num, unc = j.split(' +/- ')
+                    unc, extra = unc.split(' g')
+                    if num in iso_conc:
+                        pass
+                    else:
+                        iso_conc.append(float(num))
+                        iso_unc.append(float(unc))
+
+                else:
+                    pass
+        values[i] = iso_conc, iso_unc
+    lowef_avg_conc = []
+    lowef_avg_unc = []
+    midef_avg_conc = []
+    midef_avg_unc = []
+    highef_avg_conc = []
+    highef_avg_unc = []
+    total_error = []
+    for i in elements:
+        arr_size =len(values[i][0])
+        amount = int(arr_size / 3)
+        lowef_avg_conc.append(np.mean(values[i][0][0:amount]))
+        lowef_avg_unc.append(np.mean(values[i][1][0:amount]))
+        midef_avg_conc.append(np.mean(values[i][0][amount:amount+amount]))
+        midef_avg_unc.append(np.mean(values[i][1][amount:amount+amount]))
+        highef_avg_conc.append(np.mean(values[i][0][amount+amount:arr_size]))
+        highef_avg_unc.append(np.mean(values[i][1][amount+amount:arr_size]))
+        total_error.append(np.mean(values[i][0][0:amount])-np.mean(values[i][0][amount+amount:arr_size]))
+
+
+    x=np.linspace(1,len(elements),len(elements))
+
+    mpl_fig = plt.figure()
+    ax = mpl_fig.add_subplot(111)
+    width = 0.35
+    p3 = plt.errorbar(x, midef_avg_conc, yerr=midef_avg_unc, fmt='.', ecolor='black', capthick=2, capsize=1)
+    p1 = ax.bar(x, midef_avg_conc, width, color='white')
+    p2 = ax.bar(x, lowef_avg_conc, width, color=(1.0,0.7,0.68),
+             bottom=highef_avg_conc)
+    plt.xlabel('Isotope')
+    plt.ylabel('Concentration in grams')
+    plt.title('Isotope concentration of Sample '+str(quan)+': '+fish)
+    plt.xticks(x, elements)
+    ax.set_yscale('log')
+    plt.show()
