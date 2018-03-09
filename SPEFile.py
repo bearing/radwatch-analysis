@@ -104,11 +104,12 @@ class SPEFile(SpectrumFileBase):
             s += '\n'
         return s
 
-    def read(self, verbose=False):
-        self.read_spe(verbose=verbose)
+    def read(self, verbose=False, quiet=True):
+        self.read_spe(verbose=verbose, quiet=quiet)
 
-    def read_spe(self, verbose=False):
-        print('SPEFile: attempting to read file ' + self.filename)
+    def read_spe(self, verbose=False, quiet=True):
+        if not quiet:
+            print('SPEFile: attempting to read file ' + self.filename)
         assert(self.filename.split('.')[-1].upper() == 'SPE')
         with open(self.filename, 'r') as f:
             lines = f.readlines()
@@ -189,7 +190,8 @@ class SPEFile(SpectrumFileBase):
                     if verbose:
                         print(self.shape_cal)
                 else:
-                    print('Unknown line: ', lines[i])
+                    if not quiet:
+                        print('Unknown line: ', lines[i])
                 i += 1
         return True
 
