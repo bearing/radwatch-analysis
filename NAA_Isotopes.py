@@ -42,6 +42,10 @@ Cr_51_energies = {'energy': [320.1],
                     'branching_ratio': [0.1]}
 Cr_51 = NAA_source('Cr', 50, 2.9e-7, Cr_51_energies)
 
+Mn_56_energies = {'energy':[846.771, 1810.772, 2113.123],
+                    'branching_ratio':[0.989, 0.272, 0.143]}
+Mn_56 = NAA_source('Mn', 55, 7.467e-5, Mn_56_energies)
+
 Fe_59_energies = {'energy': [1099.43, 1291.79],
                     'branching_ratio': [0.565, 0.432]}
 
@@ -52,10 +56,17 @@ Co_60_energies = {'energy': [1173.43, 1332.71],
 
 Co_60 = NAA_source('Co', 59, 4.17e-9, Co_60_energies)
 
+Cu_64_energies = {'energy': [1345.84], 'branching_ratio': [0.00473]}
+Cu_64 = NAA_source('Cu', 63, 1.516e-5, Cu_64_energies)
+
 Zn_65_energies = {'energy': [1115.86],
                 'branching_ratio': [0.506]}
 
 Zn_65 = NAA_source('Zn', 64, 3.28e-8, Zn_65_energies)
+
+Ga_72_energies = {'energy': [834.01, 629.95, 600.94],
+                    'branching_ratio': [0.96, 0.248, 0.0554]}
+Ga_72 = NAA_source('Ga', 71, 1.366e-5, Ga_72_energies)
 
 Se_75_energies = {'energy': [121.1155, 136, 264.6576, 279.54, 400.6576],
                     'branching_ratio': [0.172, 0.583, 0.589, 0.2499, 0.1147]}
@@ -144,6 +155,13 @@ Eu_154_energies = {'energy': [723,81, 1274.65],
                     'branching_ratio': [0.2022, 0.3519]}
 
 Eu_154 = NAA_source('Eu', 153, 2.45e-9, Eu_154_energies)
+
+Dy_165_energies = {'energy': [361.68], 'branching_ratio': [0.0084]}
+Dy_165 = NAA_source('Dy', 164, 8.248e-5, Dy_165_energies)
+
+Hf_181_energies = {'energy': [482.182, 133.024, 345.916],
+                    'branching_ratio': [.805, .433, .1512]}
+Hf_181 = NAA_source('Hf', 180, 1.893e-7, Hf_181_energies)
 
 Au_198_energies = {'energy': [411.803], 'branching_ratio': [0.96]}
 
