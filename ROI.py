@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 #Input: Spec, Bg, E_Peak, side_bands(have a default)
 #Method: set_sidebands, get_counts
 
-class POI(object):
+class ROI(object):
 	def __init__ (spec, bg, e_peak):
 		self.spec = spec
 		self.bg = bg
