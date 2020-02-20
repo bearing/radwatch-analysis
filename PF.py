@@ -34,8 +34,9 @@ class PF(object):
         spec_energies = sub_spec.energies_kev #all energues
         spec_counts = spec_counts - bg_counts #all counts
         integrals = []
+        model = ['gauss','line','erf']
         for n in self.source_energies:
-            fit = bq.core.fitting.FitterGaussErfLine(x=sub_spec.channels, y=sub_spec.cps_vals, y_unc=sub_spec.cps_uncs)
+            fit = bq.core.fitting.Fitter(model, x=sub_spec.bin_indices, y=sub_spec.cps_vals, y_unc=sub_spec.cps_uncs)
             idx = f_near(spec_energies,n)
             fit.set_roi(idx-100,idx+100)
             fit.fit()
