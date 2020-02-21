@@ -6,10 +6,11 @@ import matplotlib.pyplot as plt
 #Method: set_sidebands, get_counts
 
 class ROI(object):
-	def __init__ (self, spec, bg, e_peak):
+	def __init__ (self, spec, bg, e_peaks):
 		self.spec = spec
 		self.bg = bg
-		self.target_peak = e_peak
+		self.bgsub = self.spec - self.bg
+		self.target_peaks = e_peaks
 		self.delta_E = 5
 		self.window = np.array([[-2, -1], [-0.5, 0.5], [1, 2]])
 
@@ -21,18 +22,24 @@ class ROI(object):
 		self.delta_E = delta_e
 		self.window = np.array(window)
 
-	def get_counts (self):
-		bgsub = self.spec - self.bg
-		idx = (bgsub.energies_kev > self.target_peak+self.window[0,0]*self.delta_E)*(bgsub.energies_kev < self.target_peak+self.window[0,1]*self.delta_E)
+	def get_roi_windows(self, target_peak):
+		idx = (self.bgsub.energies_kev > target_peak+self.window[0,0]*self.delta_E)*(self.bgsub.energies_kev < target_peak+self.window[0,1]*self.delta_E)
 		prev_bins = np.where(idx)
-		idx = (bgsub.energies_kev > self.target_peak+self.window[1,0]*self.delta_E)*(bgsub.energies_kev < self.target_peak+self.window[1,1]*self.delta_E)
+		idx = (self.bgsub.energies_kev > target_peak+self.window[1,0]*self.delta_E)*(self.bgsub.energies_kev < target_peak+self.window[1,1]*self.delta_E)
 		curr_bins = np.where(idx)
-		idx = (bgsub.energies_kev > self.target_peak+self.window[2,0]*self.delta_E)*(bgsub.energies_kev < self.target_peak+self.window[2,1]*self.delta_E)
+		idx = (self.bgsub.energies_kev > target_peak+self.window[2,0]*self.delta_E)*(self.bgsub.energies_kev < target_peak+self.window[2,1]*self.delta_E)
 		post_bins = np.where(idx)
-		counts_1 = np.sum(bgsub.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
-		counts_2 = np.sum(bgsub.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
-		counts_target = np.sum(bgsub.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
-		background = (counts_1 + counts_2)/2
-		net_counts = counts_target - background
+		return 	prev_bins,curr_bins,post_bins
+
+	def get_counts (self):
+		net_counts = []
+		for target_peak in self.target_peaks:
+			prev_bins, curr_bins, post_bins = self.get_roi_windows(target_peak)
+			counts_1 = np.sum(self.bgsub.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
+			counts_2 = np.sum(self.bgsub.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
+			counts_target = np.sum(self.bgsub.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
+			background = (counts_1 + counts_2)/2
+			inet_counts = counts_target - background
+			net_counts.append(inet_counts)
 
 		return net_counts
