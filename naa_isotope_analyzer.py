@@ -12,6 +12,7 @@ from operator import itemgetter
 
 #def naa_isotope_analyzer(filename):
 def naa_isotope_analyzer(energies):
+    print("Input energies: ",energies)
     #runs csv_reader.csv_reader to read the csv file and extract peak energy,
     #net area and uncertainty, and FWHM.
 #    csv_data = naa_csv_reader.csv_reader(filename)
@@ -27,6 +28,7 @@ def naa_isotope_analyzer(energies):
         for i in range(len(energies)):
             if np.isclose(energies[i],511,atol=1) == True:
                 energies.remove(energies[i])
+                print("Removing annihilation peak at {} from list of energies".format(energies[i]))
 #                net_area.remove(net_area[i])
 #                net_area_unc.remove(net_area_unc[i])
 #                peak_cps.remove(peak_cps[i])
@@ -65,18 +67,21 @@ def naa_isotope_analyzer(energies):
         else:
             escape_peaks.append('None')
 
+    print("Escape peaks: ",escape_peaks)
     #queries the nndc database from the module Becquerel for the isotopes
     #associated with every energy from the energy list.
     nndc_info = []
     for i in range(len(energies)):
-         nndc_info.append(nndc.fetch_decay_radiation(t_range=[0, None], i_range=(1, None), type='Gamma', e_range=[energies[i]-1, energies[i]+1]))
+         nndc_info.append(nndc.fetch_decay_radiation(t_range=[0, None], i_range=(1, None), type='Gamma', e_range=[energies[i]-2, energies[i]+10]))
 
+    #print("NNDC info: ",nndc_info)
     #checks to see if the 'parents' of the isotopes returned by the Becquerel
     #module are naturally occuring isotopes.
     nndc_info_verified_isotope = naa_isotope_verifier.isotope_verifier(nndc_info)['nndc_info_verified_isotope']
     nndc_info_verified_energy = naa_isotope_verifier.isotope_verifier(nndc_info)['nndc_info_verified_energy']
     nndc_info_verified_br = naa_isotope_verifier.isotope_verifier(nndc_info)['nndc_info_verified_br']
-
+    print("NNDC isotopes: ",nndc_info_verified_isotope)
+    print("NNDC isotope energies: ", nndc_info_verified_energy)
     #counts how many times an isotope is repeated in nndc_info_verified_isotope.
     #This is done for instances when multiple isotopes emit the same energy
     #photon and only one isotope can be chosen to represent a given energy.
@@ -133,11 +138,15 @@ def naa_isotope_analyzer(energies):
     isotopes_energy = background_isotopes_energy[:]
     isotopes_br = background_isotopes_br[:]
 
+    #print("Likely isotopes (background): ",isotopes)
+    #print("Isotope energies (background): ",isotopes_energy)
     for i in range(len(isotopes)):
         if isotopes[i] == []:
             isotopes[i] = nndc_info_verified_isotope[i]
             isotopes_energy[i] = nndc_info_verified_energy[i]
             isotopes_br[i] = nndc_info_verified_br[i]
+    print("Likely isotopes (pre-escape): ",isotopes)
+    print("Isotope energies (pre-escape): ",isotopes_energy)
 
     for j in range(len(isotopes)):
         if j in se_index:
@@ -154,6 +163,8 @@ def naa_isotope_analyzer(energies):
             except:
                 isotopes[j].extend(['DE Unidentified'])
                 pass
+    print("Likely isotopes: ",isotopes)
+    print("Isotope energies: ",isotopes_energy)
 
     """
     results1 = {'Peak Energy (keV)':energies,'Isotope':isotopes,
