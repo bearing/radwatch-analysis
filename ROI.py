@@ -24,11 +24,11 @@ class ROI(object):
 
 	def find_peak_energies (self):
 		for i, target_peak in enumerate(self.target_peaks):
-			idx = (self.bgsub.energies_kev > target_peak+self.window[1,0]*self.delta_E)*(self.bgsub.energies_kev < target_peak+self.window[1,1]*self.delta_E)
+			idx = (self.spec.energies_kev > target_peak+self.window[1,0]*self.delta_E)*(self.spec.energies_kev < target_peak+self.window[1,1]*self.delta_E)
 			bins = np.where(idx)
-			local_idx = np.argmax(self.bgsub.cps_vals[bins])
+			local_idx = np.argmax(self.spec.counts[bins])
 			index = bins[0][0] + local_idx
-			self.target_peaks[i] = self.bgsub.energies_kev[index]
+			self.target_peaks[i] = round(self.spec.energies_kev[index])
 
 	def get_roi_windows(self, target_peak):
 		idx = (self.bgsub.energies_kev > target_peak+self.window[0,0]*self.delta_E)*(self.bgsub.energies_kev < target_peak+self.window[0,1]*self.delta_E)

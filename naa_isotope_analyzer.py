@@ -10,27 +10,27 @@ import uncertainties
 from itertools import chain
 from operator import itemgetter
 
-def naa_isotope_analyzer(filename):
-
+#def naa_isotope_analyzer(filename):
+def naa_isotope_analyzer(energies):
     #runs csv_reader.csv_reader to read the csv file and extract peak energy,
     #net area and uncertainty, and FWHM.
-    csv_data = naa_csv_reader.csv_reader(filename)
-    energies = csv_data['energies']
-    net_area = csv_data['net_area']
-    net_area_unc = csv_data['net_area_unc']
-    peak_cps = csv_data['peak_cps']
-    fwhm = csv_data['fwhm']
-    csv_filename = csv_data['csv_filename']
+#    csv_data = naa_csv_reader.csv_reader(filename)
+#    energies = csv_data['energies']
+#    net_area = csv_data['net_area']
+#    net_area_unc = csv_data['net_area_unc']
+#    peak_cps = csv_data['peak_cps']
+#    fwhm = csv_data['fwhm']
+#    csv_filename = csv_data['csv_filename']
 
     #gets rid of 511 keV peak due to annihilation.
     try:
         for i in range(len(energies)):
             if np.isclose(energies[i],511,atol=1) == True:
                 energies.remove(energies[i])
-                net_area.remove(net_area[i])
-                net_area_unc.remove(net_area_unc[i])
-                peak_cps.remove(peak_cps[i])
-                fwhm.remove(fwhm[i])
+#                net_area.remove(net_area[i])
+#                net_area_unc.remove(net_area_unc[i])
+#                peak_cps.remove(peak_cps[i])
+#                fwhm.remove(fwhm[i])
     except:
         pass
 
@@ -174,25 +174,25 @@ def naa_isotope_analyzer(filename):
     ordered_isotopes = []
     ordered_energies = []
     ordered_br = []
-    ordered_net_area = []
-    ordered_net_area_unc = []
-    ordered_peak_cps = []
-    ordered_fwhm = []
+#    ordered_net_area = []
+#    ordered_net_area_unc = []
+#    ordered_peak_cps = []
+#    ordered_fwhm = []
     for i in range(len(tally)):
         ordered_isotopes.append(tally[i][0])
         temp_energies = []
         temp_br = []
-        temp_ordered_net_area = []
-        temp_ordered_net_area_unc = []
-        temp_ordered_peak_cps = []        
-        temp_ordered_fwhm = []
+ #       temp_ordered_net_area = []
+ #       temp_ordered_net_area_unc = []
+ #       temp_ordered_peak_cps = []        
+ #       temp_ordered_fwhm = []
         for j in range(len(isotopes)):
             if tally[i][0] in isotopes[j]:
                 temp_energies.append(energies[j])
-                temp_ordered_net_area.append(net_area[j])
-                temp_ordered_net_area_unc.append(net_area_unc[j])
-                temp_ordered_peak_cps.append(peak_cps[j])                
-                temp_ordered_fwhm.append(fwhm[j])
+ #               temp_ordered_net_area.append(net_area[j])
+ #               temp_ordered_net_area_unc.append(net_area_unc[j])
+ #               temp_ordered_peak_cps.append(peak_cps[j])                
+ #               temp_ordered_fwhm.append(fwhm[j])
 
                 try:
                     index = isotopes[j].index(tally[i][0])
@@ -202,20 +202,22 @@ def naa_isotope_analyzer(filename):
 
         ordered_energies.append(temp_energies)
         ordered_br.append(temp_br)
-        ordered_net_area.append(temp_ordered_net_area)
-        ordered_net_area_unc.append(temp_ordered_net_area_unc)
-        ordered_peak_cps.append(temp_ordered_peak_cps)        
-        ordered_fwhm.append(temp_ordered_fwhm)
+#        ordered_net_area.append(temp_ordered_net_area)
+#        ordered_net_area_unc.append(temp_ordered_net_area_unc)
+#        ordered_peak_cps.append(temp_ordered_peak_cps)        
+#        ordered_fwhm.append(temp_ordered_fwhm)
 
-    results2 = {'isotopes':ordered_isotopes,'energies':ordered_energies,
-                'branching ratios':ordered_br,'net areas':ordered_net_area,
-                'net area uncertainties':ordered_net_area_unc,'peak cps':ordered_peak_cps,
-                'fwhm':ordered_fwhm}
+#    results2 = {'isotopes':ordered_isotopes,'energies':ordered_energies,
+#                'branching ratios':ordered_br,'net areas':ordered_net_area,
+#                'net area uncertainties':ordered_net_area_unc,'peak cps':ordered_peak_cps,
+#                'fwhm':ordered_fwhm}
+
+    results2 = {'isotopes':ordered_isotopes,'energies':ordered_energies,'branching ratios':ordered_br}
 
     df2 = DataFrame(results2)
 
-    results2['csv_filename'] = csv_filename
+#    results2['csv_filename'] = csv_filename
 
-    naa_csv_maker.csv_maker(results2)
+#    naa_csv_maker.csv_maker(results2)
 
     return(df2)
