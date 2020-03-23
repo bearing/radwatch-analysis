@@ -1,6 +1,7 @@
 from becquerel import Spectrum
 import numpy as np
 import matplotlib.pyplot as plt
+import math as m
 
 #Input: Spec, Bg, E_Peak, side_bands(have a default)
 #Method: set_sidebands, get_counts
@@ -41,6 +42,7 @@ class ROI(object):
 
 	def get_counts (self):
 		net_counts = []
+		uncertainties = []
 		for target_peak in self.target_peaks:
 			prev_bins, curr_bins, post_bins = self.get_roi_windows(target_peak)
 			counts_1 = np.sum(self.bgsub.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
@@ -50,4 +52,18 @@ class ROI(object):
 			inet_counts = counts_target - background
 			net_counts.append(inet_counts)
 
-		return net_counts
+			counts_target_gross = np.sum(self.spec.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime 
+			tot_speclow = np.sum(self.spec.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
+			tot_spechigh = np.sum(self.spec.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
+			counts_bg_gross = np.sum(self.bg.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime 
+			tot_bglow = np.sum(self.bg.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime 
+			tot_bghigh = np.sum(self.bg.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime 
+			s_target_gross = m.sqrt(counts_target_gross)
+			s_ROI_spec = m.sqrt(tot_spechigh + tot_speclow)/2
+			s_bg_gross = m.sqrt(counts_bg_gross)
+			s_ROI_bg = m.sqrt(tot_bghigh + tot_bglow)/2
+			s = m.sqrt(s_target_gross**2 + s_ROI_spec**2 + s_bg_gross**2 + s_ROI_bg**2)
+			uncertainties.append(s)
+			
+		return net_counts,uncertainties
+
