@@ -16,8 +16,8 @@ def f_near(energy_array,energy): #finds index of closest energy in spectrum to t
 class PF(object):
     def __init__(self,spectrum, background, source_energies, 
                       source_activities = None, source_isotopes = None, branching_ratio = None):
-        self.spectrum = Spectrum.from_file(spectrum)
-        self.background = Spectrum.from_file(background)
+        self.spectrum = spectrum
+        self.background = background
         self.source_energies = source_energies
 
         self.source_activities = source_activities
