@@ -23,6 +23,7 @@ class PF(object):
         self.source_activities = source_activities
         self.source_isotopes = source_isotopes
         self.branching_ratio = branching_ratio
+        self.fitters = []
 
         self.integrals = []
 
@@ -44,14 +45,14 @@ class PF(object):
         spec_counts = spec_counts - bg_counts #all counts
         integrals = []
         model = ['gauss','line','erf']
-        for n in self.source_energies:
-            fit = bq.core.fitting.Fitter(model, x=sub_spec.bin_indices, y=sub_spec.cps_vals, y_unc=sub_spec.cps_uncs)
+        for i,n in enumerate(self.source_energies):
+            self.fitters.append(bq.core.fitting.Fitter(model, x=sub_spec.bin_indices, y=sub_spec.cps_vals, y_unc=sub_spec.cps_uncs))
             idx = f_near(spec_energies,n)
-            fit.set_roi(idx-100,idx+100)
-            fit.fit()
-            amp = fit.result.params['gauss_amp'].value
-            mu = fit.result.params['gauss_mu'].value
-            sigma =fit.result.params['gauss_sigma'].value
+            self.fitters[i].set_roi(idx-100,idx+100)
+            self.fitters[i].fit()
+            amp = self.fitters[i].result.params['gauss_amp'].value
+            mu = self.fitters[i].result.params['gauss_mu'].value
+            sigma =self.fitters[i].result.params['gauss_sigma'].value
             def gaussian(x):
                 return (self.spectrum.livetime * amp /(m.sqrt(2*m.pi)*sigma)) * m.exp(- ((x-mu)**2) / (2*sigma**2))
             integral = integrate.quad(gaussian, idx-100, idx+100)
