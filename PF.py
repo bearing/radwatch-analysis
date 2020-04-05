@@ -41,7 +41,7 @@ class PF(object):
         bg_counts = self.background.counts_vals #background counts
 
         sub_spec = self.spectrum - self.background #background subtraction
-        spec_energies = sub_spec.energies_kev #all energues
+        spec_energies = sub_spec.bin_centers_kev #all energues
         spec_counts = spec_counts - bg_counts #all counts
         integrals = []
         model = ['gauss','line','erf']
