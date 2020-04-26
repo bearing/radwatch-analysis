@@ -43,6 +43,7 @@ def get_energies(spec):
 
     energies = np.take(spec.bin_edges_kev,finder.centroids)
     energies = energies[0:-2]
+    energies = energies.astype(int)
     return energies
 
 def get_counts(cal_spec,cal_bg_spec,energies): #input energies
@@ -57,7 +58,7 @@ def peakfit(peak_counts, uncertainties):
             peakfitter.fitters[i].custom_plot()
         except:
             pass
-    #hdetermine where to cut off overflow bin
+    #determine where to cut off overflow bin
     #organize into matrix [energy;count(30min);count(3hr);count(24hr)]
     return
 
