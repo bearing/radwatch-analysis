@@ -14,7 +14,7 @@ def f_near(energy_array,energy): #finds index of closest energy in spectrum to t
     return idx
 
 class PF(object):
-    def __init__(self,spectrum, background, source_energies, 
+    def __init__(self, source_energies, spectrum, background = None,  
                       source_activities = None, source_isotopes = None, branching_ratio = None):
         self.spectrum = spectrum
         self.background = background
@@ -38,11 +38,17 @@ class PF(object):
 
     def get_counts(self):
         spec_counts = self.spectrum.counts_vals #spectrum counts
-        bg_counts = self.background.counts_vals #background counts
+        
+        if self.background is not None:
+            bg_counts = self.background.counts_vals #background counts
+            sub_spec = self.spectrum - self.background #background subtraction
+            spec_counts = spec_counts - bg_counts #all counts 
+        else:
+            bg_count = 0
+            sub_spec  = self.spectrum #background is None
+            spec_counts = spec_counts #all counts 
 
-        sub_spec = self.spectrum - self.background #background subtraction
         spec_energies = sub_spec.bin_centers_kev #all energues
-        spec_counts = spec_counts - bg_counts #all counts
         integrals = []
         integrals_unc = []
         model = ['gauss','line','erf']
@@ -59,22 +65,36 @@ class PF(object):
             integral = integrate.quad(gaussian, idx-100, idx+100)
             integrals = np.append(integrals,integral[0])
             #calculate amp_up by amp_up = amp + amp_unc
-            amp = self.fitters[i].result.params['gauss_amp'].value + self.fitters[i].result.params['gauss_amp'].stderr
-            mu = self.fitters[i].result.params['gauss_mu'].value + self.fitters[i].result.params['gauss_mu'].stderr
-            sigma =self.fitters[i].result.params['gauss_sigma'].value + self.fitters[i].result.params['gauss_sigma'].stderr
+            if self.fitters[i].result.params['gauss_amp'].stderr is not None:
+                amp = self.fitters[i].result.params['gauss_amp'].value + self.fitters[i].result.params['gauss_amp'].stderr
+            else:
+                amp = 2.0 * self.fitters[i].result.params['gauss_amp'].value      
+            if self.fitters[i].result.params['gauss_sigma'].stderr is not None:
+                sigma =self.fitters[i].result.params['gauss_sigma'].value + self.fitters[i].result.params['gauss_sigma'].stderr
+            else:
+                sigma = 2.0 * self.fitters[i].result.params['gauss_sigma'].value
             integral_up = integrate.quad(gaussian, idx-100, idx+100)
              #calculate amp_low by amp_low = amp - amp_unc
-            amp = self.fitters[i].result.params['gauss_amp'].value - self.fitters[i].result.params['gauss_amp'].stderr
-            mu = self.fitters[i].result.params['gauss_mu'].value - self.fitters[i].result.params['gauss_mu'].stderr
-            sigma =self.fitters[i].result.params['gauss_sigma'].value - self.fitters[i].result.params['gauss_sigma'].stderr
-            integral_low = integrate.quad(gaussian, idx-100, idx+100)
+            if self.fitters[i].result.params['gauss_amp'].stderr is not None:
+                amp = self.fitters[i].result.params['gauss_amp'].value - self.fitters[i].result.params['gauss_amp'].stderr
+            else:
+                amp = 0
+            if self.fitters[i].result.params['gauss_sigma'].stderr is not None:
+                sigma =self.fitters[i].result.params['gauss_sigma'].value - self.fitters[i].result.params['gauss_sigma'].stderr
+            else:
+                sigma = 0
+            if amp == 0:
+                integral_low = [0]
+            else: 
+                integral_low = integrate.quad(gaussian, idx-100, idx+100)
             #calculate integral_unc
             integral_unc = (integral_up[0] - integral_low[0])/2
             integrals_unc = np.append(integrals_unc,integral_unc)
         self.integrals = integrals
         self.integrals_unc = integrals_unc
         return integrals, integrals_unc
-
+    
+    
     def Efficiency(self):
         spec = Spectrum.from_file(self.spectrum) #import spectrum data
         spec_counts = spec.counts_vals #spectrum counts
