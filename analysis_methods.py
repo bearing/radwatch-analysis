@@ -47,7 +47,7 @@ def get_energies(spec):
     return energies
 
 def get_counts(cal_spec,cal_bg_spec,energies): #input energies
-    peakfitter = PF.PF(cal_spec, cal_bg_spec,np.array(energies))
+    peakfitter = PF.PF(spectrum = cal_spec, background = cal_bg_spec,source_energies = np.array(energies))
     peak_counts, uncertainties = peakfitter.get_counts()
 
     return peak_counts, uncertainties
