@@ -43,7 +43,7 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0):
         background_isotopes_energy.append(naa_background.background(energies[i])['identified_isotopes_energy'])
         background_isotopes_br.append(naa_background.background(energies[i])['identified_isotopes_br'])
 
-    print("Backround isotopes", background_isotopes)
+    #print("Backround isotopes", background_isotopes)
     #checks to see if any of the peaks are due to single escape peaks,
     #double escape peaks, and sum peaks.
     peak_effects_info = naa_peak_effects.peak_effects(energies)
@@ -82,8 +82,8 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0):
     #all_nndc_info_verified_isotope = isotope_verifier(nndc_info)['nndc_info_verified_isotope']
     #all_nndc_info_verified_energy = isotope_verifier(nndc_info)['nndc_info_verified_energy']
     #all_nndc_info_verified_br = isotope_verifier(nndc_info)['nndc_info_verified_br']
-    print("Possible isotopes", all_nndc_info_verified_isotope)
-    print("Possible isotope br", all_nndc_info_verified_br)
+    #print("Possible isotopes", all_nndc_info_verified_isotope)
+    #print("Possible isotope br", all_nndc_info_verified_br)
 
     nndc_info_verified_isotope =[]
     nndc_info_verified_energy = []
@@ -100,7 +100,7 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0):
                 nndc_info_verified_energy[i].append(all_nndc_info_verified_energy[i][j])
                 nndc_info_verified_br[i].append(all_nndc_info_verified_br[i][j])
 
-    print("Cut isotopes ", nndc_info_verified_isotope)
+    #print("Cut isotopes ", nndc_info_verified_isotope)
     #counts how many times an isotope is repeated in nndc_info_verified_isotope.
     #This is done for instances when multiple isotopes emit the same energy
     #photon and only one isotope can be chosen to represent a given energy.

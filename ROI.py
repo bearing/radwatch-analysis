@@ -56,7 +56,7 @@ class ROI(object):
 				background = (counts_1 + counts_2)/2
 				inet_counts = counts_target - background
 				net_counts.append(inet_counts)
-				
+
 		else:
 			for target_peak in self.target_peaks:
 				prev_bins, curr_bins, post_bins = self.get_roi_windows(target_peak)
@@ -65,7 +65,7 @@ class ROI(object):
 				counts_targetbg = np.sum(self.bg.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
 				backgroundbg = (counts_1bg + counts_2bg)/2
 				inet_countsbg = counts_targetbg - backgroundbg
-				
+
 				counts_1spec = np.sum(self.spec.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
 				counts_2spec = np.sum(self.spec.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
 				counts_targetspec = np.sum(self.spec.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
@@ -73,30 +73,28 @@ class ROI(object):
 				inet_countsspec = counts_targetspec - backgroundspec
 				inet_counts = inet_countsspec - inet_countsbg
 				net_counts.append(inet_counts)
-				
+
 		for target_peak in self.target_peaks:
 			prev_bins, curr_bins, post_bins = self.get_roi_windows(target_peak)
 			#uncertainty
-			counts_target_gross = np.sum(self.spec.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime 
-			counts_target_gross = np.sum(self.spec.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime 
-			counts_target_gross = np.sum(self.spec.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime 
+			counts_target_gross = np.sum(self.spec.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
+			counts_target_gross = np.sum(self.spec.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
+			counts_target_gross = np.sum(self.spec.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
 			tot_speclow = np.sum(self.spec.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
 			tot_spechigh = np.sum(self.spec.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
-			counts_bg_gross = np.sum(self.bg.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime 
-			counts_bg_gross = np.sum(self.bg.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime 
-			counts_bg_gross = np.sum(self.bg.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime 
-			tot_bglow = np.sum(self.bg.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime 
-			tot_bglow = np.sum(self.bg.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime 
-			tot_bglow = np.sum(self.bg.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime 
-			tot_bghigh = np.sum(self.bg.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime 
-			tot_bghigh = np.sum(self.bg.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime 
-			tot_bghigh = np.sum(self.bg.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime 
+			counts_bg_gross = np.sum(self.bg.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
+			counts_bg_gross = np.sum(self.bg.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
+			counts_bg_gross = np.sum(self.bg.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
+			tot_bglow = np.sum(self.bg.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
+			tot_bglow = np.sum(self.bg.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
+			tot_bglow = np.sum(self.bg.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
+			tot_bghigh = np.sum(self.bg.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
+			tot_bghigh = np.sum(self.bg.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
+			tot_bghigh = np.sum(self.bg.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
 			s_target_gross = m.sqrt(counts_target_gross)
 			s_ROI_spec = m.sqrt(tot_spechigh + tot_speclow)/2
 			s_bg_gross = m.sqrt(counts_bg_gross)
 			s_ROI_bg = m.sqrt(tot_bghigh + tot_bglow)/2
 			s = m.sqrt(s_target_gross**2 + s_ROI_spec**2 + s_bg_gross**2 + s_ROI_bg**2)
-			uncertainties.append(s)		
+			uncertainties.append(s)
 		return net_counts,uncertainties
-	
-	
