@@ -86,6 +86,8 @@ def background(energy):
     identified_isotopes_energy = []
     identified_isotopes_br = []
 
+#another method to weight the isotopes ?
+
     for i in range(len(background_isotopes)):
         for j in range(len(background_isotopes[i]['energy'])):
             if (np.isclose(energy,background_isotopes[i]['energy'][j],atol=1) == True) and (background_isotopes[i]['br'][j] >= 0.01):

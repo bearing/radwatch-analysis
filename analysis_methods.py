@@ -73,3 +73,15 @@ def matrix(counts_list,energies_list):
 
     ordered_set = pd.merge_ordered(df1,df2,df3)
     return ordered_set
+
+def iso_activity(peak_counts,br,ϵ):
+    A = (peak_counts/(ϵ*br))
+    return A
+
+def get_dt(spectrum,t0):
+    dt = spectrum.start_time.timestamp() - t0
+    return  dt
+
+def element_weight(Activity, M_A,iso_abundance,hl,flux,xs,Tirrad,dt):
+    ew = ((Activity) * (M_A/(6.022*10**23))*(hl/m.log(2))*(m.exp((dt*m.log(2))/hl)/(flux*xs*Tirrad)))/iso_abundance
+    return ew
