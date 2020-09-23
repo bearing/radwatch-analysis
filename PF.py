@@ -14,7 +14,7 @@ def f_near(energy_array,energy): #finds index of closest energy in spectrum to t
     return idx
 
 class PF(object):
-    def __init__(self, source_energies, spectrum, background = None,  
+    def __init__(self, source_energies, spectrum, background = None,
                       source_activities = None, source_isotopes = None, branching_ratio = None):
         self.spectrum = spectrum
         self.background = background
@@ -38,15 +38,15 @@ class PF(object):
 
     def get_counts(self):
         spec_counts = self.spectrum.counts_vals #spectrum counts
-        
+
         if self.background is not None:
             bg_counts = self.background.counts_vals #background counts
             sub_spec = self.spectrum - self.background #background subtraction
-            spec_counts = spec_counts - bg_counts #all counts 
+            spec_counts = spec_counts - bg_counts #all counts
         else:
             bg_count = 0
             sub_spec  = self.spectrum #background is None
-            spec_counts = spec_counts #all counts 
+            spec_counts = spec_counts #all counts
 
         spec_energies = sub_spec.bin_centers_kev #all energues
         integrals = []
@@ -68,7 +68,7 @@ class PF(object):
             if self.fitters[i].result.params['gauss_amp'].stderr is not None:
                 amp = self.fitters[i].result.params['gauss_amp'].value + self.fitters[i].result.params['gauss_amp'].stderr
             else:
-                amp = 2.0 * self.fitters[i].result.params['gauss_amp'].value      
+                amp = 2.0 * self.fitters[i].result.params['gauss_amp'].value
             if self.fitters[i].result.params['gauss_sigma'].stderr is not None:
                 sigma =self.fitters[i].result.params['gauss_sigma'].value + self.fitters[i].result.params['gauss_sigma'].stderr
             else:
@@ -85,7 +85,7 @@ class PF(object):
                 sigma = 0
             if amp == 0:
                 integral_low = [0]
-            else: 
+            else:
                 integral_low = integrate.quad(gaussian, idx-100, idx+100)
             #calculate integral_unc
             integral_unc = (integral_up[0] - integral_low[0])/2
@@ -93,8 +93,8 @@ class PF(object):
         self.integrals = integrals
         self.integrals_unc = integrals_unc
         return integrals, integrals_unc
-    
-    
+
+
     def Efficiency(self):
         spec = Spectrum.from_file(self.spectrum) #import spectrum data
         spec_counts = spec.counts_vals #spectrum counts
