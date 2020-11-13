@@ -237,7 +237,7 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0):
 #                'net area uncertainties':ordered_net_area_unc,'peak cps':ordered_peak_cps,
 #                'fwhm':ordered_fwhm}
 
-    results2 = {'isotopes':ordered_isotopes,'energies':ordered_energies,'branching ratios':ordered_br}
+    results2 = {'isotopes':ordered_isotopes,'energies':ordered_energies,'branching_ratios':ordered_br}
 
     df2 = DataFrame(results2)
 
