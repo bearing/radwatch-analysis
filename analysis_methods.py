@@ -55,7 +55,7 @@ class Efficiency(object):
 
     def set_parameters(self,filename='eff_calibration_parameters.txt'):
         with open(filename, 'r') as file:
-            file_reader = csv.reader()
+            file_reader = csv.reader(file)
             self.z = np.array(next(file_reader),dtype=np.float64)
             self.values = np.array(next(file_reader),dtype=np.float64)
             self.unc = np.array(next(file_reader),dtype=np.float64)
