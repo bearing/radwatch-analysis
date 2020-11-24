@@ -55,14 +55,16 @@ class Efficiency(object):
 
     def set_parameters(self,filename='eff_calibration_parameters.txt'):
         file_data = np.loadtxt(filename)
-        self.z = file_data[0]
-        self.values = file_data[1]
-        self.unc = file_data[2]
-        print("Loaded fit parameters 0-4:", self.z)
-        print("Loaded input energies:", self.energies)
-        print("Loaded energy uncertainties:", self.unc)
-        if len(self.z) != 5:
-            print('ERROR: file does not contain the correct number of paramters (5)')
+        with open(filename, 'r') as file:
+            file_reader = csv.reader()
+            self.z = np.array(next(file_reader),dtype=np.float64)
+            self.values = np.array(next(file_reader),dtype=np.float64)
+            self.unc = np.array(next(file_reader),dtype=np.float64)
+            print("Loaded fit parameters 0-4:", self.z)
+            print("Loaded input energies:", self.energies)
+            print("Loaded energy uncertainties:", self.unc)
+            if len(self.z) != 5:
+                print('ERROR: file does not contain the correct number of paramters (5)')
 
     def normal(self, x): 
         return np.log(x/1461)
