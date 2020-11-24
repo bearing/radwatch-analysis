@@ -72,7 +72,7 @@ class Efficiency(object):
         return (self.z[0]*self.normal(x)**4)+(self.z[1]*self.normal(x)**3)+(self.z[2]*self.normal(x)**2)+(self.z[3]*self.normal(x))+(self.z[4])
 
     def new_func(self, x): 
-        return np.exp(func3(x))
+        return np.exp(self.func3(x))
 
     def fitting(self):
         """
