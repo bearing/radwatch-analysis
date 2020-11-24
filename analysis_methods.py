@@ -9,6 +9,99 @@ import sys
 import matplotlib.pyplot as plt
 import PF
 
+
+class Efficiency(object):
+    """
+    Object for undertaking the Efficiency Calibration of a detector.
+    Currently only plots the Efficiency versus Energy data and the fitted curve.
+
+    Use cases:
+    
+        - apply polinomial fit to input energies
+    """
+
+    def __init__(self,source_energies=None,eff,eff_uncer=None):
+        
+        self.energy = source_energies
+        self.values = eff
+        self.unc = eff_uncer
+        self.x = []
+        self.y = []
+        self.space = np.linspace(1, 2160, 540)
+        self.z = []
+        self.fit = []
+        self.new_fit = []
+
+    def mutate(self):
+        """
+        Mutates data and creates the fit function.
+        """
+        if self.energy:
+            for i in self.energy: 
+                self.x.append(np.log(i/1461))
+            for i in self.values:
+                self.y.append(np.log(i))
+            self.z = np.polyfit(np.asarray(self.x), np.asarray(self.y), 4)
+        else:
+            print("Error: cannot perform fit without input energies and uncertainties!")
+
+    def save_fit(self,filename='eff_calibration_parameters.txt'):
+        with open(filename, 'w') as file:
+            file_writer = csv.writer(file)
+            file_writer.writerow(self.z)
+            file_writer.writerow(self.values)
+            file_writer.writerow(self.unc)
+
+    def set_parameters(self,filename='eff_calibration_parameters.txt'):
+        file_data = np.loadtxt(filename)
+        self.z = file_data[0]
+        self.values = file_data[1]
+        self.unc = file_data[2]
+        print("Loaded fit parameters 0-4:", self.z)
+        print("Loaded input energies:", self.energies)
+        print("Loaded energy uncertainties:", self.unc)
+        if len(self.z) != 5:
+            print('ERROR: file does not contain the correct number of paramters (5)')
+
+    def normal(self, x): 
+        return np.log(x/1461)
+
+    def func3(self, x): 
+        return (self.z[0]*self.normal(x)**4)+(self.z[1]*self.normal(x)**3)+(self.z[2]*self.normal(x)**2)+(self.z[3]*self.normal(x))+(self.z[4])
+
+    def new_func(self, x): 
+        return np.exp(func3(x))
+
+    def fitting(self):
+        """
+        Fits the data.
+        """
+        for i in self.space:
+            self.fit.append(self.func3(i))
+        for i in self.fit:
+            self.new_fit.append(np.exp(i))
+
+    def get_eff(self,energy):
+        return self.new_func(energy)
+
+    def plotter(self,ylim=None):
+        """
+        Plots the data and the fit.
+        """
+        plt.title('Efficiency Curve')
+        plt.xlabel('Energy (keV)')
+        plt.ylabel('Efficiency')
+        plt.errorbar(self.energy, self.values,yerr=self.unc, fmt ='ro',elinewidth=2,capsize=4)
+        plt.plot(self.energy, self.values, 'ro')
+        plt.grid()
+        plt.plot(self.space, self.new_fit)
+        plt.legend(('Data Points', 'Fitted Curve'), loc='upper right')
+        if ylim is not None:
+            plt.ylim(0, ylim)
+        plt.savefig('eff_curve.png',dpi=200)
+        plt.show()
+
+
     #input spectra and energy calibration
 def apply_ecal(spec, e_cal):
     e_cal_energies=e_cal[:,0]
