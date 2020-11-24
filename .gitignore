@@ -1,5 +1,6 @@
 # Files and file types to ignore
 .ipynb_checkpoints
+__pycache__
 
 # Python compiled files
 *.pyc
