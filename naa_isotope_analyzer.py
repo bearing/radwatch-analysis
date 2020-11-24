@@ -138,7 +138,7 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=1
 
     for i in range(len(nndc_info_verified_isotope)):
         try:
-            nndc_info_verified_br[i] = [nndc_info_verified_br[i][0] / 100]
+            nndc_info_verified_br[i][0] = nndc_info_verified_br[i][0] / 100
         except:
             pass
 
