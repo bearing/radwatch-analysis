@@ -20,7 +20,7 @@ class Efficiency(object):
         - apply polinomial fit to input energies
     """
 
-    def __init__(self,source_energies=None,eff=None,eff_uncer=None):
+    def __init__(self,source_energies=[],eff=None,eff_uncer=None):
         
         self.energy = source_energies
         self.values = eff
@@ -36,7 +36,7 @@ class Efficiency(object):
         """
         Mutates data and creates the fit function.
         """
-        if self.energy:
+        if len(self.energy)>0:
             for i in self.energy: 
                 self.x.append(np.log(i/1461))
             for i in self.values:
