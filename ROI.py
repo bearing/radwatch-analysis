@@ -56,6 +56,8 @@ class ROI(object):
 				background = (counts_1 + counts_2)/2
 				inet_counts = counts_target - background
 				net_counts.append(inet_counts)
+				print("peak counts",counts_target)
+				print("bg counts",background)
 
 		else:
 			for target_peak in self.target_peaks:
@@ -65,6 +67,8 @@ class ROI(object):
 				counts_targetbg = np.sum(self.bg.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
 				backgroundbg = (counts_1bg + counts_2bg)/2
 				inet_countsbg = counts_targetbg - backgroundbg
+				print('background spec sidebands', backgroundbg)
+				print('bg peak counts',counts_targetbg)
 
 				counts_1spec = np.sum(self.spec.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
 				counts_2spec = np.sum(self.spec.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
@@ -73,6 +77,8 @@ class ROI(object):
 				inet_countsspec = counts_targetspec - backgroundspec
 				inet_counts = inet_countsspec - inet_countsbg
 				net_counts.append(inet_counts)
+				print("signal bg", backgroundspec)
+				print("signal peak", counts_targetspec)
 
 		for target_peak in self.target_peaks:
 			prev_bins, curr_bins, post_bins = self.get_roi_windows(target_peak)
