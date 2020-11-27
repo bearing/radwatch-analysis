@@ -32,6 +32,5 @@ def isotope_verifier(nndc_info):
         nndc_info_verified_energy.append(energy_emitted_list)
         nndc_info_verified_br.append(br_list)
 
-    nndc_info_verified = {'nndc_info_verified_isotope':nndc_info_verified_isotope,'nndc_info_verified_energy':nndc_info_verified_energy,'nndc_info_verified_br':nndc_info_verified_br}
 
-    return(nndc_info_verified)
+    return nndc_info_verified_isotope, nndc_info_verified_energy, nndc_info_verified_br
