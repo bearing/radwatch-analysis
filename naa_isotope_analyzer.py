@@ -124,13 +124,14 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=1
     #below code will only extract the nominal value and discard the standard
     #deviation.
     for i in range(len(nndc_info_verified_isotope)):
-        try:
-            if type(nndc_info_verified_energy[i][0]) == uncertainties.core.Variable:
-                nndc_info_verified_energy[i][0] = nndc_info_verified_energy[i][0].nominal_value
-            if type(nndc_info_verified_br[i][0]) == uncertainties.core.Variable:
-                nndc_info_verified_br[i][0] = nndc_info_verified_br[i][0].nominal_value
-        except:
-            pass
+        for j in range(len(nndc_info_verified_energy[i])):
+            try:
+                if type(nndc_info_verified_energy[i][j]) == uncertainties.core.Variable:
+                    nndc_info_verified_energy[i][j] = nndc_info_verified_energy[i][j].nominal_value
+                if type(nndc_info_verified_br[i][j]) == uncertainties.core.Variable:
+                    nndc_info_verified_br[i][j] = nndc_info_verified_br[i][j].nominal_value
+            except:
+                pass
 
     #since the branching ratios returned from Becquerel are not normalized to 1,
     #the below code will divide each branching ratio returned from Becquerel by
@@ -138,7 +139,7 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=1
 
     for i in range(len(nndc_info_verified_isotope)):
         try:
-            nndc_info_verified_br[i][0] = nndc_info_verified_br[i][0] / 100
+            nndc_info_verified_br[i] = nndc_info_verified_br[i] / 100
         except:
             pass
 
