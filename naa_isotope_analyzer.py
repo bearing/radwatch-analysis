@@ -64,7 +64,7 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=1
     nndc_info = []
     hl_range = (half_life_cut, None)
     for i in range(len(energies)):
-        energy_range = [energies[i]-1, energies[i]+6]
+        energy_range = [energies[i]-1, energies[i]+7]
         nndc_info.append(nndc.fetch_decay_radiation(t_range=hl_range, i_range=(1, None), type='Gamma', e_range=energy_range))
 
     #checks to see if the 'parents' of the isotopes returned by the Becquerel
