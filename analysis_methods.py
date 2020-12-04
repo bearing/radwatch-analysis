@@ -8,6 +8,8 @@ import pandas as pd
 import sys
 import matplotlib.pyplot as plt
 import csv
+from bs4 import BeautifulSoup
+import urllib.request
 import PF
 
 
@@ -105,6 +107,61 @@ class Efficiency(object):
 
 
     #input spectra and energy calibration
+
+def urlcreator(abb, A_0):
+    A_num = str(A_0)
+    if len(A_num) == 1:
+        A_num = '00' + A_num
+    elif len(A_num) == 2:
+        A_num = '0' + A_num
+    else:
+        A_num = A_num
+    url = 'http://wwwndc.jaea.go.jp/cgi-bin/Tab80WWW.cgi?/data' \
+            + '/JENDL/JENDL-4-prc/intern/' + abb + A_num + '.intern'
+    html = urllib.request.urlopen(url)
+    bslink = BeautifulSoup(html, 'lxml')
+
+    return(bslink)
+
+def xsec_data(abb, A_0):
+    '''extracts data from the jaea website'''
+    bslink = urlcreator(abb, A_0)
+
+    table = bslink.table
+    table_rows = table.find_all('tr')
+    for tr in table_rows:
+        td = tr.find_all('td')
+        row = [i.text for i in td]
+
+        if len(row) == 8:
+            if row[1] == '(n,γ) ':
+                x_sec = row[2]
+                x_sec_s = x_sec.split(' ')
+                x_val = float(x_sec_s[0])
+                barn = x_sec_s[1]
+                if barn[1] == '(kb)':
+                    x_val = 10**(3) * x_val
+                    return x_val
+                elif barn[1] == '(mb)':
+                    x_val = 10**(-3) * x_val
+                    return x_val
+                elif barn[1] == '(μb)':
+                    x_val = 10**(-6) * x_val
+                    return x_val
+                elif barn[1] == '(nb)':
+                    x_val = 10**(-9) * x_val
+                    return x_val
+                else:
+                    x_val = x_val
+                    return x_val
+
+            else:
+                pass
+
+        else:
+            pass
+    return None
+
 def apply_ecal(spec, e_cal):
     e_cal_energies=e_cal[:,0]
     e_cal_channels=e_cal[:,1]
