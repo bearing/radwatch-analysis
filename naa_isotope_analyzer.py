@@ -13,7 +13,7 @@ import importlib
 importlib.reload(naa_background)
 
 #def naa_isotope_analyzer(filename):
-def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=2.0):
+def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=2.0,total_peaks_cut=0.5):
 
     #gets rid of 511 keV peak due to annihilation.
     try:
@@ -231,7 +231,7 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=2
                 if np.isclose(e,iso_e.nominal_value,atol=deltae):
                     iso_peak_count += 1
 
-        if iso_peak_count > len(iso_energies)*.75:
+        if iso_peak_count > len(iso_energies)*total_peaks_cut:
             final_isotopes.append(iso)
             final_iso_energies.append(ordered_energies[i])
             final_iso_br.append(ordered_br[i])
