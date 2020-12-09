@@ -1,6 +1,6 @@
 import numpy as np
 
-def peak_effects(energies):
+def peak_effects(energies, deltae=2.0):
     """
     This module checks to see if a given list of peak energies contains any
     possible single escape peaks, double escape peaks, and sum peaks.
@@ -16,11 +16,11 @@ def peak_effects(energies):
         if energies[i] >= float(1022):
             for j in range(len(energies)):
                 #checks to see if peak is a single escape peak.
-                if np.isclose(energies[i],energies[j]+511,atol=1) == True:
+                if np.isclose(energies[i],energies[j]+511,atol=deltae) == True:
                     single_escape_peak.append(energies[j])
                     single_escape_peak_index.append(j)
                 #checks to see if peak is a double escape peak.
-                if np.isclose(energies[i],energies[j]+1022,atol=1) == True:
+                if np.isclose(energies[i],energies[j]+1022,atol=deltae) == True:
                     double_escape_peak.append(energies[j])
                     double_escape_peak_index.append(j)
                     """
@@ -49,10 +49,10 @@ def peak_effects(energies):
     origin_index_de = []
     for i in range(len(energies)):
         for j in range(len(single_escape_peak)):
-            if np.isclose(energies[i],single_escape_peak[j]+511,atol=1) == True:
+            if np.isclose(energies[i],single_escape_peak[j]+511,atol=deltae) == True:
                 origin_index_se.append(i)
         for k in range(len(double_escape_peak)):
-            if np.isclose(energies[i],double_escape_peak[k]+1022,atol=1) == True:
+            if np.isclose(energies[i],double_escape_peak[k]+1022,atol=deltae) == True:
                 origin_index_de.append(i)
 
     peak_effects = {'single_escape_peak':single_escape_peak,'double_escape_peak':double_escape_peak,

@@ -73,6 +73,16 @@ K40 = {'name':'K40',
        'energy':[1460.830],
        'br':[0.11]}
 
+def background_iso(iso_name):
+    background_isotopes = [Pa234m,Th234,Ra226,Pb214,Bi214,
+                           U235,Th231,Pa231,Th227,Ra223,Rn219,Pb211,Bi211,Tl207,
+                           Ac228,Th228,Ra224,Pb212,Bi212,Tl208,
+                           K40]
+    for bg_iso in background_isotopes:
+        if iso_name == bg_iso['name']:
+            return True
+    return False    
+
 def background(energy,deltae=1):
 
 

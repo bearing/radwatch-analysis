@@ -1,5 +1,7 @@
 import becquerel as bq
 from becquerel import Spectrum
+from becquerel.tools.isotope import Isotope
+from becquerel.tools.isotope_qty import IsotopeQuantity, NeutronIrradiation
 import numpy as np
 import scipy.integrate as integrate
 import math as m
@@ -11,7 +13,7 @@ import csv
 from bs4 import BeautifulSoup
 import urllib.request
 import PF
-
+import re
 
 class Efficiency(object):
     """
@@ -161,6 +163,40 @@ def xsec_data(abb, A_0):
         else:
             pass
     return None
+
+def get_initial_isotopes(isotopes):
+    init_isotopes = []
+    for iso in isotopes:
+        iso_name = re.findall("[a-zA-Z]+",iso)[0]
+        if(len(iso_name)>1):
+            iso_name = iso_name[0] + iso_name[1].lower()
+        iso_A = int(re.findall("[0-9]+",iso)[0])
+        iso_A0 = iso_A - 1
+        init_isotopes.append(iso_name+'-'+str(iso_A0))
+    return init_isotopes
+
+def calculate_concentration(dataframes,name_in,name_out,flux,irr_start,irr_stop,specs):
+    for ispec,df in enumerate(dataframes):
+        concentrations = []
+        for i in range(len(df['isotopes'])):
+            iso_name = re.findall("[a-zA-Z]+",df['isotopes'].iloc[i])[0]
+            if(len(iso_name)>1):
+                iso_name = iso_name[0] + iso_name[1].lower()
+            iso_A = int(re.findall("[0-9]+",df['isotopes'].iloc[i])[0])
+            iso_A0 = iso_A - 1
+
+            x_val = xsec_data(iso_name, iso_A0)
+
+            nuclide = Isotope(df['isotopes'].iloc[i])
+            initial = Isotope(iso_name+str(iso_A0))
+
+            isotope = IsotopeQuantity(nuclide, date=specs[ispec].start_time, bq=df[name_in].iloc[i])
+            ni = NeutronIrradiation(irr_start, irr_stop, n_cm2_s=flux)
+            init_comp = ni.activate(x_val, initial=initial, activated=isotope)
+
+            concentrations.append(init_comp.g_at(irr_start))
+        df[name_out] = concentrations
+    return dataframes
 
 def apply_ecal(spec, e_cal):
     e_cal_energies=e_cal[:,0]

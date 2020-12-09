@@ -13,17 +13,18 @@ import importlib
 importlib.reload(naa_background)
 
 #def naa_isotope_analyzer(filename):
-def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=1.0):
+def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=2.0):
 
     #gets rid of 511 keV peak due to annihilation.
     try:
         annihilation_peak = np.full(energies.shape,511.0)
         peak_mask = np.isclose(energies,annihilation_peak,atol=deltae)
-        energies = np.array(energies)[peak_mask]
+        energies = np.array(energies)[~peak_mask]
 #        for i in range(len(energies)):
 #            if np.isclose(energies[i],511,atol=1) == True:
 #                energies.remove(energies[i])
     except:
+        print("Failed to remove annihilation peak.")
         pass
 
     #checks to see if any of the peaks are due to background radiation.
@@ -39,7 +40,7 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=1
     print("Backround isotopes", background_isotopes)
     #checks to see if any of the peaks are due to single escape peaks,
     #double escape peaks, and sum peaks.
-    peak_effects_info = naa_peak_effects.peak_effects(energies)
+    peak_effects_info = naa_peak_effects.peak_effects(energies.tolist(),deltae)
 
     escape_peaks = []
     se_index = peak_effects_info['single_escape_peak_index']
@@ -123,8 +124,7 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=1
     """
 
     #for every energy and branching ratio that contains an uncertainty, the
-    #below code will only extract the nominal value and discard the standard
-    #deviation.
+    #below code will only extract the nominal value and discard the std dev.
     for i in range(len(nndc_info_verified_isotope)):
         for j in range(len(nndc_info_verified_energy[i])):
             try:
@@ -147,15 +147,29 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=1
 
     #Assembles the final list of isotopes that are most likely present for each
     #given energy.
-    isotopes = background_isotopes[:]
-    isotopes_energy = background_isotopes_energy[:]
-    isotopes_br = background_isotopes_br[:]
+    #isotopes = background_isotopes[:]
+    #isotopes_energy = background_isotopes_energy[:]
+    #isotopes_br = background_isotopes_br[:]
+    isotopes = nndc_info_verified_isotope[:]
+    isotopes_energy = nndc_info_verified_energy[:]
+    isotopes_br = nndc_info_verified_br[:]
+
+    #for i in range(len(isotopes)):
+    #    if isotopes[i] == []:
+    #        isotopes[i] = nndc_info_verified_isotope[i]
+    #        isotopes_energy[i] = nndc_info_verified_energy[i]
+    #        isotopes_br[i] = nndc_info_verified_br[i]
 
     for i in range(len(isotopes)):
         if isotopes[i] == []:
-            isotopes[i] = nndc_info_verified_isotope[i]
-            isotopes_energy[i] = nndc_info_verified_energy[i]
-            isotopes_br[i] = nndc_info_verified_br[i]
+            isotopes[i] = background_isotopes[i]
+            isotopes_energy[i] = background_isotopes_energy[i]
+            isotopes_br[i] = background_isotopes_br[i]
+        elif len(background_isotopes[i]) > 0:
+            isotopes[i].extend(background_isotopes[i])
+            isotopes_energy[i].extend(background_isotopes_energy[i])
+            isotopes_br[i].extend(background_isotopes_br[i])
+
 
     for j in range(len(isotopes)):
         if j in se_index:
@@ -164,6 +178,7 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=1
                 isotopes[j].extend(['SE:' + isotopes[origin_index_se[index]][0]])
             except:
                 isotopes[j].extend(['SE Unidentified'])
+                print("Unidentified SE associated with ",energies[origin_index_se[index]])
                 pass
         if j in de_index:
             index = de_index.index(j)
@@ -171,6 +186,7 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=1
                 isotopes[j].extend(['DE:' + isotopes[origin_index_de[index]][0]])
             except:
                 isotopes[j].extend(['DE Unidentified'])
+                print("Unidentified DE associated with ",energies[origin_index_de[index]])
                 pass
 
     #Formats the data to output to a DataFrame in which the isotopes will be
@@ -202,7 +218,28 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=1
         ordered_energies.append(temp_energies)
         ordered_br.append(temp_br)
 
-    results2 = {'isotopes':ordered_isotopes,'energies':ordered_energies,'branching_ratios':ordered_br}
+    # Check for all major peaks for each isotope and reject if they are not found
+    final_isotopes = []
+    final_iso_energies = []
+    final_iso_br = []
+    for i, iso in enumerate(ordered_isotopes):
+        iso_gammas = nndc.fetch_decay_radiation(nuc=iso,t_range=hl_range, i_range=(5, None), type='Gamma',e_range=(200,2500))
+        iso_energies = np.array(iso_gammas['Radiation Energy (keV)'])
+        iso_peak_count = 0
+        for iso_e in iso_energies:
+            for e in ordered_energies[i]:
+                if np.isclose(e,iso_e.nominal_value,atol=deltae):
+                    iso_peak_count += 1
+
+        if iso_peak_count > len(iso_energies)*.75:
+            final_isotopes.append(iso)
+            final_iso_energies.append(ordered_energies[i])
+            final_iso_br.append(ordered_br[i])
+        else:
+            print("Only found",ordered_energies[i],"for isotope",iso,"with",iso_energies,"expected peaks.")
+
+
+    results2 = {'isotopes':final_isotopes,'energies':final_iso_energies,'branching_ratios':final_iso_br}
 
     df2 = DataFrame(results2)
 
