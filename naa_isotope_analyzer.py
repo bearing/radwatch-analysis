@@ -228,8 +228,12 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=2
         iso_peak_count = 0
         for iso_e in iso_energies:
             for e in ordered_energies[i]:
-                if np.isclose(e,iso_e.nominal_value,atol=deltae):
-                    iso_peak_count += 1
+                if type(iso_e) == uncertainties.core.Variable:
+                    if np.isclose(e,iso_e.nominal_value,atol=deltae):
+                        iso_peak_count += 1
+                else:
+                    if np.isclose(e,iso_e,atol=deltae):
+                        iso_peak_count += 1
 
         if iso_peak_count > len(iso_energies)*total_peaks_cut:
             final_isotopes.append(iso)
