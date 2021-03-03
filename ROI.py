@@ -7,100 +7,84 @@ import math as m
 #Method: set_sidebands, get_counts
 
 class ROI(object):
-	def __init__ (self, spec, bg, e_peaks,sub_type):
-		self.spec = spec
-		self.bg = bg
-		self.sub_type = sub_type
-		if sub_type == 0:
-			self.bgsub = self.spec
-		else:
-			self.bgsub = self.spec - self.bg
-		self.target_peaks = e_peaks
-		self.delta_E = 5
-		self.window = np.array([[-2, -1], [-0.5, 0.5], [1, 2]])
+    def __init__ (self, spec, bg, e_peaks, sub_type):
+        self.spec = spec
+        self.bg = bg
+        self.sub_type = sub_type
+        if sub_type == 0:
+            self.bgsub = self.spec
+        else:
+            self.bgsub = self.spec - self.bg
+        self.target_peaks = e_peaks
+        
+        self.roi_pars = {}
+        for i in range(len(self.target_peaks)):
+            self.roi_pars["%s" %self.target_peaks[i]] = [self.target_peaks[i], 5, [[-2, -1], [-0.5, 0.5], [1, 2]]]
+            
+    def set_sideband(self, peak_energy, delta_e, window):
+        assert type(peak_energy) == int or type(peak_energy) == float, "First argument should be the value of the target peak that you want to set sidebands for."
+        assert type(delta_e) == int or type(delta_e) == float, "Second argument should be a number designating delta_E."
+        assert len(window) == 3 and len(window[0]) == 2 and len(window[1]) == 2 and len(window[2]) == 2, "Third argument should be a list of lists designating the window in the format of: [[#, #], [#, #], [#, #]]"
+        
+        self.roi_pars["%s" %peak_energy][1] = delta_e
+        self.roi_pars["%s" %peak_energy][2] = window
+            
+    def find_peak_energies(self):
+        for peak_energy in self.roi_pars:
+            idx = (self.spec.bin_centers_kev > self.roi_pars[peak_energy][0]+self.roi_pars["%s" %peak_energy][2][1][0]*self.roi_pars["%s" %peak_energy][1])*(self.spec.bin_centers_kev < self.roi_pars[peak_energy][0]+self.roi_pars["%s" %peak_energy][2][1][1]*self.roi_pars["%s" %peak_energy][1])
+            bins = np.where(idx)
+            local_idx = np.argmax(self.spec.counts[bins])
+            index = bins[0][0] + local_idx
+            self.roi_pars["%s" %peak_energy][0] = round(self.spec.bin_centers_kev[index])
 
-	def set_sideband (self, delta_e, window):
-		if (np.array(window).ndim != 2 or len(window) != 3):
-			print ("Wrong input dimension.")
-			return
+    def get_roi_windows(self, key):
+        index = []
+        for i in range(3):
+            index.append(np.where((self.bgsub.bin_centers_kev > key[0]+key[2][i][0]*key[1])*(self.bgsub.energies_kev < key[0]+key[2][i][1]*key[1])))
+        return index
+    
+    def get_counts(self):
+        net_counts = []
+        uncertainties = []
+        for key in self.roi_pars:
+            bins = self.get_roi_windows(self.roi_pars[key])
+            if self.sub_type == 1:
+                counts = []
+                for i in range(len(bins)):
+                    counts.append(np.sum(self.bgsub.cps_vals[bins[i][0][0]:bins[i][0][-1]]) * self.spec.livetime)
+                bg = (counts[0] + counts[2])/2
+                net_counts.append(counts[1] - bg)
+                print("Peak counts at", self.roi_pars[key][0], "keV:", counts[1])
+                print("Background counts:", self.roi_pars[key][0], "keV:", bg)
 
-		self.delta_E = delta_e
-		self.window = np.array(window)
+            else:
+                bgcounts = []
+                for i in range(len(bins)):
+                    counts.append(np.sum(self.bg.cps_vals[bins[i][0][0]:bins[i][0][-1]]) * self.spec.livetime)
+                backgroundbg = (bgcounts[0] + bgcounts[2]) / 2
+                inet_countsbg = bgcounts[1] - backgroundbg
+                print('background spec sidebands', backgroundbg)
+                print('bg peak counts',bgcounts[1])
 
-	def find_peak_energies (self):
-		for i, target_peak in enumerate(self.target_peaks):
-			idx = (self.spec.bin_centers_kev > target_peak+self.window[1,0]*self.delta_E)*(self.spec.bin_centers_kev < target_peak+self.window[1,1]*self.delta_E)
-			bins = np.where(idx)
-			local_idx = np.argmax(self.spec.counts[bins])
-			index = bins[0][0] + local_idx
-			self.target_peaks[i] = round(self.spec.bin_centers_kev[index])
+                speccounts = []
+                for i in range(len(bins)):
+                    counts.append(np.sum(self.spec.cps_vals[bins[i][0][0]:bins[i][0][-1]]) * self.spec.livetime)
+                backgroundspec = (speccounts[0] + speccounts[2]) / 2
+                inet_counts = (speccounts[1] - backgroundspec) - inet_countsbg
+                net_counts.append(inet_counts)
+                print("signal bg", backgroundspec)
+                print("signal peak", speccounts[1])
 
-	def get_roi_windows(self, target_peak):
-		idx = (self.bgsub.bin_centers_kev > target_peak+self.window[0,0]*self.delta_E)*(self.bgsub.energies_kev < target_peak+self.window[0,1]*self.delta_E)
-		prev_bins = np.where(idx)
-		idx = (self.bgsub.bin_centers_kev > target_peak+self.window[1,0]*self.delta_E)*(self.bgsub.energies_kev < target_peak+self.window[1,1]*self.delta_E)
-		curr_bins = np.where(idx)
-		idx = (self.bgsub.bin_centers_kev > target_peak+self.window[2,0]*self.delta_E)*(self.bgsub.energies_kev < target_peak+self.window[2,1]*self.delta_E)
-		post_bins = np.where(idx)
-		return 	prev_bins,curr_bins,post_bins
-
-	def get_counts (self):
-		net_counts = []
-		uncertainties = []
-		if self.sub_type == 1:
-			for target_peak in self.target_peaks:
-				prev_bins, curr_bins, post_bins = self.get_roi_windows(target_peak)
-				counts_1 = np.sum(self.bgsub.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
-				counts_2 = np.sum(self.bgsub.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
-				counts_target = np.sum(self.bgsub.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
-				background = (counts_1 + counts_2)/2
-				inet_counts = counts_target - background
-				net_counts.append(inet_counts)
-				print("peak counts",counts_target)
-				print("bg counts",background)
-
-		else:
-			for target_peak in self.target_peaks:
-				prev_bins, curr_bins, post_bins = self.get_roi_windows(target_peak)
-				counts_1bg = np.sum(self.bg.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
-				counts_2bg = np.sum(self.bg.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
-				counts_targetbg = np.sum(self.bg.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
-				backgroundbg = (counts_1bg + counts_2bg)/2
-				inet_countsbg = counts_targetbg - backgroundbg
-				print('background spec sidebands', backgroundbg)
-				print('bg peak counts',counts_targetbg)
-
-				counts_1spec = np.sum(self.spec.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
-				counts_2spec = np.sum(self.spec.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
-				counts_targetspec = np.sum(self.spec.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
-				backgroundspec = (counts_1spec + counts_2spec)/2
-				inet_countsspec = counts_targetspec - backgroundspec
-				inet_counts = inet_countsspec - inet_countsbg
-				net_counts.append(inet_counts)
-				print("signal bg", backgroundspec)
-				print("signal peak", counts_targetspec)
-
-		for target_peak in self.target_peaks:
-			prev_bins, curr_bins, post_bins = self.get_roi_windows(target_peak)
-			#uncertainty
-			counts_target_gross = np.sum(self.spec.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
-			counts_target_gross = np.sum(self.spec.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
-			counts_target_gross = np.sum(self.spec.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
-			tot_speclow = np.sum(self.spec.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
-			tot_spechigh = np.sum(self.spec.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
-			counts_bg_gross = np.sum(self.bg.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
-			counts_bg_gross = np.sum(self.bg.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
-			counts_bg_gross = np.sum(self.bg.cps_vals[curr_bins[0][0]:curr_bins[0][-1]]) * self.spec.livetime
-			tot_bglow = np.sum(self.bg.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
-			tot_bglow = np.sum(self.bg.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
-			tot_bglow = np.sum(self.bg.cps_vals[prev_bins[0][0]:prev_bins[0][-1]]) * self.spec.livetime
-			tot_bghigh = np.sum(self.bg.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
-			tot_bghigh = np.sum(self.bg.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
-			tot_bghigh = np.sum(self.bg.cps_vals[post_bins[0][0]:post_bins[0][-1]]) * self.spec.livetime
-			s_target_gross = m.sqrt(counts_target_gross)
-			s_ROI_spec = m.sqrt(tot_spechigh + tot_speclow)/2
-			s_bg_gross = m.sqrt(counts_bg_gross)
-			s_ROI_bg = m.sqrt(tot_bghigh + tot_bglow)/2
-			s = m.sqrt(s_target_gross**2 + s_ROI_spec**2 + s_bg_gross**2 + s_ROI_bg**2)
-			uncertainties.append(s)
-		return net_counts,uncertainties
+            unccounts = [[], []]
+            #[[tot_speclow, counts_target_gross, tot_spechigh], [tot_bglow, counts_bg_gross, tot_bghigh]]
+            for i in range(len(bins)):
+                unccounts[0].append(np.sum(self.spec.cps_vals[bins[i][0][0]:bins[i][0][-1]]) * self.spec.livetime)
+                unccounts[1].append(np.sum(self.bg.cps_vals[bins[i][0][0]:bins[i][0][-1]]) * self.spec.livetime)
+            s_target_gross = (unccounts[0][1]) ** 0.5
+            s_ROI_spec = ((unccounts[0][2] + unccounts[0][0]) ** 0.5) / 2
+            s_bg_gross = (unccounts[1][1]) ** 0.5
+            s_ROI_bg = ((unccounts[1][2] + unccounts[1][0]) ** 0.5) / 2
+            s = (s_target_gross**2 + s_ROI_spec**2 + s_bg_gross**2 + s_ROI_bg**2) ** 0.5
+            uncertainties.append(s)
+        
+        return net_counts,uncertainties
