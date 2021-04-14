@@ -19,25 +19,26 @@ class ROI(object):
         
         self.roi_pars = {}
         for i in range(len(self.target_peaks)):
-            self.roi_pars["%s" %self.target_peaks[i]] = [self.target_peaks[i], 5, [[-2, -1], [-0.5, 0.5], [1, 2]]]
+            self.roi_pars[f'{self.target_peaks[i]}'] = [self.target_peaks[i], 5, [[-2, -1], [-0.5, 0.5], [1, 2]]]
             
     def set_sideband(self, peak_energy, delta_e, window):
         assert type(peak_energy) == int or type(peak_energy) == float, "First argument should be the value of the target peak that you want to set sidebands for."
         assert type(delta_e) == int or type(delta_e) == float, "Second argument should be a number designating delta_E."
         assert len(window) == 3 and len(window[0]) == 2 and len(window[1]) == 2 and len(window[2]) == 2, "Third argument should be a list of lists designating the window in the format of: [[#, #], [#, #], [#, #]]"
+        assert f'{peak_energy}' in self.roi_pars, f"Set Sideband: {peak_energy} energy peak not found in ROI energies list"
         
-        self.roi_pars["%s" %peak_energy][1] = delta_e
-        self.roi_pars["%s" %peak_energy][2] = window
+        self.roi_pars[f'{peak_energy}'][1] = delta_e
+        self.roi_pars[f'{peak_energy}'][2] = window
             
     def find_peak_energies(self):
         for peak_energy in self.roi_pars:
-            idx = (self.spec.bin_centers_kev > self.roi_pars[peak_energy][0]+self.roi_pars["%s" %peak_energy][2][1][0]*self.roi_pars["%s" %peak_energy][1])*(self.spec.bin_centers_kev < self.roi_pars[peak_energy][0]+self.roi_pars["%s" %peak_energy][2][1][1]*self.roi_pars["%s" %peak_energy][1])
+            idx = (self.spec.bin_centers_kev > self.roi_pars[peak_energy][0]+self.roi_pars[f'{peak_energy}'][2][1][0]*self.roi_pars[f'{peak_energy}'][1])*(self.spec.bin_centers_kev < self.roi_pars[peak_energy][0]+self.roi_pars[f'{peak_energy}'][2][1][1]*self.roi_pars[f'{peak_energy}'][1])
             bins = np.where(idx)
             local_idx = np.argmax(self.spec.counts[bins])
             index = bins[0][0] + local_idx
-            self.roi_pars["%s" %peak_energy][0] = round(self.spec.bin_centers_kev[index])
+            self.roi_pars[f'{peak_energy}'][0] = round(self.spec.bin_centers_kev[index])
 
-    def get_roi_windows(self, key):
+    def get_roi_windows(self, key):   
         index = []
         for i in range(3):
             index.append(np.where((self.bgsub.bin_centers_kev > key[0]+key[2][i][0]*key[1])*(self.bgsub.energies_kev < key[0]+key[2][i][1]*key[1])))
@@ -60,7 +61,7 @@ class ROI(object):
             else:
                 bgcounts = []
                 for i in range(len(bins)):
-                    counts.append(np.sum(self.bg.cps_vals[bins[i][0][0]:bins[i][0][-1]]) * self.spec.livetime)
+                    bgcounts.append(np.sum(self.bg.cps_vals[bins[i][0][0]:bins[i][0][-1]]) * self.spec.livetime)
                 backgroundbg = (bgcounts[0] + bgcounts[2]) / 2
                 inet_countsbg = bgcounts[1] - backgroundbg
                 print('background spec sidebands', backgroundbg)
@@ -68,7 +69,7 @@ class ROI(object):
 
                 speccounts = []
                 for i in range(len(bins)):
-                    counts.append(np.sum(self.spec.cps_vals[bins[i][0][0]:bins[i][0][-1]]) * self.spec.livetime)
+                    speccounts.append(np.sum(self.spec.cps_vals[bins[i][0][0]:bins[i][0][-1]]) * self.spec.livetime)
                 backgroundspec = (speccounts[0] + speccounts[2]) / 2
                 inet_counts = (speccounts[1] - backgroundspec) - inet_countsbg
                 net_counts.append(inet_counts)
@@ -88,3 +89,50 @@ class ROI(object):
             uncertainties.append(s)
         
         return net_counts,uncertainties
+    
+    def f_near(self, a, a0):
+        idx = np.abs(a-a0).argmin()
+        return idx
+
+    def plot_peak_region(self, spectrum, source_energies, key):
+        assert f'{key}' in self.roi_pars, f"Plot Peak Region: {key} energy peak not found in ROI energies list"
+        self.find_peak_energies()
+        target_peaks = self.target_peaks
+        spec = spectrum
+        counts = spec.counts_vals
+        energies = spec.bin_centers_kev
+        idx = self.f_near(energies,key) 
+        roi_low = idx - 50
+        roi_high = idx + 50
+
+        plot_counts = counts[roi_low:roi_high]
+        plot_energies = energies[roi_low:roi_high]
+
+        roi_low_bins,roi_peak_bins,roi_high_bins = self.get_roi_windows(self.roi_pars[f'{key}'])
+        rlow = roi_low_bins[0][0]
+        rhi = roi_high_bins[0][-1]
+        plot_counts = counts[rlow:rhi]
+        plot_energies = energies[rlow:rhi]
+
+        rlow = roi_low_bins[0][0]
+        rhi = roi_low_bins[0][-1]
+        low_counts = counts[rlow:rhi]
+        low_energies = energies[rlow:rhi]
+
+        rlow = roi_high_bins[0][0]
+        rhi = roi_high_bins[0][-1]
+        high_counts = counts[rlow:rhi]
+        high_energies = energies[rlow:rhi]
+
+        rlow = roi_peak_bins[0][0]
+        rhi = roi_peak_bins[0][-1]
+        peak_counts = counts[rlow:rhi]
+        peak_energies = energies[rlow:rhi]
+
+        fig,ax = plt.subplots()
+        ax.plot(plot_energies,plot_counts)
+        ax.fill_between(low_energies,0,low_counts,facecolor = 'green',interpolate=True)
+        ax.fill_between(high_energies,0,high_counts,facecolor = 'red',interpolate=True)
+        ax.fill_between(peak_energies,0,peak_counts,facecolor = 'blue',interpolate=True)
+        ax.set_yscale('log')
+        plt.title("%s Peak" %key)
