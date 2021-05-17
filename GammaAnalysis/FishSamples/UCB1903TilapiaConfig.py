@@ -1,4 +1,3 @@
-livetime = 172800 #s
 weight = 446.3 #g
 source_energies = [605, 609, 662, 1460, 2614]
 tag = 0

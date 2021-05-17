@@ -1,14 +1,16 @@
 import argparse
-parser = argparse.ArgumentParser(description="Signal processing (background subtraction) for parsed SIS3320 raw data")
+parser = argparse.ArgumentParser()
 parser.add_argument('filename', type=str, help="Input data file of type .spe")
 args = parser.parse_args()
 
 specname = args.filename + '.spe'
+csvname = args.filename + 'Data.csv'
 
 from becquerel import Spectrum
 import numpy as np
 import importlib
 import sys
+import csv
 import matplotlib.pyplot as plt
 sys.path.insert(0,r"C:\Users\benhu\Desktop\Research\radwatch-analysis")
 
@@ -47,8 +49,12 @@ for i in c.source_energies:
 countrate = [i / spec.livetime for i in roi_counts]
 uncrate = [i / spec.livetime for i in roi_unc]
 
-sactivity, sactunc = [(i / j) / c.weight for i, j in zip(countrate, efficiency)], [(i / j) / c.weight for i, j in zip(uncrate, efficiency)]
-for i, j, k in zip(c.source_energies, sactivity, sactunc):
-    print("Specific activity at", i, "keV:", j, "±", k, "Bq/g")
+sactivity, sactunc = [(i / j) / (c.weight / 1000) for i, j in zip(countrate, efficiency)], [(i / j) / (c.weight / 1000) for i, j in zip(uncrate, efficiency)]
+
+with open(csvname, mode='w') as csvfile:
+    csvfiler = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+    for i, j, k in zip(c.source_energies, sactivity, sactunc):
+        print("Specific activity at", i, "keV:", j, "±", k, "Bq/kg")
+        csvfiler.writerow([i, j, k])
     
 plt.show()
