@@ -45,10 +45,10 @@ class ROI(object):
         index = []
         if spec_type==0:
             for i in range(3):
-                index.append(np.where((self.bgsub.bin_centers_kev > key[0]+key[2][i][0]*key[1])*(self.bgsub.energies_kev < key[0]+key[2][i][1]*key[1])))
+                index.append(np.where((self.bgsub.bin_centers_kev > key[0]+key[2][i][0]*key[1])*(self.bgsub.bin_centers_kev <= key[0]+key[2][i][1]*key[1])))
         if spec_type==1:
             for i in range(3):
-                index.append(np.where((self.bg.bin_centers_kev > key[0]+key[3][i][0]*key[1])*(self.bg.energies_kev < key[0]+key[3][i][1]*key[1])))
+                index.append(np.where((self.bg.bin_centers_kev > key[0]+key[3][i][0]*key[1])*(self.bg.bin_centers_kev <= key[0]+key[3][i][1]*key[1])))
         return index
 
     def get_counts(self):
@@ -98,7 +98,7 @@ class ROI(object):
             uncertainties.append(s)
 
         return net_counts,uncertainties
-    
+
     def f_near(self, a, a0):
         idx = np.abs(a-a0).argmin()
         return idx
@@ -110,7 +110,7 @@ class ROI(object):
         spec = spectrum
         counts = spec.counts_vals
         energies = spec.bin_centers_kev
-        idx = self.f_near(energies,key) 
+        idx = self.f_near(energies,key)
         roi_low = idx - 50
         roi_high = idx + 50
 
