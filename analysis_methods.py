@@ -63,7 +63,7 @@ class Efficiency(object):
         else:
             print("Error: cannot perform fit without input energies, efficiencies, and uncertainties!")
 
-    def save_fit(self,filename='eff_calibration_parameters.txt'):
+    def save_fit(self,filename='eff_calibration_parameters.json'):
         par_dict = {
             "parameters": self.z.tolist(),
             "covariance": self.z_cov.tolist(),
@@ -73,7 +73,7 @@ class Efficiency(object):
         with open(filename, 'w') as file:
             json.dump(par_dict, file)
 
-    def set_parameters(self,filename='eff_calibration_parameters.txt'):
+    def set_parameters(self,filename='eff_calibration_parameters.json'):
         file = open(filename, 'r')
 
         data = json.load(file)
