@@ -27,66 +27,29 @@ class Efficiency(object):
         - apply polinomial fit to input energies
     """
 
-    def __init__(self,source_energies=[],eff=None,eff_uncer=None):
+    def __init__(self,source_energies=[],eff=None,eff_unc=None):
         
-        self.energy = source_energies
-        self.values = eff
-        self.unc = eff_uncer
-        self.x = []
-        self.y = []
-        self.werr = []
+        # type assumptions are made at various points - so we are explicitely fixing the type here
+        if type(source_energies)==type([]):
+            self.energy = source_energies
+        else:
+            self.energy = source_energies.tolist()
+        if eff is not None:
+            if type(eff)==type([]):
+                self.values = eff
+            else:
+                self.values = eff.tolist()
+        if eff_unc is not None:
+            if type(eff_unc)==type([]):
+                self.unc = eff_unc
+            else:
+                self.unc = eff_unc.tolist()
+
         self.space = np.linspace(1, 2460, 540)
         self.z = []
         self.fit = []
-        self.new_fit = []
         self.fit_lower = []
         self.fit_upper = []
-
-    def mutate(self):
-        """
-        Mutates data and creates the fit function.
-        """
-        if len(self.unc)>0:
-            if len(self.energy) != len(self.unc):
-                print("Error: cannot perform fit without the same number of input energies, efficiencies, and uncertainties!")
-                return
-            for i in range(len(self.energy)): 
-                self.x.append(np.log(self.energy[i]/1461))
-                self.y.append(np.log(self.values[i]))
-                #log_err = .5*(np.log(self.values[i]+self.unc[i])-np.log(self.values[i]-self.unc[i]))
-                log_err = self.unc[i]/self.values[i]
-                self.werr.append(1/log_err)
-
-            self.z, self.z_cov = np.polyfit(np.asarray(self.x), np.asarray(self.y), 4, cov=True)
-            print("Poly fit parameters: ",self.z)
-            print("Poly fit covariance: ",self.z_cov)
-        else:
-            print("Error: cannot perform fit without input energies, efficiencies, and uncertainties!")
-
-    def save_fit(self,filename='eff_calibration_parameters.json'):
-        par_dict = {
-            "parameters": self.z.tolist(),
-            "covariance": self.z_cov.tolist(),
-            "efficiencies": self.values,
-            "uncertainties": self.unc
-        }
-        with open(filename, 'w') as file:
-            json.dump(par_dict, file)
-
-    def set_parameters(self,filename='eff_calibration_parameters.json'):
-        file = open(filename, 'r')
-
-        data = json.load(file)
-        self.z = np.array(data['parameters'])
-        self.z_cov = np.array(data['covariance'])
-        self.values = data['efficiencies']
-        self.unc = data['uncertainties']
-        print("Loaded fit parameters 0-4:", self.z)
-        print("Loaded fit uncertainties:", self.z_cov)
-        print("Loaded input energies:", self.values)
-        print("Loaded eff uncertainties:", self.unc)
-        if len(self.z) != 5:
-            print('ERROR: file does not contain the correct number of paramters (5)')
 
     def normal(self, x): 
         return np.log(x/1461)
@@ -128,15 +91,40 @@ class Efficiency(object):
         error = np.abs(self.new_func_upper(x) - self.new_func_lower(x))/2.0
         return error
 
+    def mutate(self):
+        """
+        Mutates data and creates the fit function.
+        """
+        if len(self.unc)>0:
+            if len(self.energy) != len(self.unc):
+                print("Error: cannot perform fit without the same number of input energies, efficiencies, and uncertainties!")
+                return
+            x = np.log(np.array(self.energy)/1461)
+            y = np.log(np.array(self.values))
+            #log_err = .5*(np.log(self.values+self.unc)-np.log(self.values-self.unc))
+            log_err = np.array(self.values)/np.array(self.unc)
+            err_weight = 1/log_err
+        else:
+            print("Error: cannot perform fit without input energies, efficiencies, and uncertainties!")
+            return None
+        return x,y,err_weight
+
+    def fill_fit_func(self):
+        for i in self.space:
+            self.fit.append(self.new_func(i))
+            self.fit_upper.append(self.new_func_upper(i))
+            self.fit_lower.append(self.new_func_lower(i))
+
     def fitting(self):
         """
         Fits the data.
         """
-        for i in self.space:
-            self.fit.append(self.func3(i))
-            self.new_fit.append(self.new_func(i))
-            self.fit_upper.append(self.new_func_upper(i))
-            self.fit_lower.append(self.new_func_lower(i))
+        x,y,err_weight = self.mutate()
+        if x is None:
+            return
+
+        self.z, self.z_cov = np.polyfit(x, y, 4, cov=True)
+        self.fill_fit_func()
 
     def get_eff(self,energy):
         return self.new_func(energy)
@@ -144,7 +132,37 @@ class Efficiency(object):
     def get_eff_error(self,energy):
         return self.new_func_error(energy)
 
-    def plotter_pretty(self,ylim=None):
+    def save_fit(self,filename='eff_calibration_parameters.json'):
+        print("Saving efficiency curve to ", filename)
+        print("Saving fit parameters: ",self.z)
+        print("Saving fit covariance: ",self.z_cov)
+        par_dict = {
+            "parameters": self.z.tolist(),
+            "covariance": self.z_cov.tolist(),
+            "energies": self.energy,
+            "efficiencies": self.values,
+            "uncertainties": self.unc
+        }
+        with open(filename, 'w') as file:
+            json.dump(par_dict, file)
+
+    def set_parameters(self,filename='eff_calibration_parameters.json'):
+        file = open(filename, 'r')
+
+        data = json.load(file)
+        self.z = np.array(data['parameters'])
+        self.z_cov = np.array(data['covariance'])
+        self.energy = data['energies']
+        self.values = data['efficiencies']
+        self.unc = data['uncertainties']
+        print("Loaded fit parameters 0-4:", self.z)
+        print("Loaded fit covariance:", self.z_cov)
+        if len(self.z) != 5:
+            print('ERROR: file does not contain the correct number of paramters (5)')
+            return
+        self.fill_fit_func()
+
+    def plotter_pretty(self,ylim=None,save=False):
         fig = go.Figure([
             go.Scatter(
                 name='Measurements',
@@ -159,7 +177,7 @@ class Efficiency(object):
             go.Scatter(
                 name='Fitted Curve',
                 x=self.space,
-                y=self.new_fit,
+                y=self.fit,
                 mode='lines',
                 line=dict(color='rgb(31, 119, 180)'),
             ),
@@ -205,10 +223,11 @@ class Efficiency(object):
                          linecolor=text_color,
                          tickcolor=text_color,
                         )
-        fig.write_image("eff_curve.pdf")
+        if save:
+            fig.write_image("eff_curve.pdf")
         fig.show()
 
-    def plotter(self,ylim=None):
+    def plotter(self,ylim=None,save=False):
         """
         Plots the data and the fit.
         """
@@ -218,15 +237,15 @@ class Efficiency(object):
         plt.errorbar(self.energy, self.values,yerr=self.unc, fmt ='ro',elinewidth=2,capsize=4)
         plt.plot(self.energy, self.values, 'ro')
         plt.grid()
-        plt.plot(self.space, self.new_fit)
+        plt.plot(self.space, self.fit)
         plt.plot(self.space, self.fit_upper, '--')
         plt.plot(self.space, self.fit_lower, '--')
         plt.legend(('Data Points', 'Fitted Curve'), loc='upper right')
         if ylim is not None:
             plt.ylim(0, ylim)
-        plt.savefig('eff_curve.png',dpi=200)
+        if save:
+            plt.savefig('eff_curve.png',dpi=200)
         plt.show()
-
 
     #input spectra and energy calibration
 
