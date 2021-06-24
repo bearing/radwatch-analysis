@@ -9,11 +9,13 @@ import importlib
 import pandas as pd
 import sys
 import matplotlib.pyplot as plt
+import plotly.graph_objs as go
 import csv
 from bs4 import BeautifulSoup
 import urllib.request
 import PF
 import re
+import json
 
 class Efficiency(object):
     """
@@ -32,51 +34,99 @@ class Efficiency(object):
         self.unc = eff_uncer
         self.x = []
         self.y = []
-        self.space = np.linspace(1, 2160, 540)
+        self.werr = []
+        self.space = np.linspace(1, 2460, 540)
         self.z = []
         self.fit = []
         self.new_fit = []
+        self.fit_lower = []
+        self.fit_upper = []
 
     def mutate(self):
         """
         Mutates data and creates the fit function.
         """
-        if len(self.energy)>0:
-            for i in self.energy: 
-                self.x.append(np.log(i/1461))
-            for i in self.values:
-                self.y.append(np.log(i))
-            self.z = np.polyfit(np.asarray(self.x), np.asarray(self.y), 4)
+        if len(self.unc)>0:
+            if len(self.energy) != len(self.unc):
+                print("Error: cannot perform fit without the same number of input energies, efficiencies, and uncertainties!")
+                return
+            for i in range(len(self.energy)): 
+                self.x.append(np.log(self.energy[i]/1461))
+                self.y.append(np.log(self.values[i]))
+                #log_err = .5*(np.log(self.values[i]+self.unc[i])-np.log(self.values[i]-self.unc[i]))
+                log_err = self.unc[i]/self.values[i]
+                self.werr.append(1/log_err)
+
+            self.z, self.z_cov = np.polyfit(np.asarray(self.x), np.asarray(self.y), 4, cov=True)
+            print("Poly fit parameters: ",self.z)
+            print("Poly fit covariance: ",self.z_cov)
         else:
-            print("Error: cannot perform fit without input energies and uncertainties!")
+            print("Error: cannot perform fit without input energies, efficiencies, and uncertainties!")
 
     def save_fit(self,filename='eff_calibration_parameters.txt'):
+        par_dict = {
+            "parameters": self.z.tolist(),
+            "covariance": self.z_cov.tolist(),
+            "efficiencies": self.values,
+            "uncertainties": self.unc
+        }
         with open(filename, 'w') as file:
-            file_writer = csv.writer(file)
-            file_writer.writerow(self.z)
-            file_writer.writerow(self.values)
-            file_writer.writerow(self.unc)
+            json.dump(par_dict, file)
 
     def set_parameters(self,filename='eff_calibration_parameters.txt'):
-        with open(filename, 'r') as file:
-            file_reader = csv.reader(file)
-            self.z = np.array(next(file_reader),dtype=np.float64)
-            self.values = np.array(next(file_reader),dtype=np.float64)
-            self.unc = np.array(next(file_reader),dtype=np.float64)
-            print("Loaded fit parameters 0-4:", self.z)
-            print("Loaded input energies:", self.values)
-            print("Loaded energy uncertainties:", self.unc)
-            if len(self.z) != 5:
-                print('ERROR: file does not contain the correct number of paramters (5)')
+        file = open(filename, 'r')
+
+        data = json.load(file)
+        self.z = np.array(data['parameters'])
+        self.z_cov = np.array(data['covariance'])
+        self.values = data['efficiencies']
+        self.unc = data['uncertainties']
+        print("Loaded fit parameters 0-4:", self.z)
+        print("Loaded fit uncertainties:", self.z_cov)
+        print("Loaded input energies:", self.values)
+        print("Loaded eff uncertainties:", self.unc)
+        if len(self.z) != 5:
+            print('ERROR: file does not contain the correct number of paramters (5)')
 
     def normal(self, x): 
         return np.log(x/1461)
 
     def func3(self, x): 
-        return (self.z[0]*self.normal(x)**4)+(self.z[1]*self.normal(x)**3)+(self.z[2]*self.normal(x)**2)+(self.z[3]*self.normal(x))+(self.z[4])
+        func_value = (self.z[0]*self.normal(x)**4)+\
+                     (self.z[1]*self.normal(x)**3)+\
+                     (self.z[2]*self.normal(x)**2)+\
+                     (self.z[3]*self.normal(x))+\
+                     (self.z[4])
+        return func_value
+
+    def func3_error(self, x, side):
+        # generate sample of possible parameter values based on the covariance matrix from the fit
+        sample_par = np.random.multivariate_normal(mean=self.z.reshape(len(self.z),), cov=self.z_cov, size=1000)
+        sample_z = np.transpose(sample_par)
+        # We can now calculate the range of function values at a given x based on the sample of parameter values
+        func_values = (sample_z[0]*self.normal(x)**4)+\
+                      (sample_z[1]*self.normal(x)**3)+\
+                      (sample_z[2]*self.normal(x)**2)+\
+                      (sample_z[3]*self.normal(x))+\
+                      (sample_z[4])
+        # 1-sigma upper and lower bounds on the function value given assuming a gaussian distribution
+        if side==0:
+            return np.mean(func_values)+np.std(func_values)
+        else:
+            return np.mean(func_values)-np.std(func_values)
 
     def new_func(self, x): 
         return np.exp(self.func3(x))
+
+    def new_func_upper(self, x):
+        return np.exp(self.func3_error(x, 0))
+
+    def new_func_lower(self, x):
+        return np.exp(self.func3_error(x, 1))
+
+    def new_func_error(self, x):
+        error = np.abs(self.new_func_upper(x) - self.new_func_lower(x))/2.0
+        return error
 
     def fitting(self):
         """
@@ -84,11 +134,79 @@ class Efficiency(object):
         """
         for i in self.space:
             self.fit.append(self.func3(i))
-        for i in self.fit:
-            self.new_fit.append(np.exp(i))
+            self.new_fit.append(self.new_func(i))
+            self.fit_upper.append(self.new_func_upper(i))
+            self.fit_lower.append(self.new_func_lower(i))
 
     def get_eff(self,energy):
         return self.new_func(energy)
+
+    def get_eff_error(self,energy):
+        return self.new_func_error(energy)
+
+    def plotter_pretty(self,ylim=None):
+        fig = go.Figure([
+            go.Scatter(
+                name='Measurements',
+                x=self.energy,
+                y=self.values,
+                mode='markers',
+                error_y=dict(
+                    type='data', # value of error bar given in data coordinates
+                    array=self.unc,
+                    visible=True)
+            ),
+            go.Scatter(
+                name='Fitted Curve',
+                x=self.space,
+                y=self.new_fit,
+                mode='lines',
+                line=dict(color='rgb(31, 119, 180)'),
+            ),
+            go.Scatter(
+                name='Upper Bound',
+                x=self.space,
+                y=self.fit_upper,
+                mode='lines',
+                marker=dict(color="#444"),
+                line=dict(width=0),
+                showlegend=False
+            ),
+            go.Scatter(
+                name='Lower Bound',
+                x=self.space,
+                y=self.fit_lower,
+                marker=dict(color="#444"),
+                line=dict(width=0),
+                mode='lines',
+                fillcolor='rgba(68, 68, 68, 0.3)',
+                fill='tonexty',
+                showlegend=False
+            )
+        ])
+        fig.update_layout(
+            xaxis_title='Energy [keV]',
+            yaxis_title='Efficiency',
+            title='Efficiency Curve',
+            hovermode="x"
+        )
+        plot_color = 'plotly_white'
+        text_color = 'black'
+        if ylim:
+            fig.update_yaxes(range=[-0.002, ylim])
+        fig.update_layout(plot_bgcolor='rgba(0,0,0,0)',
+                          template=plot_color)
+        fig.update_yaxes(showgrid=True,
+                         gridcolor='gray',
+                         linecolor=text_color,
+                         tickcolor=text_color,
+                        )
+        fig.update_xaxes(gridcolor='gray',
+                         linecolor=text_color,
+                         tickcolor=text_color,
+                        )
+        fig.write_image("eff_curve.pdf")
+        fig.show()
 
     def plotter(self,ylim=None):
         """
@@ -101,6 +219,8 @@ class Efficiency(object):
         plt.plot(self.energy, self.values, 'ro')
         plt.grid()
         plt.plot(self.space, self.new_fit)
+        plt.plot(self.space, self.fit_upper, '--')
+        plt.plot(self.space, self.fit_lower, '--')
         plt.legend(('Data Points', 'Fitted Curve'), loc='upper right')
         if ylim is not None:
             plt.ylim(0, ylim)
