@@ -58,9 +58,13 @@ class ROI(object):
             if self.sub_type == 1:
                 bins = self.get_roi_windows(self.roi_pars[key])
                 counts = []
+                bin_range = []
                 for i in range(len(bins)):
                     counts.append(np.sum(self.bgsub.cps_vals[bins[i][0][0]:bins[i][0][-1]]) * self.spec.livetime)
-                bg = (counts[0] + counts[2])/2
+                    bin_range.append(bins[i][0][-1]-bins[i][0][0])
+                # bg is the per-bin average background level determined from averaging the two side-band roi average bin values
+                #  scaled by the number of peak bins
+                bg = bin_range[1]*(counts[0]/bin_range[0] + counts[2]/bin_range[2])/2
                 net_counts.append(counts[1] - bg)
                 print("Peak counts at", self.roi_pars[key][0], "keV:", counts[1])
                 print("Background counts:", self.roi_pars[key][0], "keV:", bg)
@@ -68,18 +72,22 @@ class ROI(object):
             else:
                 bins = self.get_roi_windows(self.roi_pars[key], 1)
                 bgcounts = []
+                bg_bin_range = []
                 for i in range(len(bins)):
                     bgcounts.append(np.sum(self.bg.cps_vals[bins[i][0][0]:bins[i][0][-1]]) * self.spec.livetime)
-                backgroundbg = (bgcounts[0] + bgcounts[2]) / 2
+                    bg_bin_range.append(bins[i][0][-1]-bins[i][0][0])
+                backgroundbg = bg_bin_range[1]*(bgcounts[0]/bg_bin_range[0] + bgcounts[2]/bg_bin_range[2]) / 2
                 inet_countsbg = bgcounts[1] - backgroundbg
                 print('background spec sidebands', backgroundbg)
                 print('bg peak counts',bgcounts[1])
 
                 speccounts = []
+                spec_bin_range = []
                 bins = self.get_roi_windows(self.roi_pars[key], 0)
                 for i in range(len(bins)):
                     speccounts.append(np.sum(self.spec.cps_vals[bins[i][0][0]:bins[i][0][-1]]) * self.spec.livetime)
-                backgroundspec = (speccounts[0] + speccounts[2]) / 2
+                    spec_bin_range.append(bins[i][0][-1]-bins[i][0][0])
+                backgroundspec = spec_bin_range[1]*(speccounts[0]/spec_bin_range[0] + speccounts[2]/spec_bin_range[2]) / 2
                 inet_counts = (speccounts[1] - backgroundspec) - inet_countsbg
                 net_counts.append(inet_counts)
                 print("signal bg", backgroundspec)
@@ -103,9 +111,8 @@ class ROI(object):
         idx = np.abs(a-a0).argmin()
         return idx
 
-    def plot_peak_region(self, spectrum, source_energies, key):
+    def plot_peak_region(self, spectrum, source_energies, key, spec_type=0):
         assert f'{key}' in self.roi_pars, f"Plot Peak Region: {key} energy peak not found in ROI energies list"
-        self.find_peak_energies()
         target_peaks = self.target_peaks
         spec = spectrum
         counts = spec.counts_vals
@@ -117,7 +124,7 @@ class ROI(object):
         plot_counts = counts[roi_low:roi_high]
         plot_energies = energies[roi_low:roi_high]
 
-        roi_low_bins,roi_peak_bins,roi_high_bins = self.get_roi_windows(self.roi_pars[f'{key}'])
+        roi_low_bins,roi_peak_bins,roi_high_bins = self.get_roi_windows(self.roi_pars[f'{key}'],spec_type)
         rlow = roi_low_bins[0][0]
         rhi = roi_high_bins[0][-1]
         plot_counts = counts[rlow:rhi]

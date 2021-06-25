@@ -264,6 +264,14 @@ def urlcreator(abb, A_0):
 
     return(bslink)
 
+def efficiency(roi_result,source_activities,branching_ratio,roi_uncer,activities_uncer,livetime):
+    eff = []
+    eff_uncer = []
+    for count,A,br,sigma_c,sigma_A in zip (roi_result,source_activities,branching_ratio,roi_uncer,activities_uncer):
+        eff.append(count/livetime/A/br)
+        eff_uncer.append(m.sqrt((sigma_c/A)**2+(count*sigma_A/A**2)**2)/br/livetime)
+    return eff, eff_uncer
+
 def xsec_data(abb, A_0):
     '''extracts data from the jaea website'''
     bslink = urlcreator(abb, A_0)
