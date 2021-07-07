@@ -46,15 +46,39 @@ efficiency = []
 for i in c.source_energies:
     efficiency.append(eff_func.get_eff(i))
 
+print(roi_counts)
+print(roi_unc)
+    
+plt.show()
+    
 countrate = [i / spec.livetime for i in roi_counts]
 uncrate = [i / spec.livetime for i in roi_unc]
+#actfrac = [np.exp(-1 * (np.log(2) / i) * (c.time)) for i in c.source_halflives]
 
-sactivity, sactunc = [(i / j) / (c.weight / 1000) for i, j in zip(countrate, efficiency)], [(i / j) / (c.weight / 1000) for i, j in zip(uncrate, efficiency)]
+volfracs = [i / c.maxvol for i in c.vol]
+avgvolfrac = sum(volfracs) / len(volfracs)
+
+def standarddeviation(lst):
+    avg = sum(lst) / len(lst)
+    sqrdif = [(i - avg) ** 2 for i in lst]
+    return (sum(sqrdif) / len(lst)) ** 0.5
+
+def multprop(A, a, B, b):
+    f = A * B
+    return f * ((((a / A) ** 2) + ((b / B) ** 2)) ** 0.5)
+
+sd = standarddeviation(c.vol) / c.maxvol #sd for volfrac
+    
+sactivity = [(((i / j) / (c.weight / 1000)) / avgvolfrac) for i, j in zip(countrate, efficiency)]  #reinstate activity fraction due to half-lives later
+
+sactunc = [multprop(i, j, avgvolfrac, sd) for i, j in zip(sactivity, [((i / j) / (c.weight / 1000)) for i, j in zip(uncrate, efficiency)])]
+                                                                                                               
+#sactivity, sactunc = [(((i / j) / (c.weight / 1000)) / avgvolfrac) / z for i, j, z in zip(countrate, efficiency, actfrac)], [(((i / j) / (c.weight / 1000)) / avgvolfrac) / z for i, j, z in zip(uncrate, efficiency, actfrac)]
 
 with open(csvname, mode='w') as csvfile:
     csvfiler = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
     for i, j, k in zip(c.source_energies, sactivity, sactunc):
         print("Specific activity at", i, "keV:", j, "±", k, "Bq/kg")
         csvfiler.writerow([i, j, k])
+    #csvfiler.writerow([sd])
     
-plt.show()

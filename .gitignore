@@ -1,7 +1,8 @@
 # Files and file types to ignore
 .ipynb_checkpoints
 __pycache__
-.xlsx
+*/*.xlsx
+*.xlsx
 # Python compiled files
 *.pyc
 
