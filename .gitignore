@@ -13,6 +13,7 @@ Error_Cal.txt
 # Output sampling table
 Sampling_Table.csv
 
+*.txt
 *.Spe
 *.png
 *.jpg
