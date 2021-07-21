@@ -239,11 +239,11 @@ def naa_isotope_analyzer(energies,half_life_cut=0,branching_ratio_cut=0,deltae=2
             final_isotopes.append(iso)
             final_iso_energies.append(ordered_energies[i])
             final_iso_br.append(ordered_br[i])
-        #else:
-        #    print("Only found",ordered_energies[i],"for isotope",iso,"with",iso_energies,"expected peaks.")
+        else:
+            print("Only found",ordered_energies[i],"for isotope",iso,"with",iso_energies,"expected peaks.")
     print("isotopes:",isotopes)
     print("ordered isotopes:",ordered_isotopes)
-    print("iso:",iso)
+    print("iso:",iso) #this is empty
     print("here is the data frame:",final_isotopes) #isotopes not going into dataframe
     results2 = {'isotopes':final_isotopes,'energies':final_iso_energies,'branching_ratios':final_iso_br}
 
