@@ -8,7 +8,7 @@ import math as m
 
 class ROI(object):
     def __init__ (self, spec, bg, e_peaks, sub_type):
-        #This function initiates an ROI object that requires a foreground and background spectrum, a list of energy peaks that is to be observed [keV], and a subtype of either 0 (to account for double peaking) or 1 (for spectra without double peaking).
+        #This function initiates an ROI object that requires a foreground and background spectrum, a list of energy peaks that is to be observed [keV], and a subtype of either 0 (background is not subtracted before applying ROI) or 1 (for spectra without double peaking).
         #When initiated, the ROI object will come with a dictionary of default parameters for each energy peak with the following indicies: key = initial peak energy, 0 = calibrated peak energy, 1 = delta e, 2 = foreground roi windows, 3 = bg roi windows
         self.spec = spec
         self.bg = bg
