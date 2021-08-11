@@ -8,6 +8,8 @@ import math as m
 
 class ROI(object):
     def __init__ (self, spec, bg, e_peaks, sub_type):
+        #This function initiates an ROI object that requires a foreground and background spectrum, a list of energy peaks that is to be observed [keV], and a subtype of either 0 (background is not subtracted before applying ROI) or 1 (for spectra without double peaking).
+        #When initiated, the ROI object will come with a dictionary of default parameters for each energy peak with the following indicies: key = initial peak energy, 0 = calibrated peak energy, 1 = delta e, 2 = foreground roi windows, 3 = bg roi windows
         self.spec = spec
         self.bg = bg
         self.sub_type = sub_type
@@ -16,12 +18,16 @@ class ROI(object):
         else:
             self.bgsub = self.spec - self.bg
         self.target_peaks = e_peaks
-        #dict of parameters, key is the initial peak energy, 0 = calibrated peak energy, 1 = delta e, 2 = foreground roi windows, 3 = bg roi windows
         self.roi_pars = {}
         for i in range(len(self.target_peaks)):
             self.roi_pars["%s" %self.target_peaks[i]] = [self.target_peaks[i], 5, [[-2, -1], [-0.5, 0.5], [1, 2]],[[-2, -1], [-0.5, 0.5], [1, 2]]]
 
     def set_sideband(self, peak_energy, delta_e, window, spec_type=0):
+        #This function sets the window and sidebands around a peak energy defined by the user, telling the computer to consider each defined interval on the spectrum as peak counts or background counts.
+        #peak_energy is the energy at which you're changing the sideband parameters to [keV].
+        #delta_e is the amount of energy multiplied to the intervals defined in the window, giving the energy intervals. Use this to quickly expand or shrink the sidebands and window proportionally [keV].
+        #window sets the intervals relative to delta_e. Use this to fine tune around regions of interest on the spectrum.
+        #Example: roi.set_sideband(609, 5, [[-2, -1], [-0.75, 0.75], [1, 2]], 0)
         assert type(peak_energy) == int or type(peak_energy) == float, "First argument should be the value of the target peak that you want to set sidebands for."
         assert type(delta_e) == int or type(delta_e) == float, "Second argument should be a number designating delta_E."
         assert len(window) == 3 and len(window[0]) == 2 and len(window[1]) == 2 and len(window[2]) == 2, "Third argument should be a list of lists designating the window in the format of: [[#, #], [#, #], [#, #]]"
@@ -33,13 +39,26 @@ class ROI(object):
         if spec_type == 1:
             self.roi_pars["%s" %peak_energy][3] = window
 
-    def find_peak_energies(self):
+    def find_peak_energies(self, low=609, high=2614):
+        #This function changes the peak energy value to better center the roi window around where the peak visually appears to be.
+        #Assumes there's a predominant signal at 609keV and 2614keV.
+        #Other low and high peaks may be substituted as the second and third argument respectively [keV].
+            
+        masklow = (self.spec.bin_centers_kev > (low - 15)) & (self.spec.bin_centers_kev < (low + 15))
+        maxbinlow = np.argmax(self.spec.counts[masklow])
+        maskhigh = (self.spec.bin_centers_kev > (high - 15)) & (self.spec.bin_centers_kev < (high + 15))
+        maxbinhigh = np.argmax(self.spec.counts[maskhigh])
+            
+        dElow = low - self.spec.bin_centers_kev[np.where(masklow)[0][0] + maxbinlow]
+        dEhigh = high - self.spec.bin_centers_kev[np.where(maskhigh)[0][0] + maxbinhigh]
+
+        E_scale = (dEhigh - dElow) / (high - low) #m
+        E_shift = dEhigh - high * E_scale #b
+            
+        new_peak_energy = lambda E: int(E) - (E_shift + (E_scale * int(E)))
         for peak_energy in self.roi_pars:
-            idx = (self.spec.bin_centers_kev > self.roi_pars[peak_energy][0]+self.roi_pars[f'{peak_energy}'][2][1][0]*self.roi_pars[f'{peak_energy}'][1])*(self.spec.bin_centers_kev < self.roi_pars[peak_energy][0]+self.roi_pars[f'{peak_energy}'][2][1][1]*self.roi_pars[f'{peak_energy}'][1])
-            bins = np.where(idx)
-            local_idx = np.argmax(self.spec.counts[bins])
-            index = bins[0][0] + local_idx
-            self.roi_pars[f'{peak_energy}'][0] = round(self.spec.bin_centers_kev[index])
+            self.roi_pars[f'{peak_energy}'][0] = int(round(new_peak_energy(peak_energy)))
+            print(str(peak_energy) + "keV peak changed to " + str(int(round(new_peak_energy(peak_energy)))) + "keV")
 
     def get_roi_windows(self, key, spec_type=0):
         index = []
@@ -52,6 +71,7 @@ class ROI(object):
         return index
 
     def get_counts(self):
+        #This function gives the counts and the uncertainty in [Bq].
         net_counts = []
         uncertainties = []
         for key in self.roi_pars:
