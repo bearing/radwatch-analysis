@@ -131,12 +131,11 @@ class ROI(object):
         idx = np.abs(a-a0).argmin()
         return idx
 
-    def plot_peak_region(self, spectrum, source_energies, key, spec_type=0):
+    def plot_peak_region(self, key, spec_type=0):
         assert f'{key}' in self.roi_pars, f"Plot Peak Region: {key} energy peak not found in ROI energies list"
         target_peaks = self.target_peaks
-        spec = spectrum
-        counts = spec.counts_vals
-        energies = spec.bin_centers_kev
+        counts = self.spec.counts_vals
+        energies = self.spec.bin_centers_kev
         idx = self.f_near(energies,key)
         roi_low = idx - 50
         roi_high = idx + 50
